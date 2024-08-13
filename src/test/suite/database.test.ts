@@ -2,46 +2,50 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { strict as assert } from 'assert';
 import { Database } from '../../database';
-import { Config } from '../../config';
+import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
 import * as vscode from 'vscode';
 
 suite('Database Class', () => {
     // const workspaceRoot = __dirname;
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+    let sqliteDbPath : string;
     let db: Database;
 
     suiteSetup(() => {
-        // テスト前にConfigの初期設定を行う
-        const config = Config.getInstance();
-        config.set('sqliteDbPath', 'session.db'); // テスト用のDBファイルパスを設定
+        sqliteDbPath = path.join(workspaceRoot, SessionDb);
     });
 
     suiteSetup(() => {
         // suite全体のセットアップをここで行うことも可能
     });
 
-    suiteTeardown(() => {
-        // suite全体のクリーンアップをここで行うことも可能
-    });
-
-    setup(async () => {
-        db = new Database(workspaceRoot);
-        await db.initialize();
-    });
-
-    teardown(() => {
-        const dbPath = path.join(workspaceRoot, 'session.db');
+    suiteTeardown(async () => {
         try {
-            require('fs').unlinkSync(dbPath);
+            await db.close();
+            require('fs').unlinkSync(sqliteDbPath);
         } catch (err) {
             console.error('テストDBファイルの削除に失敗しました:', err);
         }
     });
 
+    setup(async () => {
+        db = new Database(sqliteDbPath);
+        await db.initialize();
+    });
+
+    teardown(() => {
+        // try {
+        //     require('fs').unlinkSync(sqliteDbPath);
+        // } catch (err) {
+        //     console.error('テストDBファイルの削除に失敗しました:', err);
+        // }
+    });
+
     test('should create a new database with the correct path', async () => {
-        const dbPathSetting = Config.getInstance().get('sqliteDbPath') as string;
-        const expectedPath = path.join(workspaceRoot, dbPathSetting);
-        assert.strictEqual(db.dbPathUri?.fsPath, expectedPath, 'データベースのパスが正しく設定されていません');
+        const sqliteDbPath = Config.getInstance().get('sqliteDbPath') as string;
+        const expectedPath = path.join(workspaceRoot, sqliteDbPath);
+        console.log("DB PATH: ", db.sqliteDbPath, expectedPath);
+        assert.strictEqual(db.sqliteDbPath, expectedPath, 'データベースのパスが正しく設定されていません');
     });
 
     test('should create sessions and commands tables', async () => {
@@ -76,3 +80,7 @@ suite('Database Class', () => {
         await assert.rejects(invalidDb.initialize(), /データベースの作成に失敗しました/, '不正なパスでデータベースが作成されました');
     });
 });
+function async(arg0: () => void) {
+    throw new Error('Function not implemented.');
+}
+

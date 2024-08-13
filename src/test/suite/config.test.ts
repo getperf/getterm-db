@@ -2,40 +2,40 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { Config } from '../../config'; // クラスのパスを適切に変更
+import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
 
 suite('Config Tests', function() {
     let workspaceRoot: string;
     let configFilePath: string;
-    let relativeDbPath = 'session.db';
-    let defaultDbPath: string;
 
     suiteSetup(function() {
         // ワークスペースディレクトリを取得
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            throw new Error('ワークスペースが開かれていません');
+        // const workspaceFolders = vscode.workspace.workspaceFolders;
+        // if (!workspaceFolders || workspaceFolders.length === 0) {
+        //     throw new Error('ワークスペースが開かれていません');
+        // }
+        // workspaceRoot = workspaceFolders[0].uri.fsPath;
+        workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        configFilePath = path.join(workspaceRoot, ConfigFile);
+        if (fs.existsSync(configFilePath)) {
+            fs.unlinkSync(configFilePath);
         }
-        workspaceRoot = workspaceFolders[0].uri.fsPath;
-        configFilePath = path.join(workspaceRoot, '.getterm.json');
-        defaultDbPath = path.join(workspaceRoot, relativeDbPath);
+    });
+
+    suiteTeardown(async () => {
+        if (fs.existsSync(configFilePath)) {
+            fs.unlinkSync(configFilePath);
+        }
     });
 
     setup(function() {
         // 設定ファイルが存在しない場合にのみ作成
         if (!fs.existsSync(configFilePath)) {
             fs.writeFileSync(configFilePath, JSON.stringify({
-                sqliteDbPath: relativeDbPath,
+                sqliteDbPath: SessionDb,
                 terminalProfiles: [],
-                version: '1.0'
+                version: ConfigVersion
             }, null, 2));
-        }
-    });
-
-    teardown(function() {
-        // テスト後に設定ファイルを削除
-        if (fs.existsSync(configFilePath)) {
-            fs.unlinkSync(configFilePath);
         }
     });
 
@@ -44,8 +44,8 @@ suite('Config Tests', function() {
 
         // 設定ファイルの内容を確認
         const settings = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
-        assert.strictEqual(settings.sqliteDbPath, relativeDbPath);
-        assert.strictEqual(settings.version, '1.0');
+        assert.strictEqual(settings.sqliteDbPath, SessionDb);
+        assert.strictEqual(settings.version, ConfigVersion);
     });
 
     test('should load existing settings from the config file', function() {
@@ -58,6 +58,7 @@ suite('Config Tests', function() {
         fs.writeFileSync(configFilePath, JSON.stringify(initialSettings, null, 2), 'utf8');
 
         const config = Config.getInstance();
+        config.loadSettings();
         // 設定ファイルから読み込んだデータが正しいか確認
         assert.strictEqual(config.get('sqliteDbPath'), 'custom.db');
         assert.deepStrictEqual(config.get('terminalProfiles'), ['profile1']);
@@ -81,7 +82,8 @@ suite('Config Tests', function() {
         // 設定ファイルに値がない場合のデフォルト値の確認
         fs.unlinkSync(configFilePath); // 設定ファイルを削除してデフォルト値の確認
         const config = Config.getInstance();
-        assert.strictEqual(config.get('sqliteDbPath'), relativeDbPath);
-        assert.strictEqual(config.get('version'), '1.0');
+        config.loadSettings();
+        assert.strictEqual(config.get('sqliteDbPath'), SessionDb);
+        assert.strictEqual(config.get('version'), ConfigVersion);
     });
 });

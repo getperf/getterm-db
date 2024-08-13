@@ -2,28 +2,24 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export const SessionDb = 'session.db';
+export const ConfigFile = '.getterm.json';
+export const ConfigVersion = '1.0';
+
 interface Settings {
     sqliteDbPath?: string;
     terminalProfiles?: string[];
     version?: string;
 }
 
-const Version = '1.0';
-const ConfigFile = '.getterm.json';
-const SessionDB = 'session.db';
-
 export class Config {
     private static instance: Config;
     private settings: Settings = {};
     private configFilePath: string;
-    private defaultDbPath: string;
-    private defaultVersion: string = Version;
 
     private constructor() {
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
         this.configFilePath = path.join(workspaceRoot, ConfigFile);
-        this.defaultDbPath = SessionDB;
-
         this.loadSettings();
         this.registerFileSystemWatcher();
     }
@@ -36,24 +32,20 @@ export class Config {
     }
 
     public loadSettings(): void {
+        console.log("TEST: LOAD:", this.configFilePath);
         if (fs.existsSync(this.configFilePath)) {
             const data = fs.readFileSync(this.configFilePath, 'utf8');
             this.settings = JSON.parse(data);
+            console.log("TEST: LOAD Parse:", data);
         } else {
-            this.settings = {}; // Initialize with default settings if the file does not exist
+            console.log("TEST: LOAD NOT FOUND:");
+            this.settings = {
+                sqliteDbPath: SessionDb,
+                terminalProfiles: [],
+                version: ConfigVersion,
+            };
+            this.saveSettings();
         }
-
-        // Set default sqliteDbPath if it is not defined
-        if (!this.settings.sqliteDbPath) {
-            this.settings.sqliteDbPath = this.defaultDbPath;
-        }
-
-        // Set default version if it is not defined
-        if (!this.settings.version) {
-            this.settings.version = this.defaultVersion;
-        }
-
-        this.saveSettings();
     }
 
     public get<T extends keyof Settings>(key: T): Settings[T] {
@@ -71,7 +63,7 @@ export class Config {
     }
 
     private registerFileSystemWatcher(): void {
-        const watcher = vscode.workspace.createFileSystemWatcher('.getterm.json');
+        const watcher = vscode.workspace.createFileSystemWatcher(this.configFilePath);
         watcher.onDidChange(() => this.loadSettings());
         watcher.onDidCreate(() => this.loadSettings());
         watcher.onDidDelete(() => this.loadSettings());

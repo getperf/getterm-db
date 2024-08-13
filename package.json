@@ -17,8 +17,24 @@
       {
         "command": "getterm-db.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "getterm-db.showRemoteSSHView",
+        "title": "Getterm: Open SSH"
+      },
+      {
+        "command": "getterm-db.openTerminalWithProfile",
+        "title": "Getterm : Open Terminal"
       }
-    ]
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "getterm-db.openTerminalWithProfile",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -26,7 +42,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test",
+    "test": "vscode-test --folder-uri C:/Windows/Temp/",
     "test2": "mocha --require ts-node/register src/test/**/*.ts",
     "update-proposed-api": "vscode-dts dev"
   },
