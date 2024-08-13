@@ -12,7 +12,8 @@ export class SSHProvider {
     private registerCommands() {
         this.context.subscriptions.push(
             vscode.commands.registerCommand('getterm-db.showRemoteSSHView', () => {
-                vscode.commands.executeCommand('remote-explorer.focus');
+                // vscode.commands.executeCommand('remote-explorer.focus');
+                vscode.commands.executeCommand('workbench.view.remote');
             }),
             vscode.commands.registerCommand('getterm-db.openTerminalWithProfile', 
                 this.openTerminalWithProfile, this
@@ -26,6 +27,7 @@ export class SSHProvider {
             return;
         }
         const profileName = node.label;
+        console.log("Open Terminal : ", profileName);
         const terminalOptions: vscode.TerminalOptions = {
             name: `SSH: ${profileName}`,
             shellPath: 'ssh',

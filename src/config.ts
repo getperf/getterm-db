@@ -59,7 +59,13 @@ export class Config {
 
     private saveSettings(): void {
         const data = JSON.stringify(this.settings, null, 2);
-        fs.writeFileSync(this.configFilePath, data, 'utf8');
+        // fs.writeFileSync(this.configFilePath, data, 'utf8');
+        try {
+            fs.writeFileSync(this.configFilePath, data, 'utf8');
+            vscode.window.showInformationMessage('設定が正常に保存されました。');
+        } catch (err) {
+            vscode.window.showErrorMessage(`設定の保存に失敗しました: ${(err as Error).message}`);
+        }
     }
 
     private registerFileSystemWatcher(): void {
