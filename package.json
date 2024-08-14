@@ -27,6 +27,14 @@
         "title": "Getterm : Open Terminal"
       }
     ],
+    "terminal": {
+      "profiles": [
+        {
+          "id": "getterm-db.captureTerminal",
+          "title": "Capture Terminal Session"
+        }
+      ]
+    },
     "menus": {
       "view/item/context": [
         {
