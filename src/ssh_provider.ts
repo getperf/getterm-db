@@ -1,6 +1,9 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
 import { Config } from './config';
+import path from 'path';
+import { Database } from './database';
+import { Session } from './model/sessions';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
@@ -61,10 +64,13 @@ export class SSHProvider {
         try {
             const getScriptCmd = 'code --locate-shell-integration-path bash';
             const shellIntegrationPath = cp.execSync(getScriptCmd).toString().trim();
+            console.log(`シェル統合スクリプトソース：${shellIntegrationPath}`);
             if (!shellIntegrationPath) {
                 throw new Error(`faild ${getScriptCmd}`);
             }
-            cp.execSync(`scp ${shellIntegrationPath} ${remoteProfile}:${this.remotePath}`);
+            const scpCommand = `scp ${shellIntegrationPath} ${remoteProfile}:${this.remotePath}`;
+            const rc = cp.execSync(scpCommand, { timeout: 1000 });
+            console.log(`シェル統合スクリプト転送結果：${rc}`);
         } catch (error) {
             vscode.window.showErrorMessage('Failed to locate shell integration path.');
             return false;
@@ -86,11 +92,23 @@ export class SSHProvider {
         };
         const config = Config.getInstance();
         config.set('terminalProfiles', [remoteProfile]);
-        const terminal = vscode.window.createTerminal(terminalOptions);
-
-        this.transferShellIntegrationScript(remoteProfile);
-        terminal.sendText(`source "${this.remotePath}"`);
+        console.log(`シェル統合端末起動： ${remoteProfile}`);
+        const terminal = await vscode.window.createTerminal(terminalOptions);
         terminal.show();
+
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const sqliteDbPath = config.get('sqliteDbPath') as string;
+        const sqliteDbPath2 = path.join(workspaceRoot, sqliteDbPath);
+        // const db = new Database(sqliteDbPath2);
+        // const session = new Session(db);
+        const isok = await this.transferShellIntegrationScript(remoteProfile);
+        console.log(`シェル統合スクリプト実行結果： ${isok}`);
+        if (!isok) {
+            vscode.window.showErrorMessage(`シェル統合有効化スクリプトを実行できません。
+                手動でスクリプトを実行してください。詳細は ～ を参照してください`);
+            return;
+        }
+        terminal.sendText(`source "${this.remotePath}"`);
     }
 
 	// OSC 633 を解析する関数
