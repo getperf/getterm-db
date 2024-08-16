@@ -1,54 +1,53 @@
 import * as sqlite3 from 'sqlite3';
 
 export class Session {
-  constructor(private db: sqlite3.Database) {}
+    private static db: sqlite3.Database;
 
-  create(profileName: string, executePath: string, args: string[], remoteHost: string, user: string): Promise<number> {
-    return new Promise((resolve, reject) => {
-      const query = `
-        INSERT INTO sessions (profile_name, execute_path, execute_args, remote_host, user, start) 
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
-      `;
-      this.db.run(query, [profileName, executePath, args.join(' '), remoteHost, user], function (err) {
-        if (err) {return reject(err);}
-        resolve(this.lastID); // Return the session ID
-      });
-    });
-  }
+    // constructor(db: sqlite3.Database) {
+    //     Session.db = db;
+    // }
 
-  getById(sessionId: number): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM sessions WHERE id = ?`;
-      this.db.get(query, [sessionId], (err, row) => {
-        if (err) {return reject(err);}
-        resolve(row);
-      });
-    });
-  }
+    static setup(database: sqlite3.Database) {
+      Session.db = database;
+    }
 
-  update(sessionId: number, profileName: string, executePath: string, args: string[], remoteHost: string, user: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const query = `
-        UPDATE sessions 
-        SET profile_name = ?, execute_path = ?, execute_args = ?, remote_host = ?, user = ?, end = datetime('now')
-        WHERE id = ?
-      `;
-      this.db.run(query, [profileName, executePath, args.join(' '), remoteHost, user, sessionId], (err) => {
-        if (err) {return reject(err);}
-        resolve();
-      });
-    });
-  }
+    static async create(profile_name: string, execute_path: string, execute_args: string[], remote_host: string, user: string): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const query = `INSERT INTO sessions (profile_name, execute_path, execute_args, remote_host, user, start) VALUES (?, ?, ?, ?, ?, datetime('now'))`;
+            Session.db.run(query, [profile_name, execute_path, JSON.stringify(execute_args), remote_host, user], function (err) {
+                if (err) {reject(err);}
+                resolve(this.lastID); // Get the last inserted ID
+            });
+        });
+    }
 
-  delete(sessionId: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const query = `DELETE FROM sessions WHERE id = ?`;
-      this.db.run(query, [sessionId], (err) => {
-        if (err) {return reject(err);}
-        resolve();
-      });
-    });
-  }
+    static async getById(id: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const query = `SELECT * FROM sessions WHERE id = ?`;
+            Session.db.get(query, [id], (err, row) => {
+                if (err) {reject(err);}
+                resolve(row);
+            });
+        });
+    }
 
-  // Additional CRUD methods can be added here if needed.
+    static async update(id: number, profile_name: string, execute_path: string, execute_args: string[], remote_host: string, user: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const query = `UPDATE sessions SET profile_name = ?, execute_path = ?, execute_args = ?, remote_host = ?, user = ? WHERE id = ?`;
+            Session.db.run(query, [profile_name, execute_path, JSON.stringify(execute_args), remote_host, user, id], (err) => {
+                if (err) {reject(err);}
+                resolve();
+            });
+        });
+    }
+
+    static async delete(id: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const query = `DELETE FROM sessions WHERE id = ?`;
+            Session.db.run(query, [id], (err) => {
+                if (err) {reject(err);}
+                resolve();
+            });
+        });
+    }
 }
