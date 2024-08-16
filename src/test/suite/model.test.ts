@@ -84,4 +84,23 @@ suite('Database Models', function () {
 
     assert.strictEqual(deletedCommand, undefined);
   });
+
+  test('Get All Commands by Session ID and Delete All Commands by Session ID', async function () {
+    // Create a session
+    const sessionId = await Session.create('test_profile', '/path/to/exe', ['arg1'], 'remote_host', 'user');
+
+    // Create multiple commands under the same session
+    await Command.create(sessionId, 'command1', 'output1', '/cwd', 0);
+    await Command.create(sessionId, 'command2', 'output2', '/cwd', 0);
+    await Command.create(sessionId, 'command3', 'output3', '/cwd', 0);
+
+    // Retrieve all commands by session ID
+    const commands = await Command.getAllBySessionId(sessionId);
+    assert.strictEqual(commands.length, 3, 'All commands were retrieved.');
+
+    // Delete all commands by session ID
+    await Command.deleteAllBySessionId(sessionId);
+    const deletedCommands = await Command.getAllBySessionId(sessionId);
+    assert.strictEqual(deletedCommands.length, 0, 'All commands were deleted.');
+  });
 });

@@ -8,11 +8,22 @@ import { Session } from './model/sessions';
 export class SSHProvider {
     private context: vscode.ExtensionContext;
     private  remotePath = '/tmp/vscode-shell-integration.sh';
+    private db!: Promise<Database>;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         this.registerCommands();
         this.registerEventHandlers();
+    }
+
+    private async initializeDatabase() : Promise<Database> {
+        const config = Config.getInstance();
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const sqliteDbPath = config.get('sqliteDbPath') as string;
+        const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+        const db = new Database(sqliteDbAbsolutePath);
+        await db.initialize();
+        return db;
     }
 
     private registerCommands() {
@@ -68,8 +79,9 @@ export class SSHProvider {
             if (!shellIntegrationPath) {
                 throw new Error(`faild ${getScriptCmd}`);
             }
-            const scpCommand = `scp ${shellIntegrationPath} ${remoteProfile}:${this.remotePath}`;
-            const rc = cp.execSync(scpCommand, { timeout: 1000 });
+            const scpCommand = `scp "${shellIntegrationPath}" ${remoteProfile}:${this.remotePath}`;
+            console.log(`シェル統合スクリプト転送コマンド:${scpCommand}`);
+            const rc = cp.execSync(scpCommand, { timeout: 5000 });
             console.log(`シェル統合スクリプト転送結果：${rc}`);
         } catch (error) {
             vscode.window.showErrorMessage('Failed to locate shell integration path.');
@@ -90,17 +102,23 @@ export class SSHProvider {
             shellPath: 'ssh',
             shellArgs: [remoteProfile] 
         };
-        const config = Config.getInstance();
-        config.set('terminalProfiles', [remoteProfile]);
-        console.log(`シェル統合端末起動： ${remoteProfile}`);
         const terminal = await vscode.window.createTerminal(terminalOptions);
         terminal.show();
 
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        const sqliteDbPath = config.get('sqliteDbPath') as string;
-        const sqliteDbPath2 = path.join(workspaceRoot, sqliteDbPath);
-        // const db = new Database(sqliteDbPath2);
-        // const session = new Session(db);
+        const config = Config.getInstance();
+        config.set('terminalProfiles', [remoteProfile]);
+        // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        // const sqliteDbPath = config.get('sqliteDbPath') as string;
+        // const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+        // const db = new Database(sqliteDbAbsolutePath);
+        // await db.initialize();
+        if (!this.db) {
+            this.db = this.initializeDatabase();
+        }
+        // const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
+        // const session = await Session.getById(sessionId);
+        // console.log("セッション履歴登録：", session);
+
         const isok = await this.transferShellIntegrationScript(remoteProfile);
         console.log(`シェル統合スクリプト実行結果： ${isok}`);
         if (!isok) {

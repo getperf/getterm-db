@@ -65,6 +65,7 @@ export class Database {
             } catch (error) {
                 reject(error);
             }
+            console.log(`データベースが初期化されました: ${this.sqliteDbPath}`);
         });
     }
 
