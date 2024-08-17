@@ -19,7 +19,7 @@ suite('Database Models', function () {
             execute_path TEXT,
             execute_args TEXT,
             remote_host TEXT,
-            user TEXT,
+            remote_user TEXT,
             start DATE,
             end DATE
           )`);

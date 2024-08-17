@@ -1,7 +1,19 @@
 import * as vscode from 'vscode';
 import * as sqlite3 from 'sqlite3';
-// import * as path from 'path';
-// import { Config } from './config';
+import { Session } from './model/sessions';
+import { Command } from './model/commands';
+import { Config } from './config';
+import path from 'path';
+
+export async function  initializeDatabase() : Promise<Database> {
+    const config = Config.getInstance();
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+    const sqliteDbPath = config.get('sqliteDbPath') as string;
+    const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+    const db = new Database(sqliteDbAbsolutePath);
+    await db.initialize();
+    return db;
+}
 
 export class Database {
     private db: sqlite3.Database | null = null;
@@ -62,9 +74,12 @@ export class Database {
                         }
                     });
                 });
+                Session.setup(this.db);
+                Command.setup(this.db);
             } catch (error) {
                 reject(error);
             }
+
             console.log(`データベースが初期化されました: ${this.sqliteDbPath}`);
         });
     }

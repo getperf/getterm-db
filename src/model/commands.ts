@@ -13,7 +13,7 @@ export class Command {
 
     static async create(session_id: number, command: string, output: string, cwd: string, exit_code: number): Promise<number> {
         return new Promise((resolve, reject) => {
-            const query = `INSERT INTO commands (session_id, command, output, cwd, exit_code, start) VALUES (?, ?, ?, ?, ?, datetime('now'))`;
+            const query = `INSERT INTO commands (session_id, command, output, cwd, exit_code, start) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))`;
             Command.db.run(query, [session_id, command, output, cwd, exit_code], function (err) {
                 if (err) {reject(err);}
                 resolve(this.lastID); // Get the last inserted ID

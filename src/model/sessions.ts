@@ -13,7 +13,7 @@ export class Session {
 
     static async create(profile_name: string, execute_path: string, execute_args: string[], remote_host: string, user: string): Promise<number> {
         return new Promise((resolve, reject) => {
-            const query = `INSERT INTO sessions (profile_name, execute_path, execute_args, remote_host, user, start) VALUES (?, ?, ?, ?, ?, datetime('now'))`;
+            const query = `INSERT INTO sessions (profile_name, execute_path, execute_args, remote_host, remote_user, start) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))`;
             Session.db.run(query, [profile_name, execute_path, JSON.stringify(execute_args), remote_host, user], function (err) {
                 if (err) {reject(err);}
                 resolve(this.lastID); // Get the last inserted ID
@@ -33,7 +33,7 @@ export class Session {
 
     static async update(id: number, profile_name: string, execute_path: string, execute_args: string[], remote_host: string, user: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = `UPDATE sessions SET profile_name = ?, execute_path = ?, execute_args = ?, remote_host = ?, user = ? WHERE id = ?`;
+            const query = `UPDATE sessions SET profile_name = ?, execute_path = ?, execute_args = ?, remote_host = ?, remote_user = ? WHERE id = ?`;
             Session.db.run(query, [profile_name, execute_path, JSON.stringify(execute_args), remote_host, user, id], (err) => {
                 if (err) {reject(err);}
                 resolve();

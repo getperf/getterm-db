@@ -1,7 +1,5 @@
 {
   "sqliteDbPath": "session.db",
-  "terminalProfiles": [
-    "ol810"
-  ],
+  "terminalProfiles": [],
   "version": "1.0"
 }

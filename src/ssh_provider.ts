@@ -2,13 +2,16 @@ import * as cp from 'child_process';
 import * as vscode from 'vscode';
 import { Config } from './config';
 import path from 'path';
-import { Database } from './database';
+import { initializeDatabase, Database } from './database';
 import { Session } from './model/sessions';
+import { Command } from './model/commands';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
     private  remotePath = '/tmp/vscode-shell-integration.sh';
     private db!: Promise<Database>;
+    private terminalToSessions: Map<vscode.Terminal, number> = new Map();
+    private terminalDataBuffer: Map<vscode.Terminal, string[]> = new Map();
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -16,15 +19,15 @@ export class SSHProvider {
         this.registerEventHandlers();
     }
 
-    private async initializeDatabase() : Promise<Database> {
-        const config = Config.getInstance();
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        const sqliteDbPath = config.get('sqliteDbPath') as string;
-        const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
-        const db = new Database(sqliteDbAbsolutePath);
-        await db.initialize();
-        return db;
-    }
+    // private async initializeDatabase() : Promise<Database> {
+    //     const config = Config.getInstance();
+    //     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+    //     const sqliteDbPath = config.get('sqliteDbPath') as string;
+    //     const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+    //     const db = new Database(sqliteDbAbsolutePath);
+    //     await db.initialize();
+    //     return db;
+    // }
 
     private registerCommands() {
         this.context.subscriptions.push(
@@ -47,31 +50,18 @@ export class SSHProvider {
             ),
             vscode.window.onDidEndTerminalShellExecution(
                 async e => this.commandEndHandler(e)
+            ),
+            vscode.window.onDidWriteTerminalData(
+                async e => this.terminalDataWriteEventHandler(e)
             )
         );
     }
 
-    async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
-        console.log("START COMMAND");
-        const stream = e.execution?.read();
-        const buffer: string[] = [];
-        for await (const data of stream!) {
-            console.log("DATA:", data);
-            buffer.push(data);
-        }
-        // 結果を1つの文字列に結合
-        const rawOutput = buffer.join('');
-        console.log("OUTPUT:", rawOutput);
-
-        const osc633Messages = this.parseOsc633(rawOutput);
-        console.log("OSC 633 解析:", osc633Messages);
+    private getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
+        return this.terminalToSessions.get(terminal);
     }
 
-    async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
-        console.log("END COMMAND");
-    }
-
-    private async transferShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
+    private async copyShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
         try {
             const getScriptCmd = 'code --locate-shell-integration-path bash';
             const shellIntegrationPath = cp.execSync(getScriptCmd).toString().trim();
@@ -81,7 +71,8 @@ export class SSHProvider {
             }
             const scpCommand = `scp "${shellIntegrationPath}" ${remoteProfile}:${this.remotePath}`;
             console.log(`シェル統合スクリプト転送コマンド:${scpCommand}`);
-            const rc = cp.execSync(scpCommand, { timeout: 5000 });
+            const ScpCommandTimeout = 5000;
+            const rc = cp.execSync(scpCommand, { timeout: ScpCommandTimeout });
             console.log(`シェル統合スクリプト転送結果：${rc}`);
         } catch (error) {
             vscode.window.showErrorMessage('Failed to locate shell integration path.');
@@ -107,19 +98,15 @@ export class SSHProvider {
 
         const config = Config.getInstance();
         config.set('terminalProfiles', [remoteProfile]);
-        // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        // const sqliteDbPath = config.get('sqliteDbPath') as string;
-        // const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
-        // const db = new Database(sqliteDbAbsolutePath);
-        // await db.initialize();
         if (!this.db) {
-            this.db = this.initializeDatabase();
+            this.db = initializeDatabase();
         }
-        // const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
-        // const session = await Session.getById(sessionId);
-        // console.log("セッション履歴登録：", session);
+        const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
+        const session = await Session.getById(sessionId);
+        console.log("セッション履歴登録：", session);
+        this.terminalToSessions.set(terminal, sessionId);
 
-        const isok = await this.transferShellIntegrationScript(remoteProfile);
+        const isok = await this.copyShellIntegrationScript(remoteProfile);
         console.log(`シェル統合スクリプト実行結果： ${isok}`);
         if (!isok) {
             vscode.window.showErrorMessage(`シェル統合有効化スクリプトを実行できません。
@@ -129,9 +116,68 @@ export class SSHProvider {
         terminal.sendText(`source "${this.remotePath}"`);
     }
 
-	// OSC 633 を解析する関数
+    async terminalDataWriteEventHandler(e:  vscode.TerminalDataWriteEvent) {
+        if (!this.terminalDataBuffer.has(e.terminal)) {
+            this.terminalDataBuffer.set(e.terminal, []);
+        }
+        // Buffer the data chunk
+        this.terminalDataBuffer.get(e.terminal)!.push(e.data);
+    }
+
+    private retrieveTerminalBuffer(terminal: vscode.Terminal) : string {
+        const bufferedData = this.terminalDataBuffer.get(terminal)?.join('') ?? '';
+        // Clean up the buffer
+        this.terminalDataBuffer.delete(terminal);
+        return bufferedData;
+    }
+
+    async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
+        console.log("START COMMAND");
+        const sessionId = this.getSessionIdForTerminal(e.terminal);
+        if (!sessionId) {
+            return;
+        }
+        console.log(`Terminal execution started for session ID: ${sessionId}`);
+
+        const stream = e.execution?.read();
+        const buffer: string[] = [];
+        for await (const data of stream!) {
+            console.log("Shell Integration Data:", data);
+            buffer.push(data);
+        }
+        // let rawOutput = this.getTerminalBuffer(e.terminal);
+        const rawOutput = buffer.join('');
+        console.log("OUTPUT:", rawOutput);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const output = this.retrieveTerminalBuffer(e.terminal);
+        let commandText = "";
+        let cwd = "";
+        let exit_code = 0;
+        const osc633Messages = this.parseOsc633(rawOutput);
+        osc633Messages.forEach((message) => {
+            console.log("MESSAGE:", message);
+            switch(message['type']) {
+                case 'E':
+                    commandText = message['payload'];
+                case 'D':
+                    exit_code = parseInt(message['payload']);
+                case 'P':
+                    cwd = message['payload'];
+            }
+        });
+        const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
+        const command = await Command.getById(commandId);
+        console.log("コマンド登録：", command);
+    }
+
+    async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
+        console.log("END COMMAND");
+    }
+
+    // OSC 633 を解析する関数
 	parseOsc633(input: string): Array<{ type: string, payload: string }> {
 		// const osc633Pattern = /\x1B\]633;([A-Z]);([^\x1B]+)\x1B\\/g;
+        console.log("OSC633 input : ", input);
 		const osc633Pattern = /\x1B\]633;([A-Z]);([^]*)/g;
 		const matches = input.matchAll(osc633Pattern);
 		const results: Array<{ type: string, payload: string }> = [];
@@ -144,4 +190,5 @@ export class SSHProvider {
 		}
         return results;
     }
+
 }

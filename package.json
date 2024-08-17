@@ -11,7 +11,9 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
-  "enabledApiProposals": [],
+  "enabledApiProposals": [
+    "terminalDataWriteEvent"
+  ],
   "contributes": {
     "commands": [
       {
