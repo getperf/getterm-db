@@ -19,16 +19,6 @@ export class SSHProvider {
         this.registerEventHandlers();
     }
 
-    // private async initializeDatabase() : Promise<Database> {
-    //     const config = Config.getInstance();
-    //     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-    //     const sqliteDbPath = config.get('sqliteDbPath') as string;
-    //     const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
-    //     const db = new Database(sqliteDbAbsolutePath);
-    //     await db.initialize();
-    //     return db;
-    // }
-
     private registerCommands() {
         this.context.subscriptions.push(
             vscode.commands.registerCommand('getterm-db.showRemoteSSHView', () => {
