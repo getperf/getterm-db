@@ -9,7 +9,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onNotebook:*",
+    "onView:terminal-notebook"
+  ],
   "main": "./out/extension.js",
   "enabledApiProposals": [
     "terminalDataWriteEvent"
@@ -22,11 +25,15 @@
       },
       {
         "command": "getterm-db.showRemoteSSHView",
-        "title": "Getterm: Open SSH"
+        "title": "Getterm: Show remote SSH view"
       },
       {
         "command": "getterm-db.openTerminalWithProfile",
-        "title": "Getterm : Open Terminal"
+        "title": "Getterm : Open terminal"
+      },
+      {
+        "command": "getterm-db.createNewTerminalNotebook",
+        "title": "Getterm : Create new terminal notebook"
       }
     ],
     "terminal": {
@@ -48,7 +55,7 @@
     "notebooks": [
       {
         "type": "terminal-notebook",
-        "displayName": "Terminal Capture Notebook",
+        "displayName": "Terminal Notebook",
         "selector": [
           {
             "filenamePattern": "*.getterm"

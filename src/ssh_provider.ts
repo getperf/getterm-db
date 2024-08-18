@@ -1,20 +1,22 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
 import { Config } from './config';
-import path from 'path';
 import { initializeDatabase, Database } from './database';
 import { Session } from './model/sessions';
 import { Command } from './model/commands';
+import { TerminalNotebookController } from './notebook_controller';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
     private  remotePath = '/tmp/vscode-shell-integration.sh';
     private db!: Promise<Database>;
-    private terminalToSessions: Map<vscode.Terminal, number> = new Map();
+    private notebookController : TerminalNotebookController;
+    private static terminalToSessions: Map<vscode.Terminal, number> = new Map();
     private terminalDataBuffer: Map<vscode.Terminal, string[]> = new Map();
 
-    constructor(context: vscode.ExtensionContext) {
+    constructor(context: vscode.ExtensionContext, notebookController: TerminalNotebookController) {
         this.context = context;
+        this.notebookController = notebookController;
         this.registerCommands();
         this.registerEventHandlers();
     }
@@ -47,7 +49,7 @@ export class SSHProvider {
         );
     }
 
-    private getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
+    public static getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
         return this.terminalToSessions.get(terminal);
     }
 
@@ -94,7 +96,7 @@ export class SSHProvider {
         const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
         const session = await Session.getById(sessionId);
         console.log("セッション履歴登録：", session);
-        this.terminalToSessions.set(terminal, sessionId);
+        SSHProvider.terminalToSessions.set(terminal, sessionId);
 
         const isok = await this.copyShellIntegrationScript(remoteProfile);
         console.log(`シェル統合スクリプト実行結果： ${isok}`);
@@ -123,7 +125,7 @@ export class SSHProvider {
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         console.log("START COMMAND");
-        const sessionId = this.getSessionIdForTerminal(e.terminal);
+        const sessionId = SSHProvider.getSessionIdForTerminal(e.terminal);
         if (!sessionId) {
             return;
         }
@@ -143,7 +145,8 @@ export class SSHProvider {
         let commandText = "";
         let cwd = "";
         let exit_code = 0;
-        const osc633Messages = this.parseOsc633(rawOutput);
+        // const osc633Messages = this.parseOsc633(rawOutput);
+        const osc633Messages = this.parseOsc633(output);
         osc633Messages.forEach((message) => {
             console.log("MESSAGE:", message);
             switch(message['type']) {
@@ -158,6 +161,7 @@ export class SSHProvider {
         const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);
         console.log("コマンド登録：", command);
+        await this.notebookController.updateNotebook(commandId);
     }
 
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SSHProvider } from './ssh_provider';
+import { TerminalNotebookProvider } from './notebook_provider';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -8,7 +9,8 @@ export function activate(context: vscode.ExtensionContext) {
 	const disposable = vscode.commands.registerCommand('getterm-db.helloWorld', () => {
 		vscode.window.showInformationMessage('Hello World from getterm-db!');
 	});
-	new SSHProvider(context);
+	const terminalNotebookProvider = new TerminalNotebookProvider(context);
+	new SSHProvider(context, terminalNotebookProvider.controller);
 }
 
 export function deactivate() {}
