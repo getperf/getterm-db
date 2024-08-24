@@ -18,6 +18,13 @@
     "terminalDataWriteEvent"
   ],
   "contributes": {
+    "keybindings": [
+      {
+        "command": "getterm-db.execute",
+        "key": "shift+enter",
+        "when": "notebookEditorFocused"
+      }
+    ],
     "commands": [
       {
         "command": "getterm-db.helloWorld",

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { SSHProvider } from './ssh_provider';
 import path from 'path';
 import { Command } from './model/commands';
+import { NotebookCleaner } from './notebook_cleaner';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export class TerminalNotebookController  {
@@ -11,6 +12,7 @@ export class TerminalNotebookController  {
 	readonly supportedLanguages = ['shellscript'];
 
     private readonly _controller: vscode.NotebookController;
+	// private notebookCleaner: NotebookCleaner;
 	private _executionOrder = 0;
 
 	constructor() {
@@ -23,6 +25,7 @@ export class TerminalNotebookController  {
 		this._controller.supportedLanguages = this.supportedLanguages;
 		this._controller.supportsExecutionOrder = true;
 		this._controller.executeHandler = this._execute.bind(this);
+		// this.notebookCleaner = new NotebookCleaner(this);
 	}
 
     async execute(cells: vscode.NotebookCell[]): Promise<void> {
@@ -109,6 +112,8 @@ export class TerminalNotebookController  {
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
 
+		NotebookCleaner.cleanupUnusedCells();
+	
 		const row = await Command.getById(rowid);
 		const newCell = new vscode.NotebookCellData(
 			vscode.NotebookCellKind.Code,

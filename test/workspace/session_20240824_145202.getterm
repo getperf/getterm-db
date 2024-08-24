@@ -1,0 +1,1 @@
+{"cells":[{"kind":2,"language":"shellscript","id":168,"value":"pwd;"},{"kind":2,"language":"shellscript","id":170,"value":"ls --color=auto;"},{"kind":1,"language":"markdown","value":"aaa"},{"kind":2,"language":"shellscript","id":171,"value":"ls --color=auto;"},{"kind":2,"language":"shellscript","id":172,"value":"ls --color=auto;"}],"metadata":{"sessionId":58}}

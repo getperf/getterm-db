@@ -27,10 +27,25 @@ export class TerminalNotebookProvider {
 	    	this.controller,
             vscode.commands.registerCommand('getterm-db.createNewTerminalNotebook', async () => {
                 this.controller.createNotebook();
+            }),
+            vscode.commands.registerCommand('getterm-db.copyCode', (cell: vscode.NotebookCell) => {
+                vscode.env.clipboard.writeText(cell.document.getText()).then(() => {
+                    vscode.window.showInformationMessage('Code copied to clipboard!');
+                });
             })
         );
+
+        
     }
 
     private registerEventHandlers() {
+        // Enable auto-save for notebooks
+        vscode.workspace.onDidChangeNotebookDocument((e) => {
+            const notebookUri = e.notebook.uri;
+            if (e.contentChanges.length > 0) {
+                e.notebook.save();
+                console.log(`Notebook ${notebookUri.toString()} saved automatically.`);
+            }
+        });
     }
 }
