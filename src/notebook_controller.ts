@@ -106,6 +106,13 @@ export class TerminalNotebookController  {
 			vscode.window.showErrorMessage("No active notebook editor found!");
 			return;
 		}
+		const activeCell = notebookEditor.selections[0]; // Get the currently active cell
+		if (activeCell && activeCell.isEmpty) { // Check if the cell is empty
+			console.log("DELETE CELL:", activeCell);
+			// notebookEditor.notebook.
+		//   notebookEditor.notebook.deleteCell(activeCell.index); // Delete the empty cell
+		}
+	
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
 
