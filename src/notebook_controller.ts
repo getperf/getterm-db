@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { SSHProvider } from './ssh_provider';
 import path from 'path';
 import { Command } from './model/commands';
+import { NotebookCleaner } from './notebook_cleaner';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export class TerminalNotebookController  {
@@ -11,6 +12,7 @@ export class TerminalNotebookController  {
 	readonly supportedLanguages = ['shellscript'];
 
     private readonly _controller: vscode.NotebookController;
+	// private notebookCleaner: NotebookCleaner;
 	private _executionOrder = 0;
 
 	constructor() {
@@ -23,6 +25,7 @@ export class TerminalNotebookController  {
 		this._controller.supportedLanguages = this.supportedLanguages;
 		this._controller.supportsExecutionOrder = true;
 		this._controller.executeHandler = this._execute.bind(this);
+		// this.notebookCleaner = new NotebookCleaner(this);
 	}
 
     async execute(cells: vscode.NotebookCell[]): Promise<void> {
@@ -55,10 +58,11 @@ export class TerminalNotebookController  {
 		});
 		console.log("INDEX:", cell.index, cell.metadata.id);
         const row = await Command.getById(cell.metadata.id);
-		writeSuccess(
-			execution,
-			[[text(row.output)]]
-		);
+		if (row.exit_code === 0) {
+			writeSuccess(execution, [[text(row.output)]]);
+		} else {
+			writeErr(execution, row.output);
+		}
 	}
 
     private createTerminalNotebookFilename(): string {
@@ -116,6 +120,8 @@ export class TerminalNotebookController  {
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
 
+		NotebookCleaner.cleanupUnusedCells();
+ 	
 		const row = await Command.getById(rowid);
 		const newCell = new vscode.NotebookCellData(
 			vscode.NotebookCellKind.Code,
@@ -151,8 +157,11 @@ export class TerminalNotebookController  {
 }
 
 function writeErr(execution: vscode.NotebookCellExecution, err: string) {
+	const redTextErr = `\u001b[31m${err}\u001b[0m`;
 	execution.replaceOutput([
-	  new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(err)]),
+		new vscode.NotebookCellOutput([
+			vscode.NotebookCellOutputItem.text(redTextErr),
+		]),
 	]);
 	execution.end(false, Date.now());
   }

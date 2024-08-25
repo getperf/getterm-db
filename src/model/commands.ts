@@ -13,7 +13,7 @@ export class Command {
 
     static async create(session_id: number, command: string, output: string, cwd: string, exit_code: number): Promise<number> {
         return new Promise((resolve, reject) => {
-            const query = `INSERT INTO commands (session_id, command, output, cwd, exit_code, start) VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))`;
+            const query = `INSERT INTO commands (session_id, command, output, cwd, exit_code, start) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'))`;
             Command.db.run(query, [session_id, command, output, cwd, exit_code], function (err) {
                 if (err) {reject(err);}
                 resolve(this.lastID); // Get the last inserted ID
@@ -44,6 +44,16 @@ export class Command {
     static async update(id: number, command: string, output: string, cwd: string, exit_code: number): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ? WHERE id = ?`;
+            Command.db.run(query, [command, output, cwd, exit_code, id], (err) => {
+                if (err) {reject(err);}
+                resolve();
+            });
+        });
+    }
+
+    static async updateEnd(id: number, command: string, output: string, cwd: string, exit_code: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ?, end = strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime') WHERE id = ?`;
             Command.db.run(query, [command, output, cwd, exit_code, id], (err) => {
                 if (err) {reject(err);}
                 resolve();
