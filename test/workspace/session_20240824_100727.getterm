@@ -1,1 +1,0 @@
-{"cells":[{"kind":2,"language":"shellscript","id":128,"value":"ls --color=auto -l;"},{"kind":2,"language":"shellscript","id":129,"value":"pwd;"},{"kind":2,"language":"shellscript","id":130,"value":"ls --color=auto -l;"}],"metadata":{"sessionId":46}}

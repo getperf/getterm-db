@@ -58,10 +58,11 @@ export class TerminalNotebookController  {
 		});
 		console.log("INDEX:", cell.index, cell.metadata.id);
         const row = await Command.getById(cell.metadata.id);
-		writeSuccess(
-			execution,
-			[[text(row.output)]]
-		);
+		if (row.exit_code === 0) {
+			writeSuccess(execution, [[text(row.output)]]);
+		} else {
+			writeErr(execution, row.output);
+		}
 	}
 
     private createTerminalNotebookFilename(): string {
@@ -120,7 +121,7 @@ export class TerminalNotebookController  {
 		const currentRow = notebookDocument.cellCount;
 
 		NotebookCleaner.cleanupUnusedCells();
-	
+ 	
 		const row = await Command.getById(rowid);
 		const newCell = new vscode.NotebookCellData(
 			vscode.NotebookCellKind.Code,
@@ -156,8 +157,11 @@ export class TerminalNotebookController  {
 }
 
 function writeErr(execution: vscode.NotebookCellExecution, err: string) {
+	const redTextErr = `\u001b[31m${err}\u001b[0m`;
 	execution.replaceOutput([
-	  new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(err)]),
+		new vscode.NotebookCellOutput([
+			vscode.NotebookCellOutputItem.text(redTextErr),
+		]),
 	]);
 	execution.end(false, Date.now());
   }

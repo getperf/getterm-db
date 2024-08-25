@@ -5,6 +5,7 @@ import { initializeDatabase, Database } from './database';
 import { Session } from './model/sessions';
 import { Command } from './model/commands';
 import { TerminalNotebookController } from './notebook_controller';
+import { Util } from './util';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
@@ -130,6 +131,11 @@ export class SSHProvider {
             return;
         }
         console.log(`Terminal execution started for session ID: ${sessionId}`);
+        let output = "";
+        let commandText = "";
+        let cwd = "";
+        let exit_code = 0;
+        const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
 
         const stream = e.execution?.read();
         const buffer: string[] = [];
@@ -141,10 +147,8 @@ export class SSHProvider {
         const rawOutput = buffer.join('');
         console.log("OUTPUT:", rawOutput);
         await new Promise(resolve => setTimeout(resolve, 500));
-        const output = this.retrieveTerminalBuffer(e.terminal);
-        let commandText = "";
-        let cwd = "";
-        let exit_code = 0;
+        output = this.retrieveTerminalBuffer(e.terminal);
+
         // const osc633Messages = this.parseOsc633(rawOutput);
         const osc633Messages = this.parseOsc633(output);
         osc633Messages.forEach((message) => {
@@ -152,13 +156,14 @@ export class SSHProvider {
             switch(message['type']) {
                 case 'E':
                     commandText = message['payload'];
+                    commandText = Util.removeTrailingSemicolon(commandText);
                 case 'D':
                     exit_code = parseInt(message['payload']);
                 case 'P':
                     cwd = message['payload'];
             }
         });
-        const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
+        await Command.updateEnd(commandId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);
         console.log("コマンド登録：", command);
         await this.notebookController.updateNotebook(commandId);

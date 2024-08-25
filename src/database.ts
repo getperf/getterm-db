@@ -43,8 +43,8 @@ export class Database {
                             remote_type TEXT,
                             remote_host TEXT,
                             remote_user TEXT,
-                            start DATE,
-                            end DATE
+                            start DATETIME,
+                            end DATETIME
                         )
                     `, (err) => {
                         if (err) {
@@ -62,8 +62,8 @@ export class Database {
                             output TEXT,
                             cwd TEXT,
                             exit_code INTEGER,
-                            start DATE,
-                            end DATE,
+                            start DATETIME,
+                            end DATETIME,
                             FOREIGN KEY(session_id) REFERENCES sessions(id)
                         )
                     `, (err) => {

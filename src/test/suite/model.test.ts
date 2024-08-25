@@ -79,6 +79,11 @@ suite('Database Models', function () {
 
     assert.strictEqual(updatedCommand.command, 'updated command');
 
+    await Command.updateEnd(commandId, 'error command', 'error output', '/new/cwd', -1);
+    const updatedEndCommand = await Command.getById(commandId);
+
+    assert.strictEqual(updatedEndCommand.output, 'error output');
+
     await Command.delete(commandId);
     const deletedCommand = await Command.getById(commandId);
 
