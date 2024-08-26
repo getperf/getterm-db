@@ -13,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);
-	new CellExecutionTimeProvider(context);
+	// new CellExecutionTimeProvider(context);
 	new SSHProvider(context, terminalNotebookProvider.controller);
 }
 

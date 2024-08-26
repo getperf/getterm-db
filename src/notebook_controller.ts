@@ -143,8 +143,11 @@ export class TerminalNotebookController  {
 		notebookEditor.revealRange(range, vscode.NotebookEditorRevealType.Default);
 
 		// Get the index of the newly added cell
-		const addedCell = notebookDocument.cellAt(currentRow);
-		this.execute([addedCell]);
+		// const addedCell = notebookDocument.cellAt(currentRow);
+		// this.execute([addedCell]);
+		await vscode.commands.executeCommand('notebook.cell.execute', 
+			{ ranges: [{ start: currentRow, end: currentRow + 1 }] }
+		);
 
 		notebookEditor.selection = range;
 		notebookEditor.revealRange(range, vscode.NotebookEditorRevealType.Default);
