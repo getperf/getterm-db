@@ -3,4 +3,5 @@ dist
 node_modules
 .vscode-test/
 *.vsix
-test/workspace/
+/test/workspace/*
+!/test/workspace/.gitkeep

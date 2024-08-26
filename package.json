@@ -18,13 +18,6 @@
     "terminalDataWriteEvent"
   ],
   "contributes": {
-    "keybindings": [
-      {
-        "command": "getterm-db.execute",
-        "key": "shift+enter",
-        "when": "notebookEditorFocused"
-      }
-    ],
     "commands": [
       {
         "command": "getterm-db.helloWorld",
@@ -79,7 +72,8 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test --folder-uri C:/Windows/Temp/",
     "test2": "mocha --require ts-node/register src/test/**/*.ts",
-    "update-proposed-api": "vscode-dts dev"
+    "update-proposed-api": "vscode-dts dev",
+    "clean-test-workspace": "rm test/workspace/*.*"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",

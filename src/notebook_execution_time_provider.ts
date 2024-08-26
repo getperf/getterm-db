@@ -34,20 +34,12 @@ export class CellExecutionTimeProvider implements vscode.NotebookCellStatusBarIt
 
         const lastCell = notebook.cellAt(notebook.cellCount - 1);
         const rowid = lastCell.metadata.id;
+        if (!rowid || lastCell.kind !== vscode.NotebookCellKind.Code) {return;}
+
         const row = await Command.getById(rowid);
         const startTime = new Date(row.start);
         const endTime = new Date(row.end);
-        const execDuration = (endTime.getTime() - startTime.getTime()) / 1000; // Calculate duration in seconds
+        const execDuration = (endTime.getTime() - startTime.getTime()) / 1000; 
         this.executionTimes.set(lastCell.document.uri.toString(), `${execDuration.toFixed(2)}s`);
-        console.log("TIME DURATION: ", execDuration);
-
-        // Trigger the status bar update for the last cell
-        // vscode.commands.executeCommand('vscode.notebook.cell.execute', { ranges: [{ start: notebook.cellCount - 1, end: notebook.cellCount }] });
-        // Update the last cell metadata to trigger a UI refresh
-        this.isUpdating = true; 
-        // const edit = new vscode.WorkspaceEdit();
-        // edit.replace(lastCell.document.uri, new vscode.Range(0, 0, 0, 0), lastCell.document.getText()); // Replace with no changes
-        // await vscode.workspace.applyEdit(edit);
-        this.isUpdating = false; 
     }
 }
