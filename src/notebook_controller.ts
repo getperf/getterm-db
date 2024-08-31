@@ -3,6 +3,7 @@ import { SSHProvider } from './ssh_provider';
 import path from 'path';
 import { Command } from './model/commands';
 import { NotebookCleaner } from './notebook_cleaner';
+import { TerminalSessionManager } from './terminal_session_manager';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export class TerminalNotebookController  {
@@ -79,8 +80,9 @@ export class TerminalNotebookController  {
             vscode.window.showInformationMessage('No active terminal is currently selected.');
             return;
         }
-        const sessionId = SSHProvider.getSessionIdForTerminal(activeTerminal);
-        if (!sessionId) {
+        // const sessionId = SSHProvider.getSessionIdForTerminal(activeTerminal);
+		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
+		if (!sessionId) {
             vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
             return;
         }

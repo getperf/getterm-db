@@ -5,6 +5,7 @@ import { initializeDatabase, Database } from './database';
 import { Session } from './model/sessions';
 import { Command } from './model/commands';
 import { TerminalNotebookController } from './notebook_controller';
+import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 
 export class SSHProvider {
@@ -12,8 +13,6 @@ export class SSHProvider {
     private  remotePath = '/tmp/vscode-shell-integration.sh';
     private db!: Promise<Database>;
     private notebookController : TerminalNotebookController;
-    private static terminalToSessions: Map<vscode.Terminal, number> = new Map();
-    private terminalDataBuffer: Map<vscode.Terminal, string[]> = new Map();
 
     constructor(context: vscode.ExtensionContext, notebookController: TerminalNotebookController) {
         this.context = context;
@@ -50,9 +49,10 @@ export class SSHProvider {
         );
     }
 
-    public static getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
-        return this.terminalToSessions.get(terminal);
-    }
+    // public static getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
+    //     // return this.terminalToSessions.get(terminal);
+    //     return TerminalSessionManager.getSessionId(terminal);
+    // }
 
     private async copyShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
         try {
@@ -97,8 +97,7 @@ export class SSHProvider {
         const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
         const session = await Session.getById(sessionId);
         console.log("セッション履歴登録：", session);
-        SSHProvider.terminalToSessions.set(terminal, sessionId);
-
+        TerminalSessionManager.setSessionId(terminal, sessionId);
         const isok = await this.copyShellIntegrationScript(remoteProfile);
         console.log(`シェル統合スクリプト実行結果： ${isok}`);
         if (!isok) {
@@ -110,24 +109,15 @@ export class SSHProvider {
     }
 
     async terminalDataWriteEventHandler(e:  vscode.TerminalDataWriteEvent) {
-        if (!this.terminalDataBuffer.has(e.terminal)) {
-            this.terminalDataBuffer.set(e.terminal, []);
-        }
-        // Buffer the data chunk
-        this.terminalDataBuffer.get(e.terminal)!.push(e.data);
-    }
-
-    private retrieveTerminalBuffer(terminal: vscode.Terminal) : string {
-        const bufferedData = this.terminalDataBuffer.get(terminal)?.join('') ?? '';
-        // Clean up the buffer
-        this.terminalDataBuffer.delete(terminal);
-        return bufferedData;
+        TerminalSessionManager.pushDataBuffer(e.terminal, e.data);
     }
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         console.log("START COMMAND");
-        const sessionId = SSHProvider.getSessionIdForTerminal(e.terminal);
+        const sessionId = TerminalSessionManager.getSessionId(e.terminal);
         if (!sessionId) {
+            const terminalSession = TerminalSessionManager.get(e.terminal);
+            console.error("セッションidが取得できませんでした : ", terminalSession);
             return;
         }
         console.log(`Terminal execution started for session ID: ${sessionId}`);
@@ -136,41 +126,85 @@ export class SSHProvider {
         let cwd = "";
         let exit_code = 0;
         const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
-
-        const stream = e.execution?.read();
-        const buffer: string[] = [];
-        for await (const data of stream!) {
-            console.log("Shell Integration Data:", data);
-            buffer.push(data);
-        }
-        // let rawOutput = this.getTerminalBuffer(e.terminal);
-        const rawOutput = buffer.join('');
-        console.log("OUTPUT:", rawOutput);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        output = this.retrieveTerminalBuffer(e.terminal);
-
-        // const osc633Messages = this.parseOsc633(rawOutput);
-        const osc633Messages = this.parseOsc633(output);
-        osc633Messages.forEach((message) => {
-            console.log("MESSAGE:", message);
-            switch(message['type']) {
-                case 'E':
-                    commandText = message['payload'];
-                    commandText = Util.removeTrailingSemicolon(commandText);
-                case 'D':
-                    exit_code = parseInt(message['payload']);
-                case 'P':
-                    cwd = message['payload'];
-            }
-        });
-        await Command.updateEnd(commandId, commandText, output, cwd, exit_code);
-        const command = await Command.getById(commandId);
-        console.log("コマンド登録：", command);
-        await this.notebookController.updateNotebook(commandId);
+        TerminalSessionManager.setCommandId(e.terminal, commandId);
     }
 
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
         console.log("END COMMAND");
+        let output = "";
+        let commandText = "";
+        let cwd = "";
+        let exit_code = 0;
+
+        const commandId = TerminalSessionManager.getCommandId(e.terminal);
+        if (!commandId) { 
+            const terminalSession = TerminalSessionManager.get(e.terminal);
+            console.error("セッションからコマンドIDが取得できませんでした: ", terminalSession);
+            return; 
+        }
+        await Command.updateEndTimestamp(commandId);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+        if (!rawData) { 
+            const terminalSession = TerminalSessionManager.get(e.terminal);
+            console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);
+            return; 
+        }
+        console.log("DATABUFFER: ", rawData);
+        const osc633Messages = this.parseOSC633Simple(rawData);
+        output = osc633Messages.output;
+        commandText = osc633Messages.command;
+        cwd = osc633Messages.cwd;
+        if (osc633Messages.exitCode) {
+            exit_code = osc633Messages.exitCode;
+        }
+        // // const osc633Messages = this.parseOsc633(rawOutput);
+        // const osc633Messages = this.parseOsc633(output);
+        // osc633Messages.forEach((message) => {
+        //     console.log("MESSAGE:", message);
+        //     switch(message['type']) {
+        //         case 'E':
+        //             commandText = message['payload'];
+        //             commandText = Util.removeTrailingSemicolon(commandText);
+        //         case 'D':
+        //             exit_code = parseInt(message['payload']);
+        //         case 'P':
+        //             cwd = message['payload'];
+        //     }
+        // });
+        await Command.updateEnd(commandId, commandText, output, cwd, exit_code);
+        const command = await Command.getById(commandId);
+        console.log("コマンド登録：", command);
+        await this.notebookController.updateNotebook(commandId);
+
+    }
+
+    // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
+    parseOSC633Simple(input: string) {
+        // Split the input by OSC 633 sequences
+        const parts = input.split(/\u001b\]633;/);
+
+        let command = '';
+        let output = '';
+        let exitCode: number | null = null;
+        let cwd = '';
+
+        if (parts.length > 0) { command = parts[0].trim(); };
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+
+            if (part.startsWith('D;')) {
+                // Extract the exit code from the sequence starting with 'D;'
+                exitCode = parseInt(part.slice(2).trim(), 10);
+            } else if (part.startsWith('C')) {
+                // Extract the output which is between 'C' and next sequence.
+                output = parts[i].replace(/^C\u0007\n/, '').trim();
+            } else if (part.startsWith('P;Cwd=')) {
+                // Extract the working directory from the sequence starting with 'P;Cwd='
+                cwd = part.slice(6).trim();
+            }
+        }
+        return { command, exitCode, output, cwd };
     }
 
     // OSC 633 を解析する関数
@@ -191,3 +225,4 @@ export class SSHProvider {
     }
 
 }
+                                                        
