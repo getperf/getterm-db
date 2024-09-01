@@ -4,6 +4,7 @@ import { Command } from './model/commands';
 import { rejects } from 'assert';
 import { Session } from './model/sessions';
 import { initializeDatabase, Database } from './database';
+import { Logger } from './logger';
 
 interface RawNotebookData {
 	cells: RawNotebookCell[];
@@ -33,41 +34,44 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 		try {
 			rawData = JSON.parse(text);
 		} catch (error) {
-			console.error('Error parsing notebook:', error);
+			Logger.error(`Initialize notebook because parse failed : ${error}`);
 			rawData = { cells: [] };
 		}
-		console.log(`端末ノート読み込み : ${text}`);
         const sessionId = rawData.metadata?.sessionId;
-		console.log(`端末ノート読み込み、セッションid : ${sessionId}`);
+		Logger.info(`initialize notebook, session id : ${sessionId}`);
 		let cells: Array<vscode.NotebookCellData> = [];
         // セッションid が登録されておらず、session.db にも履歴がない場合はエラーとする
         if (!sessionId) {
-            const message = `セッションid不明のため、ノートを開けませんでした`;
+            const message = `The notebook could not be opened because the session was unknown.`;
 			vscode.window.showErrorMessage(message);
             return new vscode.NotebookData(cells);
         }
         const session = Session.getById(sessionId);
         if (!session) {
-            const message = `session.db からセッション情報を取得できませんでした`;
+            const message = `The note could not be opened because the session was not registered in the DB.`;
 			vscode.window.showErrorMessage(message);
             return new vscode.NotebookData(cells);
         }
         const startTime = new Date().toISOString();
-        // const text = new TextDecoder().decode(data);
         rawData.cells.forEach( item => {
-            console.log("ITEM: ", item);
             const cell = new vscode.NotebookCellData(
                 item.kind,
                 item.value,
                 item.language,
             );
-            cell.metadata = {id : item.id};
+			const commandId = item.id;
+			if (commandId) {
+				Logger.info(`read cell command id : ${item.id}`);
+				cell.metadata = {id : item.id};
+			} else {
+				Logger.info(`read cell comment`);
+			}
             cells.push(cell);
         });
-		console.log("Deserialize Cells:", cells);
         const notebookData = new vscode.NotebookData(cells);
-		if (rawData.metadata?.sessionId) {
-			notebookData.metadata = { custom: { sessionId: rawData.metadata.sessionId } };
+		if (sessionId) {
+			Logger.info(`set session id in notebook : ${sessionId}`);
+			notebookData.metadata = { custom: { sessionId: sessionId } };
 		} else {
 			// Set the start time to the current time if not present
 			// notebookData.metadata = { custom: { startTime: new Date().toISOString() } };
@@ -78,9 +82,11 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 	public async serializeNotebook(data: vscode.NotebookData, token: vscode.CancellationToken): Promise<Uint8Array> {
 		// Map the Notebook data into the format we want to save the Notebook data as
 		// const contents: RawNotebookData = { cells: [] };
+		const sessionId = data.metadata?.custom?.sessionId;
+		Logger.info(`serialize notebook, session id : ${sessionId}`);
 		const contents: RawNotebookData = { 
 			cells: [], 
-			metadata: { sessionId: data.metadata?.custom?.sessionId }
+			metadata: { sessionId: sessionId }
 		};
 	
 		for (const cell of data.cells) {
@@ -91,7 +97,6 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 				id: id,
 				value: cell.value
 			};
-			console.log(`Serialize Cell : ${newCell.id}`);
 			contents.cells.push(newCell);
 		}
 

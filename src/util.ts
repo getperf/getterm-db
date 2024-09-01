@@ -3,4 +3,21 @@ export class Util {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }
 
+    static cleanDeleteSequenceString(input: string): string {
+        const stack: string[] = [];
+        // delete an escape sequence for erase
+        const unescapeInput = input.replace(/\u001B\[K/g, '');
+
+        // Iterate over each character in the input string
+        for (let i = 0; i < unescapeInput.length; i++) {
+            const char = unescapeInput[i];
+            if (char === '\b') {
+                // If it's a backspace, remove the last character from the stack
+                stack.pop();
+            } else {
+                stack.push(char);
+            }
+        }
+        return stack.join('');
+    }
 }

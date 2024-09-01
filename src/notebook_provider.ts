@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TerminalNotebookSerializer } from './notebook_serializer';
 import { NOTEBOOK_TYPE, TerminalNotebookController } from './notebook_controller';
 import { initializeDatabase, Database } from './database';
+import { Logger } from './logger';
 
 export class TerminalNotebookProvider {
     private context: vscode.ExtensionContext;
@@ -44,7 +45,7 @@ export class TerminalNotebookProvider {
             const notebookUri = e.notebook.uri;
             if (e.contentChanges.length > 0) {
                 e.notebook.save();
-                console.log(`Notebook ${notebookUri.toString()} saved automatically.`);
+                Logger.info(`notebook saved automatically.`);
             }
         });
     }

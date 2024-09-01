@@ -3,10 +3,12 @@ import { SSHProvider } from './ssh_provider';
 import { TerminalNotebookProvider } from './notebook_provider';
 import { NotebookCopyButtonProvider } from './notebook_copy_button_provider';
 import { CellExecutionTimeProvider } from './notebook_execution_time_provider';
+import { Logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	console.log('Congratulations, your extension "getterm-db" is now active!');
+	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
+	Logger.setup(outputChannel);
 
 	const disposable = vscode.commands.registerCommand('getterm-db.helloWorld', () => {
 		vscode.window.showInformationMessage('Hello World from getterm-db!');

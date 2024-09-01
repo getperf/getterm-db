@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Logger } from './logger';
 // import { TerminalNotebookController } from './notebook_controller';
 
 export class NotebookCleaner {
@@ -21,7 +22,7 @@ export class NotebookCleaner {
 			const cellContent = activeCell.document.getText();
 			if (!cellContent) {
 				const edit = new vscode.WorkspaceEdit();
-				console.log("DELETE EMPTY CELL : ", currentRow);
+				Logger.warn(`delete empty cell : ${currentRow}`);
 				const range = new vscode.NotebookRange(currentRow - 1 , currentRow);
 				const nedit = vscode.NotebookEdit.deleteCells(range);
 				edit.set(notebookDocument.uri, [nedit]);

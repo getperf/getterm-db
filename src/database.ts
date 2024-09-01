@@ -4,6 +4,7 @@ import { Session } from './model/sessions';
 import { Command } from './model/commands';
 import { Config } from './config';
 import path from 'path';
+import { Logger } from './logger';
 
 export async function  initializeDatabase() : Promise<Database> {
     const config = Config.getInstance();
@@ -25,10 +26,10 @@ export class Database {
         return new Promise((resolve, reject) => {
             try {
                 this.db = new sqlite3.Database(this.sqliteDbPath, (err) => {
+                    console.log("ERROR DEBUG : ", err);
                     if (err) {
-                        return reject(new Error(`データベースの作成に失敗しました: ${err.message}`));
+                        return reject(new Error(`database initialize error : ${err.message}`));
                     } else {
-                        console.log(`データベースが作成されました: ${this.sqliteDbPath}`);
                         resolve();
                     }
                 });
@@ -48,9 +49,9 @@ export class Database {
                         )
                     `, (err) => {
                         if (err) {
-                            throw new Error(`sessionsテーブルの作成に失敗しました: ${err.message}`);
+                            throw new Error(`sessions table create error: ${err.message}`);
                         } else {
-                            console.log('sessionsテーブルが作成されました。');
+                            Logger.info(`sessions table created`);
                         }
                     });
         
@@ -68,9 +69,9 @@ export class Database {
                         )
                     `, (err) => {
                         if (err) {
-                            throw new Error(`commandsテーブルの作成に失敗しました: ${err.message}`);
+                            throw new Error(`commands table create error: ${err.message}`);
                         } else {
-                            console.log('commandsテーブルが作成されました。');
+                            Logger.info(`commands table created`);
                         }
                     });
                 });
@@ -80,14 +81,14 @@ export class Database {
                 reject(error);
             }
 
-            console.log(`データベースが初期化されました: ${this.sqliteDbPath}`);
+            Logger.info(`initialize database : ${this.sqliteDbPath}`);
         });
     }
 
     // データベースインスタンスの取得
     public getDBInstance(): sqlite3.Database | null {
         if (!this.db) {
-            throw new Error('データベースが初期化されていません。');
+            throw new Error('database not initialized');
         }
         return this.db;
     }
@@ -97,9 +98,9 @@ export class Database {
         if (this.db) {
             this.db.close((err) => {
                 if (err) {
-                    throw new Error(`データベースのクローズに失敗しました: ${err.message}`);
+                    throw new Error(`database close error : ${err.message}`);
                 } else {
-                    console.log('データベース接続が閉じられました。');
+                    console.log('database closed');
                 }
             });
         }

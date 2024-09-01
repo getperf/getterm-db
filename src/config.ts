@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Logger } from './logger';
 
 export const SessionDb = 'session.db';
 export const ConfigFile = '.getterm.json';
@@ -36,9 +37,9 @@ export class Config {
         if (fs.existsSync(this.configFilePath)) {
             const data = fs.readFileSync(this.configFilePath, 'utf8');
             this.settings = JSON.parse(data);
-            console.log("TEST: LOAD Parse:", data);
+            Logger.info(`load config ${this.configFilePath}`);
         } else {
-            console.log("TEST: LOAD NOT FOUND:");
+            Logger.warn(`initialize config file ${this.configFilePath}`);
             this.settings = {
                 sqliteDbPath: SessionDb,
                 terminalProfiles: [],

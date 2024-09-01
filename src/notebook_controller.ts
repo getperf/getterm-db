@@ -4,6 +4,7 @@ import path from 'path';
 import { Command } from './model/commands';
 import { NotebookCleaner } from './notebook_cleaner';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { Logger } from './logger';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export class TerminalNotebookController  {
@@ -30,6 +31,7 @@ export class TerminalNotebookController  {
 	}
 
     async execute(cells: vscode.NotebookCell[]): Promise<void> {
+		Logger.info("execute cell invoked.");
         for (const cell of cells) {
 			await this.doExecution(cell);
         }
@@ -40,6 +42,7 @@ export class TerminalNotebookController  {
 		_notebook: vscode.NotebookDocument,
 		_controller: vscode.NotebookController
 	): Promise<void> {
+		Logger.info("_execute cell invoked.");
 		for (let cell of cells) {
 			// run each cell sequentially, awaiting its completion
 			await this.doExecution(cell);
@@ -52,12 +55,12 @@ export class TerminalNotebookController  {
 		execution.start(Date.now());
 	
 		execution.token.onCancellationRequested(() => {
-			console.debug('got cancellation request');
+			Logger.debug('got cancellation request');
 			(async () => {
 				writeErr(execution, 'Query cancelled');
 			})();
 		});
-		console.log("INDEX:", cell.index, cell.metadata.id);
+		Logger.info(`execute cell at ${cell.index}, command id is ${cell.metadata.id}`);
         const row = await Command.getById(cell.metadata.id);
 		if (row.exit_code === 0) {
 			writeSuccess(execution, [[text(row.output)]]);
@@ -86,9 +89,10 @@ export class TerminalNotebookController  {
             vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
             return;
         }
-        console.log("Active terminal : ", sessionId);
+        Logger.info(`create notebook, session id : ${sessionId}`);
 
         const terminalNotebookFilename = this.createTerminalNotebookFilename();
+        Logger.info(`create notebook filename : ${terminalNotebookFilename}`);
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
         const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
     
@@ -100,31 +104,42 @@ export class TerminalNotebookController  {
             };
 			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(newNotebookData)));
 			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
-			vscode.window.showInformationMessage(`端末ノートを開きました: ${newNotebookUri.fsPath}`);
+			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
+			const notebookEditor = vscode.window.activeNotebookEditor;
+			if (!notebookEditor) {
+				throw new Error("active notebook editor not found.");
+			}
+			TerminalSessionManager.setNotebookEditor(activeTerminal, notebookEditor);
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);
 		}
 	}
 
 	public async updateNotebook(rowid: number) {
-		const notebookEditor = vscode.window.activeNotebookEditor;
+        const activeTerminal = vscode.window.activeTerminal;
+        if (!activeTerminal) {
+            vscode.window.showInformationMessage('No active terminal is currently selected.');
+            return;
+        }
+		// const notebookEditor = vscode.window.activeNotebookEditor;
+		const notebookEditor = TerminalSessionManager.getNotebookEditor(activeTerminal);
 		if (!notebookEditor) {
-			vscode.window.showErrorMessage("No active notebook editor found!");
+			vscode.window.showErrorMessage("no active notebook editor found!");
 			return;
 		}
-		const activeCell = notebookEditor.selections[0]; // Get the currently active cell
-		if (activeCell && activeCell.isEmpty) { // Check if the cell is empty
-			console.log("DELETE CELL:", activeCell);
-			// notebookEditor.notebook.
-		//   notebookEditor.notebook.deleteCell(activeCell.index); // Delete the empty cell
-		}
-	
+		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
+		if (!sessionId) {
+            vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
+            return;
+        }
+        Logger.info(`update notebook session id : ${sessionId} , command id : ${rowid}`);
+
+		// NotebookCleaner.cleanupUnusedCells();
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
-
-		NotebookCleaner.cleanupUnusedCells();
  	
 		const row = await Command.getById(rowid);
+        Logger.info(`update notebook add cell command : ${row.command}`);
 		const newCell = new vscode.NotebookCellData(
 			vscode.NotebookCellKind.Code,
 			row.command,
@@ -134,6 +149,7 @@ export class TerminalNotebookController  {
 		// const newCellId = this.generateUniqueId();
 		newCell.metadata = { id: rowid };
 
+        Logger.info(`update notebook add cell at ${currentRow}`);
 		const range = new vscode.NotebookRange(currentRow, currentRow + 1);
 		const edit = new vscode.NotebookEdit(range, [newCell]);
 
@@ -147,6 +163,7 @@ export class TerminalNotebookController  {
 		// Get the index of the newly added cell
 		// const addedCell = notebookDocument.cellAt(currentRow);
 		// this.execute([addedCell]);
+        Logger.info(`update notebook execute cell at ${currentRow}`);
 		await vscode.commands.executeCommand('notebook.cell.execute', 
 			{ ranges: [{ start: currentRow, end: currentRow + 1 }] }
 		);
@@ -169,14 +186,14 @@ function writeErr(execution: vscode.NotebookCellExecution, err: string) {
 		]),
 	]);
 	execution.end(false, Date.now());
-  }
-  
-  const { text, json } = vscode.NotebookCellOutputItem;
-  
-  function writeSuccess(
+}
+
+const { text, json } = vscode.NotebookCellOutputItem;
+
+function writeSuccess(
 	execution: vscode.NotebookCellExecution,
 	outputs: vscode.NotebookCellOutputItem[][]
-  ) {
+) {
 	execution.replaceOutput(
 	  outputs.map((items) => new vscode.NotebookCellOutput(items))
 	);

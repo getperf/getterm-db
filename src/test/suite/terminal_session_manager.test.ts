@@ -1,6 +1,8 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { TerminalSessionManager } from '../../terminal_session_manager';
+import { MockOutputChannel } from './logger.test';
+import { Logger, LogLevel } from '../../logger';
 
 suite('TerminalSessionManager Tests', () => {
 
