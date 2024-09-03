@@ -53,11 +53,6 @@ export class SSHProvider {
         );
     }
 
-    // public static getSessionIdForTerminal(terminal: vscode.Terminal): number | undefined {
-    //     // return this.terminalToSessions.get(terminal);
-    //     return TerminalSessionManager.getSessionId(terminal);
-    // }
-
     private async copyShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
         try {
             const getScriptCmd = 'code --locate-shell-integration-path bash';
@@ -117,7 +112,6 @@ export class SSHProvider {
     }
 
     async terminalDataWriteEventHandler(e:  vscode.TerminalDataWriteEvent) {
-        // TerminalSessionManager.pushDataBuffer(e.terminal, e.data);
         TerminalSessionManager.pushDataBufferExcludingOpening(e.terminal, e.data);
     }
 
@@ -177,92 +171,6 @@ export class SSHProvider {
         Logger.info(`end command handler, update commands table : ${command}.`);
 
         await this.notebookController.updateNotebook(commandId);
-
     }
-
-    extractCommandResult(output: string): string | null {
-        // Split the output by control characters and sequences
-        const parts = output.split('\u0007\u001B]633;B\u0007');
-        // Check if there is a part after the final sequence
-        if (parts.length < 2) {
-            return null;
-        }
-        // Extract the part after the control sequence and remove the prompt
-        const result = parts[1].split('\n')[0].trim();
-        // Ensure the prompt is not included in the result
-        if (result.startsWith('[')) {
-            return null;
-        }
-        return result;
-    }
-
-    extractOutputOfOSC633B(output: string): string {
-        // Split the output by the OSC 633;B sequence
-        const parts = output.split('\u0007\u001B]633;B\u0007');
-        if (parts.length < 2) {return ''; }
-        
-        // The relevant part is after the OSC 633;B sequence
-        let result = parts[1].trim();
-        
-        // Remove the prompt if it exists
-        const promptPattern = /\[\w+@\w+.*?\$\s*$/;
-        result = result.replace(promptPattern, '').trim();
-        
-        // Return the cleaned-up result
-        return result.length > 0 ? result : '';
-    }
-
-    // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
-    parseOSC633Simple(input: string) {
-        // Split the input by OSC 633 sequences
-        const parts = input.split(/\u001b\]633;/);
-
-        let command = '';
-        let output = '';
-        let exitCode: number | null = null;
-        let cwd = '';
-
-        if (parts.length > 0) { 
-            command = Util.cleanDeleteSequenceString(parts[0].trim());
-        };
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-
-            if (part.startsWith('D;')) {
-                // Extract the exit code from the sequence starting with 'D;'
-                exitCode = parseInt(part.slice(2).trim(), 10);
-            } else if (part.startsWith('C')) {
-                // Extract the output which is between 'C' and next sequence.
-                output = parts[i].replace(/^C\u0007\n/, '').trim();
-            } else if (part.startsWith('P;Cwd=')) {
-                // Extract the working directory from the sequence starting with 'P;Cwd='
-                cwd = part.slice(6).replace(/\x07/, '').trim();
-            }
-        }
-        console.log("COMMAND OUTPUT:" , output);
-        if (output === '' || output === 'C\u0007') { 
-            console.log("PARSE OSC633B");
-            output = this.extractOutputOfOSC633B(input);
-        }
-        return { command, exitCode, output, cwd };
-    }
-
-    // OSC 633 を解析する関数
-	parseOsc633(input: string): Array<{ type: string, payload: string }> {
-		// const osc633Pattern = /\x1B\]633;([A-Z]);([^\x1B]+)\x1B\\/g;
-        console.log("OSC633 input : ", input);
-		const osc633Pattern = /\x1B\]633;([A-Z]);([^]*)/g;
-		const matches = input.matchAll(osc633Pattern);
-		const results: Array<{ type: string, payload: string }> = [];
-
-		for (const match of matches) {
-			results.push({
-				type: match[1],     // メッセージの種類 (A, B, C など)
-				payload: match[2]   // メッセージのペイロード
-			});
-		}
-        return results;
-    }
-
 }
                                                         
