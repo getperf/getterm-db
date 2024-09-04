@@ -98,6 +98,17 @@ export class TerminalNotebookController  {
     
         const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
 		try {
+			// const cells : Array<vscode.NotebookCellData> = [];
+			// const commands = await Command.getAllBySessionId(sessionId);
+			// for (let command of commands) {
+			// 	const cell = new vscode.NotebookCellData(
+			// 		vscode.NotebookCellKind.Code,
+			// 		command.command,
+			// 		'shellscript'
+			// 	);
+			// 	cell.metadata = { id: command.id };
+			// 	cells.push(cell);
+			// }
 			const newNotebookData = { 
                 cells: [],
                 metadata: { sessionId: sessionId }

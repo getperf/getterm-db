@@ -166,11 +166,12 @@ export class SSHProvider {
         if (osc633Messages.exitCode) {
             exit_code = osc633Messages.exitCode;
         }
-        await Command.updateEnd(commandId, commandText, output, cwd, exit_code);
+        await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);
         Logger.info(`end command handler, update commands table : ${command}.`);
-
-        await this.notebookController.updateNotebook(commandId);
+        if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
+            await this.notebookController.updateNotebook(commandId);
+        }
     }
 }
                                                         
