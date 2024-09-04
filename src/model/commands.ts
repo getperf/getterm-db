@@ -43,7 +43,7 @@ export class Command {
 
     static async update(id: number, command: string, output: string, cwd: string, exit_code: number): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ? WHERE id = ?`;
+            const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ?, end = strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime') WHERE id = ?`;
             Command.db.run(query, [command, output, cwd, exit_code, id], (err) => {
                 if (err) {reject(err);}
                 resolve();
@@ -51,9 +51,9 @@ export class Command {
         });
     }
 
-    static async updateEnd(id: number, command: string, output: string, cwd: string, exit_code: number): Promise<void> {
+    static async updatedWithoutTimestamp(id: number, command: string, output: string, cwd: string, exit_code: number): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ?, end = strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime') WHERE id = ?`;
+            const query = `UPDATE commands SET command = ?, output = ?, cwd = ?, exit_code = ? WHERE id = ?`;
             Command.db.run(query, [command, output, cwd, exit_code, id], (err) => {
                 if (err) {reject(err);}
                 resolve();
