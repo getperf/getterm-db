@@ -10,9 +10,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
 	Logger.setup(outputChannel);
 
-	const disposable = vscode.commands.registerCommand('getterm-db.helloWorld', () => {
-		vscode.window.showInformationMessage('Hello World from getterm-db!');
-	});
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);
 	new CellExecutionTimeProvider(context);

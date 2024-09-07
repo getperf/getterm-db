@@ -131,6 +131,7 @@ export class SSHProvider {
         let exit_code = 0;
         const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
         TerminalSessionManager.setCommandId(e.terminal, commandId);
+        console.log("command start id:", commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
@@ -141,6 +142,8 @@ export class SSHProvider {
         let cwd = "";
         let exit_code = 0;
 
+        const endTime = new Date();
+        await new Promise(resolve => setTimeout(resolve, 500));
         const commandId = TerminalSessionManager.getCommandId(e.terminal);
         if (commandId === undefined) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
@@ -148,8 +151,8 @@ export class SSHProvider {
             return; 
         }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);
-        await Command.updateEndTimestamp(commandId);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // await Command.updateEndTimestamp(commandId);
+        await Command.updateEnd(commandId, endTime);
         Logger.info(`end command handler, wait few seconds.`);
         const rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
         if (!rawData) { 
@@ -157,6 +160,8 @@ export class SSHProvider {
             console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);
             return; 
         }
+        console.log("command end id:", commandId);
+        console.log("command buffer:", rawData);
         Logger.info(`end command handler, retrieve data : ${rawData}.`);
         // const osc633Messages = this.parseOSC633Simple(rawData);
         const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
