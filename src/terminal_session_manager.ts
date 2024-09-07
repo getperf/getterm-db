@@ -36,7 +36,7 @@ export class TerminalSessionManager {
         return session;
     }
 
-    static setNotebookEditor(terminal: vscode.Terminal, notebookEditor: vscode.NotebookEditor) {
+    static setNotebookEditor(terminal: vscode.Terminal, notebookEditor: vscode.NotebookEditor|undefined) {
 		// throw new Error('Method not implemented.');
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.notebookEditor = notebookEditor;
@@ -106,4 +106,31 @@ export class TerminalSessionManager {
         }
         return sessionId; // Will return undefined if retries are exhausted
     }
+
+    static getAllSessionLabels(): string[] {
+        const sessionLabels: string[] = [];
+        TerminalSessionManager.terminalSessions.forEach((session, terminal) => {
+            sessionLabels.push(terminal.name);
+        });
+        return sessionLabels;
+    }
+
+    static findTerminalByName(terminalName: string): vscode.Terminal | undefined {
+        for (const [terminal, session] of TerminalSessionManager.terminalSessions.entries()) {
+            if (terminal.name === terminalName) {
+                return terminal;
+            }
+        }
+        return undefined;  // Return undefined if no matching terminal name is found
+    }
+
+    static findTerminalByNotebookEditor(notebookEditor: vscode.NotebookEditor | undefined) {
+        for (const [terminal, session] of TerminalSessionManager.terminalSessions.entries()) {
+            if (session.notebookEditor === notebookEditor) {
+                return terminal;
+            }
+        }
+        return undefined;
+    }
+
 }

@@ -7,6 +7,13 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Logger } from './logger';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
+export enum TerminalNotebookStatus {
+	NoSession,
+	TerminalOpend,
+	CaptureReady,
+	TerminalClosed,	
+}
+
 export class TerminalNotebookController  {
 	readonly controllerId = 'terminal-notebook-executor';
 	readonly notebookType = NOTEBOOK_TYPE;
@@ -77,8 +84,49 @@ export class TerminalNotebookController  {
         return `session_${yyyymmdd}_${hhmiss}.getterm`;
     }
     
-	public async createNotebook() {
+	private checkTerminalNotebookStatus() : TerminalNotebookStatus {
         const activeTerminal = vscode.window.activeTerminal;
+        if (!activeTerminal) {
+			return TerminalNotebookStatus.NoSession;
+		}
+		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
+		if (sessionId) {
+			return TerminalNotebookStatus.CaptureReady;
+		} else {
+			return TerminalNotebookStatus.TerminalOpend;
+		}
+	}
+	private async createEmptyNotebook() {
+        const terminalNotebookFilename = this.createTerminalNotebookFilename();
+        Logger.info(`create notebook filename : ${terminalNotebookFilename}`);
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
+        const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
+		try {
+			const cells : Array<vscode.NotebookCellData> = [];
+			const newNotebookData = { 
+                cells: [],
+            };
+			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(newNotebookData)));
+			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
+			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
+			const notebookEditor = vscode.window.activeNotebookEditor;
+			if (!notebookEditor) {
+				throw new Error("active notebook editor not found.");
+			}
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);
+		}
+	}
+
+	public async createNotebook() {
+		const notebookStatus = this.checkTerminalNotebookStatus();
+		console.log("notebook status : ", notebookStatus);
+		if (notebookStatus !== TerminalNotebookStatus.CaptureReady) {
+			await this.createEmptyNotebook();
+			return;
+		}
+		const activeTerminal = vscode.window.activeTerminal;
         if (!activeTerminal) {
             vscode.window.showInformationMessage('No active terminal is currently selected.');
             return;
@@ -98,18 +146,21 @@ export class TerminalNotebookController  {
     
         const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
 		try {
-			// const cells : Array<vscode.NotebookCellData> = [];
-			// const commands = await Command.getAllBySessionId(sessionId);
-			// for (let command of commands) {
-			// 	const cell = new vscode.NotebookCellData(
-			// 		vscode.NotebookCellKind.Code,
-			// 		command.command,
-			// 		'shellscript'
-			// 	);
-			// 	cell.metadata = { id: command.id };
-			// 	cells.push(cell);
-			// }
-			const newNotebookData = { 
+			const cells : Array<vscode.NotebookCellData> = [];
+			const commands = await Command.getAllBySessionId(sessionId);
+			// コマンド履歴をセルに登録。不整合なJSONファイルが保存され、開けない問題発生
+			for (let command of commands) {
+				console.log("COMMAND:", command);
+				const cell = new vscode.NotebookCellData(
+					vscode.NotebookCellKind.Code,
+					command.command,
+					'shellscript'
+				);
+				cell.metadata = { id: command.id };
+				cells.push(cell);
+			}
+			console.log("NEW CELLS : ", cells);
+			const newNotebookData : vscode.NotebookData =  { 
                 cells: [],
                 metadata: { sessionId: sessionId }
             };

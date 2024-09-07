@@ -34,6 +34,11 @@
       {
         "command": "getterm-db.createNewTerminalNotebook",
         "title": "Getterm : Create new terminal notebook"
+      },
+      {
+        "command": "getterm-db.selectSession",
+        "title": "Select Session",
+        "category": "Notebook"
       }
     ],
     "terminal": {
@@ -49,6 +54,12 @@
         {
           "command": "getterm-db.openTerminalWithProfile",
           "group": "navigation"
+        }
+      ],
+      "notebook/toolbar": [
+        {
+            "command": "getterm-db.selectSession",
+            "group": "navigation"
         }
       ]
     },

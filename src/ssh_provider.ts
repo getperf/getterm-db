@@ -12,27 +12,14 @@ import { OSC633Parser } from './osc633_parser';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
-    private  remotePath = '/tmp/vscode-shell-integration.sh';
-    private db!: Promise<Database>;
+    // private  remotePath = '/tmp/vscode-shell-integration.sh';
+    // private db!: Promise<Database>;
     private notebookController : TerminalNotebookController;
 
     constructor(context: vscode.ExtensionContext, notebookController: TerminalNotebookController) {
         this.context = context;
         this.notebookController = notebookController;
-        this.registerCommands();
         this.registerEventHandlers();
-    }
-
-    private registerCommands() {
-        this.context.subscriptions.push(
-            vscode.commands.registerCommand('getterm-db.showRemoteSSHView', () => {
-                Logger.info("show remove ssh view command invoked");
-                vscode.commands.executeCommand('workbench.view.remote');
-            }),
-            vscode.commands.registerCommand('getterm-db.openTerminalWithProfile', 
-                this.openTerminalWithProfile, this
-            ),
-        );
     }
 
     private registerEventHandlers(): void {
@@ -51,64 +38,6 @@ export class SSHProvider {
                 async e => this.terminalDataWriteEventHandler(e)
             )
         );
-    }
-
-    private async copyShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
-        try {
-            const getScriptCmd = 'code --locate-shell-integration-path bash';
-            const shellIntegrationPath = cp.execSync(getScriptCmd).toString().trim();
-            Logger.info(`shell integration script path ：${shellIntegrationPath}`);
-            if (!shellIntegrationPath) {
-                throw new Error(`faild ${getScriptCmd}`);
-            }
-            const scpCommand = `scp "${shellIntegrationPath}" ${remoteProfile}:${this.remotePath}`;
-            Logger.info(`shell integration script copy :${scpCommand}`);
-            const ScpCommandTimeout = 5000;
-            const rc = cp.execSync(scpCommand, { timeout: ScpCommandTimeout });
-            Logger.info(`shell integration script copy result ：${rc}`);
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to locate shell integration path.');
-            return false;
-        }
-        return true;
-    }
-
-    private async openTerminalWithProfile(node: any) {
-        if (!node || !node.label) {
-            vscode.window.showErrorMessage('プロファイルが選択されていません。');
-            return;
-        }
-        const remoteProfile = node.label;
-        Logger.info(`open terminal profile : ${remoteProfile}`);
-        const terminalOptions: vscode.TerminalOptions = {
-            name: `SSH Capture: ${remoteProfile}`,
-            shellPath: 'ssh',
-            shellArgs: [remoteProfile] 
-        };
-        const terminal = await vscode.window.createTerminal(terminalOptions);
-        terminal.show();
-
-        const config = Config.getInstance();
-        config.set('terminalProfiles', [remoteProfile]);
-        Logger.info(`open terminal, save profile : ${remoteProfile}`);
-        if (!this.db) {
-            this.db = initializeDatabase();
-        }
-        const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
-        const session = await Session.getById(sessionId);
-        console.log("セッション履歴登録：", session);
-        TerminalSessionManager.setSessionId(terminal, sessionId);
-        Logger.info(`open terminal, regist session id : ${sessionId}`);
-
-        const isok = await this.copyShellIntegrationScript(remoteProfile);
-        Logger.info(`open terminal, shell integration activate : ${isok}`);
-        if (!isok) {
-            vscode.window.showErrorMessage(`シェル統合有効化スクリプトを実行できません。
-                手動でスクリプトを実行してください。詳細は ～ を参照してください`);
-            return;
-        }
-        terminal.sendText(`source "${this.remotePath}"`);
-        Logger.info(`open terminal, end`);
     }
 
     async terminalDataWriteEventHandler(e:  vscode.TerminalDataWriteEvent) {
