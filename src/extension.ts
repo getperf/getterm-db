@@ -7,6 +7,8 @@ import { Logger } from './logger';
 import { TerminalNotebookSessionPicker } from './notebook_session_picker';
 import { initializeDatabase } from './database';
 import { RemoteShellExecutor } from './remote_shell_executor';
+import { PowerShellExecutor } from './powershell_executor';
+import { TerminalCaptureExecutor } from './terminal_capture_executor';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -18,6 +20,8 @@ export function activate(context: vscode.ExtensionContext) {
 	new CellExecutionTimeProvider(context);
 	new TerminalNotebookSessionPicker(context);
 	new RemoteShellExecutor(context);
+	new PowerShellExecutor(context);
+	new TerminalCaptureExecutor(context);
 	new SSHProvider(context, terminalNotebookProvider.controller);
 }
 

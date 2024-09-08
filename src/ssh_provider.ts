@@ -49,7 +49,7 @@ export class SSHProvider {
         const sessionId = await TerminalSessionManager.getSessionIdWithRetry(e.terminal);
         if (!sessionId) {
             const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.error("セッションidが取得できませんでした : ", terminalSession);
+            console.info("セッションidが取得できませんでした : ", terminalSession);
             return;
         }
         Logger.info(`start command handler, session id : ${sessionId}`);
@@ -76,7 +76,7 @@ export class SSHProvider {
         const commandId = TerminalSessionManager.getCommandId(e.terminal);
         if (commandId === undefined) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.error("セッションからコマンドIDが取得できませんでした: ", terminalSession);
+            console.info("セッションからコマンドIDが取得できませんでした: ", terminalSession);
             return; 
         }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);

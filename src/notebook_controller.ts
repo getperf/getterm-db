@@ -5,6 +5,7 @@ import { Command } from './model/commands';
 import { NotebookCleaner } from './notebook_cleaner';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Logger } from './logger';
+import { RawNotebookCell, RawNotebookData } from './notebook_serializer';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export enum TerminalNotebookStatus {
@@ -146,26 +147,27 @@ export class TerminalNotebookController  {
     
         const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
 		try {
-			const cells : Array<vscode.NotebookCellData> = [];
-			const commands = await Command.getAllBySessionId(sessionId);
 			// コマンド履歴をセルに登録。不整合なJSONファイルが保存され、開けない問題発生
+			// notebook serializer で定義した、note, cell データ型で JSON 保存する必要がある
+			// 
+			const contents: RawNotebookData = { 
+				cells: [], 
+				metadata: { sessionId: sessionId }
+			};
+			const commands = await Command.getAllBySessionId(sessionId);
 			for (let command of commands) {
-				console.log("COMMAND:", command);
-				const cell = new vscode.NotebookCellData(
-					vscode.NotebookCellKind.Code,
-					command.command,
-					'shellscript'
-				);
-				cell.metadata = { id: command.id };
-				cells.push(cell);
+				const newCell : RawNotebookCell = {
+					kind: vscode.NotebookCellKind.Code,
+					language: 'shellscript',
+					id: command.id,
+					value: command.command
+				};
+				contents.cells.push(newCell);
 			}
-			console.log("NEW CELLS : ", cells);
-			const newNotebookData : vscode.NotebookData =  { 
-                cells: [],
-                metadata: { sessionId: sessionId }
-            };
-			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(newNotebookData)));
+			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(contents)));
+	
 			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
+			await vscode.commands.executeCommand('notebook.execute');
 			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
 			const notebookEditor = vscode.window.activeNotebookEditor;
 			if (!notebookEditor) {

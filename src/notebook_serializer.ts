@@ -6,12 +6,12 @@ import { Session } from './model/sessions';
 import { initializeDatabase, Database } from './database';
 import { Logger } from './logger';
 
-interface RawNotebookData {
+export interface RawNotebookData {
 	cells: RawNotebookCell[];
     metadata?: { sessionId: number };
 }
 
-interface RawNotebookCell {
+export interface RawNotebookCell {
 	language: string;
 	value: string;
 	id: number;
