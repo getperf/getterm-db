@@ -32,6 +32,10 @@
         "title": "Getterm : Open terminal"
       },
       {
+        "command": "getterm-db.startTerminalCapture",
+        "title": "Getterm : Start Terminal Caputure"
+      },
+      {
         "command": "getterm-db.createNewTerminalNotebook",
         "title": "Getterm : Create new terminal notebook"
       },
