@@ -14,7 +14,7 @@ export interface RawNotebookData {
 export interface RawNotebookCell {
 	language: string;
 	value: string;
-	id: number;
+	id?: number;
 	kind: vscode.NotebookCellKind;
 	editable?: boolean;
 }

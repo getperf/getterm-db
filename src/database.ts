@@ -5,6 +5,8 @@ import { Command } from './model/commands';
 import { Config } from './config';
 import path from 'path';
 import { Logger } from './logger';
+import { Note } from './model/notes';
+import { Cell } from './model/cells';
 
 export async function  initializeDatabase() : Promise<Database> {
     const config = Config.getInstance();
@@ -74,9 +76,49 @@ export class Database {
                             Logger.info(`commands table created`);
                         }
                     });
+                    this.db!.run(`
+                        CREATE TABLE IF NOT EXISTS notes (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            title TEXT NOT NULL,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                    `, (err) => {
+                        if (err) {
+                            throw new Error(`notes table create error: ${err.message}`);
+                        } else {
+                            Logger.info(`notes table created`);
+                        }
+                    });
+
+                    this.db!.run(`
+                        CREATE TABLE IF NOT EXISTS cells (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            notebook_id INTEGER NOT NULL,
+                            session_id INTEGER,
+                            command_id INTEGER,
+                            content TEXT NOT NULL,
+                            type TEXT CHECK(type IN ('code', 'markdown')),
+                            position INTEGER,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (notebook_id) REFERENCES notes(id) ON DELETE CASCADE,
+                            FOREIGN KEY (session_id) REFERENCES sessions(id),
+                            FOREIGN KEY (command_id) REFERENCES commands(id)
+                        )
+                    `, (err) => {
+                        if (err) {
+                            throw new Error(`notes table create error: ${err.message}`);
+                        } else {
+                            Logger.info(`notes table created`);
+                        }
+                    });
+
                 });
                 Session.setup(this.db);
                 Command.setup(this.db);
+                Note.setup(this.db);
+                Cell.setup(this.db);
             } catch (error) {
                 reject(error);
             }

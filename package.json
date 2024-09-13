@@ -62,8 +62,8 @@
       ],
       "notebook/toolbar": [
         {
-            "command": "getterm-db.selectSession",
-            "group": "navigation"
+          "command": "getterm-db.selectSession",
+          "group": "navigation"
         }
       ]
     },
@@ -91,8 +91,9 @@
     "clean-test-workspace": "rm test/workspace/*.*"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.7",
+    "@types/mocha": "^10.0.8",
     "@types/node": "^20.14.15",
+    "@types/sinon": "^17.0.3",
     "@types/vscode": "^1.54.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
@@ -100,6 +101,7 @@
     "@vscode/test-electron": "^2.4.0",
     "eslint": "^8.57.0",
     "mocha": "^10.7.3",
+    "sinon": "^19.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "vscode-dts": "^0.3.3"

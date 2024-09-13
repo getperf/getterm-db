@@ -80,16 +80,6 @@ export class Command {
         });
     }
 
-    // static async updateEndTimestamp(id: number): Promise<void> {
-    //     return new Promise((resolve, reject) => {
-    //         const query = `UPDATE commands SET end = strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime') WHERE id = ?`;
-    //         Command.db.run(query, [id], (err) => {
-    //             if (err) {reject(err);}
-    //             resolve();
-    //         });
-    //     });
-    // }
-
     static async delete(id: number): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `DELETE FROM commands WHERE id = ?`;
