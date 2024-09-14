@@ -1,113 +1,78 @@
-import * as sqlite3 from "sqlite3";
-import * as assert from "assert";
-import { Session } from "../../model/sessions";
-import { Command } from "../../model/commands";
-import { Note } from "../../model/notes";
-import { Cell } from "../../model/cells";
-import { initializeTestDB } from "./initialize_test_db";
+import * as vscode from 'vscode';
+import * as sqlite3 from 'sqlite3';
+import * as assert from 'assert';
+import { Session } from '../../model/sessions';
+import { Command } from '../../model/commands';
+import { Note } from '../../model/notes';
+import { Cell } from '../../model/cells';
+import { initializeTestDB } from './initialize_test_db';
+import { RawNotebookData } from '../../notebook_serializer';
+import { TerminalNotebookExporter } from '../../notebook_exporter';
 
-suite("TerminalNotebookExporter Tests", () => {
+suite('TerminalNotebookExporter Tests', function () {
   let db: sqlite3.Database;
 
-  suiteSetup(async function (done) {
-    // suiteSetup(async() => {
-    // db = await initializeTestDB();
-    db = new sqlite3.Database(":memory:", (err) => {
-      if (err) {
-        return done(err);
-      }
-
-      db.serialize(() => {
-        db.run(`
-          CREATE TABLE IF NOT EXISTS sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            profile_name TEXT,
-            execute_path TEXT,
-            execute_args TEXT,
-            remote_host TEXT,
-            remote_user TEXT,
-            start DATE,
-            end DATE
-          )`);
-        db.run(`
-          CREATE TABLE IF NOT EXISTS commands (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id INTEGER,
-            command TEXT,
-            output TEXT,
-            cwd TEXT,
-            exit_code INTEGER,
-            start DATE,
-            end DATE,
-            FOREIGN KEY(session_id) REFERENCES sessions(id)
-          )`);
-        db.run(`
-          CREATE TABLE IF NOT EXISTS notes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-          )`);
-        db.run(
-          `
-          CREATE TABLE IF NOT EXISTS cells (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            notebook_id INTEGER NOT NULL,
-            session_id INTEGER,
-            command_id INTEGER,
-            content TEXT NOT NULL,
-            type TEXT CHECK(type IN ('code', 'markdown')),
-            position INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (notebook_id) REFERENCES notes(id) ON DELETE CASCADE,
-            FOREIGN KEY (session_id) REFERENCES sessions(id),
-            FOREIGN KEY (command_id) REFERENCES commands(id)
-          )`,
-          done
-        );
-      });
-    });
-    // Set up the models with the database instance
-    Session.setup(db);
-    Command.setup(db);
-    Note.setup(db);
-    Cell.setup(db);
+  // Setup in-memory database before tests
+  suiteSetup(function (done) {
+    db = initializeTestDB(done);
   });
 
-  // Clean up after tests
   suiteTeardown(function (done) {
     db.close(done);
   });
 
-  test("should save notebook correctly when no existing note", async function () {
-    const sessionId = await Session.create(
-      "test_profile",
-      "/path/to/exe",
-      ["arg1"],
-      "host",
-      "user"
+  test("should save notebook correctly when no existing note", async () => {
+    const notebookData: RawNotebookData = {
+      cells: [
+        {
+          kind: vscode.NotebookCellKind.Code,
+          id: 75,
+          value: 'echo "Hello, World!"',
+          language: "shellscript",
+        },
+        {
+          kind: vscode.NotebookCellKind.Markup,
+          value: "# Markdown Title",
+          language: "shellscript",
+        },
+        {
+          kind: vscode.NotebookCellKind.Code,
+          id: 76,
+          value: "pwd",
+          language: "shellscript",
+        },
+      ],
+      metadata: { sessionId: 16 },
+    };
+    const notebookTitle = "Test Notebook";
+    const result = await TerminalNotebookExporter.saveNotebook(
+      notebookData,
+      notebookTitle
     );
-    const session = await Session.getById(sessionId);
 
-    assert.strictEqual(session.profile_name, "test_profile");
-    assert.strictEqual(session.execute_path, "/path/to/exe");
-
-    await Session.update(
-      sessionId,
-      "new_profile",
-      "/new/path",
-      ["arg2"],
-      "new_host",
-      "new_user"
-    );
-    const updatedSession = await Session.getById(sessionId);
-
-    assert.strictEqual(updatedSession.profile_name, "new_profile");
-
-    await Session.delete(sessionId);
-    const deletedSession = await Session.getById(sessionId);
-
-    assert.strictEqual(deletedSession, undefined);
+    const note = await Note.getAll();
+    console.log("NOTE:", result);
+    const fetchedNote = await Note.getByTitle(notebookTitle);
+    assert.ok(fetchedNote !== null);
+    assert.strictEqual(fetchedNote!.title, notebookTitle);
   });
+
+  test('should update an existing notebook and delete its old cells before saving new ones', async function () {
+    const notebookData = {
+        cells: [
+            { id: 1, kind: vscode.NotebookCellKind.Code, value: 'print("Updated")', language: 'python' }
+        ],
+        metadata: { sessionId: 10 }
+    };
+
+    const notebookTitle = 'Test Notebook';
+    await TerminalNotebookExporter.saveNotebook(notebookData, notebookTitle);
+
+    const updatedNote = await Note.getByTitle(notebookTitle);
+    assert.ok(updatedNote, 'Note should be updated');
+    const cells = await Cell.getByNotebookId(updatedNote.id);
+    assert.equal(cells.length, 1, 'Old cells should be deleted, only 1 cell should exist');
+    assert.equal(cells[0].content, 'print("Updated")', 'Cell value should be updated');
+  });
+
 });

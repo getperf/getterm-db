@@ -5,6 +5,8 @@ import { rejects } from 'assert';
 import { Session } from './model/sessions';
 import { initializeDatabase, Database } from './database';
 import { Logger } from './logger';
+import { TerminalNotebookExporter } from './notebook_exporter';
+import { Util } from './util';
 
 export interface RawNotebookData {
 	cells: RawNotebookCell[];
@@ -79,7 +81,42 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 		return notebookData;
 	}
 
-	public async serializeNotebook(data: vscode.NotebookData, token: vscode.CancellationToken): Promise<Uint8Array> {
+	public static getNotebookData(notebook: vscode.NotebookDocument): RawNotebookData {
+		const sessionId = notebook.metadata?.custom?.sessionId;
+		Logger.info(`serialize notebook document, session id : ${sessionId}`);
+		const contents: RawNotebookData = { 
+			cells: [], 
+			metadata: { sessionId: sessionId }
+		};
+		for (const cell of notebook.getCells()) {
+			const id = cell.metadata?.id;
+			const newCell : RawNotebookCell = {
+				kind: cell.kind,
+				language: cell.document.languageId,
+				id: id,
+				value: cell.document.getText()
+			};
+			console.log("CELL:", newCell);
+			contents.cells.push(newCell);
+		}
+		return contents;
+
+		// const cells = notebook.getCells().map(cell => ({
+		// 	id: cell.metadata.custom.id,
+		// 	kind: cell.kind,
+		// 	value: cell.document.getText(),
+		// 	language: cell.document.languageId
+		// }));
+	
+		// return {
+		// 	cells: cells,
+		// 	metadata: {
+		// 		sessionId: notebook.metadata?.sessionId || null
+		// 	}
+		// };
+	}
+	
+	public static serializeNotebookData(data: vscode.NotebookData): RawNotebookData {
 		// Map the Notebook data into the format we want to save the Notebook data as
 		// const contents: RawNotebookData = { cells: [] };
 		const sessionId = data.metadata?.custom?.sessionId;
@@ -99,7 +136,20 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 			};
 			contents.cells.push(newCell);
 		}
+		return contents;
+	}
 
+	public async serializeNotebook(data: vscode.NotebookData, token: vscode.CancellationToken): Promise<Uint8Array> {
+		// Map the Notebook data into the format we want to save the Notebook data as
+		// const contents: RawNotebookData = { cells: [] };
+		const sessionId = data.metadata?.custom?.sessionId;
+    		Logger.info(`serialize notebook, session id : ${sessionId}`);
+		const contents = TerminalNotebookSerializer.serializeNotebookData(data);
+		console.log(`serialize notebook`);
+		// const title = Util.getActiveNotebookFileName();
+		// if (title) {
+		// 	TerminalNotebookExporter.saveNotebook(contents, title);
+		// }
 		return new TextEncoder().encode(JSON.stringify(contents));
 	}
 

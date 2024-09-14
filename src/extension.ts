@@ -9,6 +9,7 @@ import { initializeDatabase } from './database';
 import { RemoteShellExecutor } from './remote_shell_executor';
 import { PowerShellExecutor } from './powershell_executor';
 import { TerminalCaptureExecutor } from './terminal_capture_executor';
+import { TerminalNotebookExporter } from './notebook_exporter';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -22,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 	new RemoteShellExecutor(context);
 	new PowerShellExecutor(context);
 	new TerminalCaptureExecutor(context);
+	new TerminalNotebookExporter(context);
 	new SSHProvider(context, terminalNotebookProvider.controller);
 }
 

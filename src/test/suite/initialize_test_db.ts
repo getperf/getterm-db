@@ -4,16 +4,13 @@ import { Command } from "../../model/commands";
 import { Note } from "../../model/notes";
 import { Cell } from "../../model/cells";
 
-export function initializeTestDB(): Promise<sqlite3.Database> {
-  return new Promise((resolve, reject) => {
-    console.log("INIT TEST DB : Start");
-    const db = new sqlite3.Database(":memory:", (err) => {
-      if (err) {
-        return reject(err);
-      }
+export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
+    const db = new sqlite3.Database(':memory:', (err) => {
+      if (err) {return done(err);}
+
       db.serialize(() => {
         db.run(`
-            CREATE TABLE IF NOT EXISTS sessions (
+          CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             profile_name TEXT,
             execute_path TEXT,
@@ -22,9 +19,9 @@ export function initializeTestDB(): Promise<sqlite3.Database> {
             remote_user TEXT,
             start DATE,
             end DATE
-            )`);
+          )`);
         db.run(`
-            CREATE TABLE IF NOT EXISTS commands (
+          CREATE TABLE IF NOT EXISTS commands (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER,
             command TEXT,
@@ -34,17 +31,16 @@ export function initializeTestDB(): Promise<sqlite3.Database> {
             start DATE,
             end DATE,
             FOREIGN KEY(session_id) REFERENCES sessions(id)
-            )`);
+          )`);
         db.run(`
-            CREATE TABLE IF NOT EXISTS notes (
+          CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-        db.run(
-          `
-            CREATE TABLE IF NOT EXISTS cells (
+          )`);
+        db.run(`
+          CREATE TABLE IF NOT EXISTS cells (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             notebook_id INTEGER NOT NULL,
             session_id INTEGER,
@@ -57,21 +53,21 @@ export function initializeTestDB(): Promise<sqlite3.Database> {
             FOREIGN KEY (notebook_id) REFERENCES notes(id) ON DELETE CASCADE,
             FOREIGN KEY (session_id) REFERENCES sessions(id),
             FOREIGN KEY (command_id) REFERENCES commands(id)
-            )`,
-          (err) => {
+          )`, (err) => {
             if (err) {
-              return reject(err);
+              done(err); // Fail the test if there's an error creating tables
+            } else {
+              done(); // Signal that the test setup is complete
             }
-          }
-        );
-      });
+          });
+        });
     });
-    // Set up the models with the database instance
-    Session.setup(db);
-    Command.setup(db);
-    Note.setup(db);
-    Cell.setup(db);
-    console.log("INIT TEST DB : End");
-    resolve(db);
-  });
+
+  // Set up the models with the database instance
+  Session.setup(db);
+  Command.setup(db);
+  Note.setup(db);
+  Cell.setup(db);
+  return db;
 }
+

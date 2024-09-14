@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 export class Util {
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
@@ -20,4 +22,17 @@ export class Util {
         }
         return stack.join('');
     }
+
+    static getActiveNotebookFileName() {
+        const activeNotebook = vscode.window.activeNotebookEditor?.notebook;
+        if (activeNotebook) {
+            const fileName = activeNotebook.uri.path.split('/').pop();
+            console.log(`Active Notebook File Name: ${fileName}`);
+            return fileName;
+        } else {
+            console.log("No active notebook");
+            return null;
+        }
+    }
+    
 }
