@@ -40,6 +40,10 @@
         "title": "Getterm : Create new terminal notebook"
       },
       {
+        "command": "getterm-db.reportTerminalNotebook",
+        "title": "Getterm : Create terminal notebook report"
+      },
+      {
         "command": "getterm-db.selectSession",
         "title": "Select Session",
         "category": "Notebook"
@@ -108,6 +112,7 @@
   },
   "dependencies": {
     "@vscode/sqlite3": "^5.1.6-vscode",
+    "exceljs": "^4.4.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   }

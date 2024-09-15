@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { exec } from 'child_process';
 
 export class Util {
     static removeTrailingSemicolon(input: string): string {
@@ -35,4 +36,13 @@ export class Util {
         }
     }
     
+    static openExcelFile(filePath: string) {
+        exec(`start excel "${filePath}"`, (err, stdout, stderr) => {
+            if (err) {
+                vscode.window.showErrorMessage(`Error opening Excel: ${stderr}`);
+                return;
+            }
+            vscode.window.showInformationMessage('Excel file opened successfully!');
+        });
+    }
 }

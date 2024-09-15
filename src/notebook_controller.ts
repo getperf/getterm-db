@@ -198,7 +198,7 @@ export class TerminalNotebookController  {
         }
         Logger.info(`update notebook session id : ${sessionId} , command id : ${rowid}`);
 
-		// NotebookCleaner.cleanupUnusedCells();
+		NotebookCleaner.cleanupUnusedCells();
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
  	

@@ -16,7 +16,6 @@ export class NotebookCleaner {
 		}
 		const notebookDocument = notebookEditor.notebook;
 		const currentRow = notebookDocument.cellCount;
-    
 		if (currentRow > 0) {
 			const activeCell = notebookDocument.cellAt(currentRow);
 			const cellContent = activeCell.document.getText();

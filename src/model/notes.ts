@@ -5,6 +5,16 @@ interface NoteRow {
     title: string;
 }
 
+type ReportRow = {
+    position: number;
+    type: string;
+    content: string,
+    output: string,
+    start: Date,
+    end: Date,
+    exit_code: number,
+};
+
 export class Note {
     private static db: sqlite3.Database;
     id: number;
@@ -92,6 +102,23 @@ export class Note {
                 (err, rows: NoteRow[]) => {
                     if (err) {return reject(err);}
                     resolve(rows.map((row) => new Note(row.id, row.title)));
+                }
+            );
+        });
+    }
+
+    static async reportQuery(id: number): Promise<ReportRow[]> {
+        return new Promise((resolve, reject) => {
+            Note.db.all(
+                `SELECT cel.position, cel.type, cel.content, 
+                    cmd.output, cmd.start, cmd.end, cmd.exit_code
+                FROM cells AS cel
+                LEFT JOIN commands AS cmd ON cmd.id = cel.id
+                WHERE notebook_id = ?`,
+                [id],
+                (err, rows: ReportRow[]) => {
+                    if (err) {return reject(err);}
+                    resolve(rows);
                 }
             );
         });

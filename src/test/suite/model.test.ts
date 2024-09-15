@@ -149,4 +149,12 @@ suite('Database Models', function () {
     assert.strictEqual(cells[0].notebookId, notebookId);
   });
 
+  test('should retrieve report by notebook ID', async () => {
+    const notebookId = 1; // Replace with an actual notebook ID from your test data
+    const rows = await Note.reportQuery(notebookId);
+    console.log("ROWS:", rows);
+    assert.ok(rows.length > 0);
+    // assert.strictEqual(cells[0].notebookId, notebookId);
+  });
+
 });
