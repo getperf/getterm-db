@@ -59,8 +59,8 @@ export class TerminalSessionManager {
         const currentTime = new Date();
         const execDuration = (currentTime.getTime() - session.start.getTime()) / 1000; 
         console.log("EXEC DURATION : ", execDuration);
-        if (execDuration < 5) {
-            Logger.warn(`skip data buffering for opening session. : ${execDuration}`);
+        if (execDuration < 1 || !terminal.shellIntegration) {
+            Logger.warn(`skip data buffering for shell integration opening session. : ${execDuration}`);
             return 0;
         }
         return this.pushDataBuffer(terminal, data);

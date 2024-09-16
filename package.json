@@ -69,6 +69,13 @@
           "command": "getterm-db.selectSession",
           "group": "navigation"
         }
+      ],
+      "terminal/title/context": [
+        {
+          "command": "getterm-db.startTerminalCapture",
+          "title": "Start Terminal Capture",
+          "group": "navigation"
+        }
       ]
     },
     "notebooks": [

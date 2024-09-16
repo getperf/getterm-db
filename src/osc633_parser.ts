@@ -26,8 +26,22 @@ export class OSC633Parser {
         return result.length > 0 ? result : '';
     }
 
+    static removeAnsiEscapeCodes(output: string): string {
+        // Regex to match ANSI escape codes
+        const ansiRegex = /\x1b\[[0-9;?]*[a-zA-Z]/g;
+    
+        // Remove ANSI escape codes
+        const cleanOutput = output.replace(ansiRegex, '');
+    
+        // Extract the actual command or result (in this case 'pwd')
+        const command = cleanOutput.trim();
+    
+        return command;
+    }
+    
     // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
     static parseOSC633Simple(input: string) : ParsedCommand {
+        input = OSC633Parser.removeAnsiEscapeCodes(input);
         const parsedCommand = new ParsedCommand();
         // Split the input by OSC 633 sequences
         const parts = input.split(/\u001b\]633;/);
