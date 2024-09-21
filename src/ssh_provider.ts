@@ -93,12 +93,14 @@ export class SSHProvider {
         console.log("command buffer:", rawData);
         Logger.info(`end command handler, retrieve data : ${rawData}.`);
         // const osc633Messages = this.parseOSC633Simple(rawData);
-        const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
-        output = osc633Messages.output;
-        commandText = osc633Messages.command;
-        cwd = osc633Messages.cwd;
-        if (osc633Messages.exitCode) {
-            exit_code = osc633Messages.exitCode;
+        // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
+        const parsedCommand = OSC633Parser.parseOSC633AndCommand(rawData);
+
+        output = parsedCommand.output;
+        commandText = parsedCommand.command;
+        cwd = parsedCommand.cwd;
+        if (parsedCommand.exitCode) {
+            exit_code = parsedCommand.exitCode;
         }
         await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);

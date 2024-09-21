@@ -38,7 +38,95 @@ export class OSC633Parser {
     
         return command;
     }
+
+    static filterOSCSequenceHeader(buffer: string): string {
+        // Define the sequences
+        const oscASequence = '\x1b]633;A\x07';
+        const osc0Start = '\x1b]0;';
+        const oscEnd = '\x07';
+        console.log("FILTER:", buffer);
+        // Find the start and end of the sequences
+        const oscAIndex = buffer.indexOf(oscASequence);
+        if (oscAIndex !== 0) {
+            // If the buffer does not start with OSC A, return it unchanged
+            return buffer;
+        }
     
+        const osc0StartIndex = buffer.indexOf(osc0Start, oscAIndex);
+        if (osc0StartIndex === -1) {
+            // If there's no OSC 0 sequence, return the buffer unchanged
+            return buffer;
+        }
+    
+        const osc0EndIndex = buffer.indexOf(oscEnd, osc0StartIndex);
+        if (osc0EndIndex === -1) {
+            // If there's no terminating BEL, return the buffer unchanged
+            return buffer;
+        }
+    
+        // Return the part of the buffer after the OSC 0 sequence
+        return buffer.slice(osc0EndIndex + oscEnd.length);
+    }
+
+    static cleanOutput(output: string): string {
+        // Replace the escape code with an empty string if it exists
+        const ansiEscapeRegex = /\x1B\[\d*C$/;
+        output = output.replace(ansiEscapeRegex, '');    
+        // Check if the string ends with "$" and has a preceding newline
+        if (output.endsWith("$")) {
+            const lastNewlineIndex = output.lastIndexOf("\n");
+            if (lastNewlineIndex !== -1) {
+                // Return the string up to the last newline (excluding the prompt line)
+                return output.slice(0, lastNewlineIndex).trim();
+            }
+        }
+        return output.trim();  // Return the trimmed output if no $ prompt is present
+    }
+    
+    // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
+    static parseOSC633AndCommand(input: string) : ParsedCommand {
+        const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
+        const command = new ParsedCommand();
+
+        let buffer = this.filterOSCSequenceHeader(input);
+        // Extract command from the start of the buffer until the first OSC-633 sequence starts
+        const firstOSCMatch = buffer.match(/\x1B\]633;[A-ZP];/);
+        if (firstOSCMatch) {
+            command.command = buffer.slice(0, firstOSCMatch.index).trim();
+            buffer = buffer.slice(firstOSCMatch.index);
+        }
+        // Extract exclude the all OSC sequence as the output
+        let output =  buffer.replace(oscRegex, '').trim();
+        console.log("RESULT:", output);
+        command.output = this.cleanOutput(output);
+
+        let lastIndex = 0;
+        let match;
+        while ((match = oscRegex.exec(buffer)) !== null) {
+            const oscType = match[1];  // A, B, C, D, E, P
+            const oscData = match[2] || '';  // The oscData after the ; in the sequence
+            // console.log("CHECK: ", oscType, oscData, oscRegex.lastIndex);
+            lastIndex = oscRegex.lastIndex;
+            switch (oscType) {
+                case 'C':  // Command result starts
+                case 'B':  // Command result starts
+                    break;
+                case 'D':  // Exit code
+                    const exitCodeString = oscData.split(';')[1];  // Extract exit code from the format `;0`
+                    if (exitCodeString){
+                        command.exitCode = parseInt(exitCodeString, 10);  // Capture the exit code
+                    }
+                    break;
+                case 'P':  // Current working directory
+                    command.cwd = oscData.split('=')[1] || '';  // Extract cwd from the format `Cwd=...`
+                    break;
+                default:
+                    break;
+            }
+        }
+        return command;
+    }
+
     // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
     static parseOSC633Simple(input: string) : ParsedCommand {
         input = OSC633Parser.removeAnsiEscapeCodes(input);
