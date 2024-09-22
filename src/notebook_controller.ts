@@ -6,6 +6,7 @@ import { NotebookCleaner } from './notebook_cleaner';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Logger } from './logger';
 import { RawNotebookCell, RawNotebookData } from './notebook_serializer';
+import { rejects } from 'assert';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export enum TerminalNotebookStatus {
@@ -38,12 +39,12 @@ export class TerminalNotebookController  {
 		// this.notebookCleaner = new NotebookCleaner(this);
 	}
 
-    async execute(cells: vscode.NotebookCell[]): Promise<void> {
-		Logger.info("execute cell invoked.");
-        for (const cell of cells) {
-			await this.doExecution(cell);
-        }
-    }
+    // async execute(cells: vscode.NotebookCell[]): Promise<void> {
+	// 	Logger.info("execute cell invoked.");
+    //     for (const cell of cells) {
+	// 		await this.doExecution(cell);
+    //     }
+    // }
 
 	private async _execute(
 		cells: vscode.NotebookCell[],
@@ -58,22 +59,28 @@ export class TerminalNotebookController  {
 	}
 
     private async doExecution(cell: vscode.NotebookCell): Promise<void> {
-		const execution = this._controller.createNotebookCellExecution(cell);
-		execution.executionOrder = ++this._executionOrder;
-		execution.start(Date.now());
-	
-		execution.token.onCancellationRequested(() => {
-			Logger.debug('got cancellation request');
-			(async () => {
-				writeErr(execution, 'Query cancelled');
-			})();
-		});
-		Logger.info(`execute cell at ${cell.index}, command id is ${cell.metadata.id}`);
-        const row = await Command.getById(cell.metadata.id);
-		if (row.exit_code === 0) {
-			writeSuccess(execution, [[text(row.output)]]);
-		} else {
-			writeErr(execution, row.output);
+		try {
+			const command_id = cell.metadata?.id;
+			if (!command_id) {
+				throw new Error(`Command id not found in cell`);
+			}
+			const command = await Command.getById(command_id);
+			if (!command) {
+				throw new Error(`Commmand with id ${command_id} not found in DB`);
+			}
+			const execution = this._controller.createNotebookCellExecution(cell);
+			execution.executionOrder = ++this._executionOrder;
+			execution.start(new Date(command.start).getTime());
+			Logger.info(`execute cell at ${cell.index}, command id is ${command_id}`);
+			const command_success = (command.exit_code === 0);
+			if (command_success) {
+				writeSuccess(execution, [[text(command.output)]]);
+			} else {
+				writeErr(execution, command.output);
+			}
+			execution.end(command_success, new Date(command.end).getTime());
+		} catch (error) {
+			vscode.window.showErrorMessage(`${error}`);
 		}
 	}
 
@@ -249,7 +256,6 @@ function writeErr(execution: vscode.NotebookCellExecution, err: string) {
 			vscode.NotebookCellOutputItem.text(redTextErr),
 		]),
 	]);
-	execution.end(false, Date.now());
 }
 
 const { text, json } = vscode.NotebookCellOutputItem;
@@ -261,5 +267,4 @@ function writeSuccess(
 	execution.replaceOutput(
 	  outputs.map((items) => new vscode.NotebookCellOutput(items))
 	);
-	execution.end(true, Date.now());
 }

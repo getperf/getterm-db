@@ -48,4 +48,25 @@ suite('OSC633Parser Tests', () => {
         assert.strictEqual(parsed.cwd, expectedCwd, `CWD should be "${expectedCwd}"`);
     });
 
+    test('Handle Filter OSC Sequence Header', () => {
+        const input = `\u001B]633;A\u0007\u001B]633;B\u0007(base) [psadmin@ol89 ~]$ pwd`;
+        const expected = `(base) [psadmin@ol89 ~]$ pwd`;
+        const parsed = OSC633Parser.filterOSCSequenceHeader(input);
+        assert.strictEqual(parsed, expected, 'Command should be first');
+    });
+
+    test('should remove everything before "$ "', () => {
+        const input = '(base) [psadmin@ol89 ~]$ pwd\n';
+        const expected = 'pwd\n';
+        const result = OSC633Parser.cleanCommandLines(input);
+        assert.strictEqual(result, expected);
+    });
+
+    test('should handle echo with special characters correctly', () => {
+        const input = '(base) [psadmin@ol89 ~]$ echo "\u0008\u001b[K-e "hello $ world"\n';
+        const expected = 'echo "\u0008\u001b[K-e "hello $ world"\n';
+         const result = OSC633Parser.cleanCommandLines(input);
+        assert.strictEqual(result, expected);
+    });
+
 });
