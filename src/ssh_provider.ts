@@ -95,7 +95,12 @@ export class SSHProvider {
         // const osc633Messages = this.parseOSC633Simple(rawData);
         // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
         const parsedCommand = OSC633Parser.parseOSC633AndCommand(rawData);
-
+        if (!parsedCommand) {
+            vscode.window.showErrorMessage(
+                `Oops. Failed to parse the capture data. Command could not be recorded.`
+            );
+            return;
+        }
         output = parsedCommand.output;
         commandText = parsedCommand.command;
         cwd = parsedCommand.cwd;

@@ -3,12 +3,12 @@ import { Logger } from './logger';
 import { Util } from './util';
 
  /** 
-シェル統合シーケンスのファイナライズ
- * https://github.com/microsoft/vscode/issues/155639
+  シェル統合シーケンスのファイナライズ
+  https://github.com/microsoft/vscode/issues/155639
 
- * VS Code 固有のシェル統合シーケンス。これらのいくつかは、次のような一般的な代替手段に基づいています 
- * FinalTermで先駆的なもの。完全にカスタムシーケンスに移行するという決定は、次のことを試みることでした。 
- *信頼性を向上させ、アプリケーションが端末を混乱させる可能性を防ぎます。 
+  VS Code 固有のシェル統合シーケンス。これらのいくつかは、次のような一般的な代替手段に基づいています 
+  FinalTermで先駆的なもの。完全にカスタムシーケンスに移行するという決定は、次のことを試みることでした。 
+  信頼性を向上させ、アプリケーションが端末を混乱させる可能性を防ぎます。 
 
  * プロンプトの開始は、常に行の先頭に表示されることが期待されます。 
 　 FinalTermの「OSC 133;A ST'. 
@@ -57,22 +57,6 @@ export class ParsedCommand {
 }
 
 export class OSC633Parser {
-    private static extractOutputOfOSC633B(output: string): string {
-        // Split the output by the OSC 633;B sequence
-        const parts = output.split('\u0007\u001B]633;B\u0007');
-        if (parts.length < 2) {return ''; }
-        
-        // The relevant part is after the OSC 633;B sequence
-        let result = parts[1].trim();
-        
-        // Remove the prompt if it exists
-        const promptPattern = /\[\w+@\w+.*?\$\s*$/;
-        result = result.replace(promptPattern, '').trim();
-        
-        // Return the cleaned-up result
-        return result.length > 0 ? result : '';
-    }
-
     static removeAnsiEscapeCodes(output: string): string {
         // Regex to match ANSI escape codes
         const ansiRegex = /\x1b\[[0-9;?]*[a-zA-Z]/g;
@@ -86,7 +70,7 @@ export class OSC633Parser {
         return command;
     }
 
-    static filterOSCSequenceHeader(buffer: string): string {
+    static filterOSCSequenceHeader(buffer: string): string | null {
         // Define the sequences
         const oscAAndBSequence = '\x1b]633;A\x07\x1b]633;B\x07';
         const osc0Start = '\x1b]0;';
@@ -119,28 +103,25 @@ export class OSC633Parser {
         return buffer;
     }
 
-    static cleanCommandLines(buffer: string): string {
+    static cleaningMultiLineCommands(buffer: string): string {
         // Split the input into lines
         const lines = buffer.split('\n');
-        console.log("INPUT:", lines);
-        // Process the first line: remove from start to "$ " if it exists
+        // Process the first line: remove prompt from start to "$ " if it exists
         if (lines[0].includes('$ ')) {
             lines[0] = lines[0].substring(lines[0].indexOf('$ ') + 2);
         }
-    
-        // Process remaining lines: remove "> " if it exists
+        // Process remaining lines: remove prompt "> " if it exists
         for (let i = 1; i < lines.length; i++) {
             if (lines[i].startsWith('> ')) {
                 lines[i] = lines[i].substring(2);
             }
         }
-    
-        // Join lines and remove the specified escape codes
+        // Join lines and remove the OSC-633 F,G escape codes
         const cleanedOutput = lines.join('\n')
             .replace(/\x1b\]633;F\x07/g, '') // Remove OSC 633;F
-            .replace(/\x1b\]633;G\x07/g, ''); // Remove OSC 633;G
-    
-        console.log("OUTPUT:", cleanedOutput);
+            .replace(/\x1b\]633;G\x07/g, '') // Remove OSC 633;G
+            .replace(/\u001b\[\?2004[hl]/g, '') // Remove ANSI escape code related to bracketed paste mode.
+            .replace(/\u001b\[\d+C/g, '');     // Remove cursor forward sequences 
         return cleanedOutput;
     }
     
@@ -160,22 +141,51 @@ export class OSC633Parser {
         }
         return output.trim();  // Return the trimmed output if no $ prompt is present
     }
+
+    // OSC 633 開始シーケンスが複数含まれるかを判別
+    static hasMultipleOSCStartSequences(buffer: string): boolean {
+        // Regular expression to match OSC-633;A sequence
+        const regex = /\u001b\]633;A\u0007/g;
+        
+        // Find all matches of the escape sequence in the buffer
+        const matches = buffer.match(regex);
+        
+        // Check if two or more matches are found
+        return matches !== null && matches.length >= 2;
+    }
     
     // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
-    static parseOSC633AndCommand(input: string) : ParsedCommand {
+    static parseOSC633AndCommand(input: string) : ParsedCommand | null {
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
         const command = new ParsedCommand();
 
+        if (this.hasMultipleOSCStartSequences(input)) {
+            Logger.error(`
+                Detected multiple OSC-633 start escape sequences in buffer. 
+                Exits with an error because it is difficult to parse :
+                ${input}
+            `);
+            return null;
+        }
         let buffer = this.filterOSCSequenceHeader(input);
+        if (!buffer) {
+            Logger.error(`Failed to parse header of OSC-633 sequence : ${input}`);
+            return null;
+        }
         console.log("FILTER OUT:", buffer);
+
         // Extract command from the start of the buffer until the first OSC-633 sequence starts
         const firstOSCMatch = buffer.match(/\x1B\]633;[A-ZP];/);
         if (firstOSCMatch) {
             // Clean Multiple lines
             const commandText = buffer.slice(0, firstOSCMatch.index).trim();
-            command.command = this.cleanCommandLines(commandText);
+            command.command = this.cleaningMultiLineCommands(commandText);
             buffer = buffer.slice(firstOSCMatch.index);
+        } else {
+            Logger.error(`Failed to extract command from OSC-633 sequence : ${buffer}`);
+            return null;
         }
+
         // Extract exclude the all OSC sequence as the output
         let output =  buffer.replace(oscRegex, '').trim();
         console.log("RESULT:", output);
@@ -207,40 +217,4 @@ export class OSC633Parser {
         }
         return command;
     }
-
-    // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
-    static parseOSC633Simple(input: string) : ParsedCommand {
-        input = OSC633Parser.removeAnsiEscapeCodes(input);
-        const parsedCommand = new ParsedCommand();
-        // Split the input by OSC 633 sequences
-        const parts = input.split(/\u001b\]633;/);
-
-        if (parts.length > 0) { 
-            parsedCommand.command = Util.cleanDeleteSequenceString(parts[0].trim());
-        };
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-
-            if (part.startsWith('D;')) {
-                // Extract the exit code from the sequence starting with 'D;'
-                parsedCommand.exitCode = parseInt(part.slice(2).trim(), 10);
-            } else if (part.startsWith('C')) {
-                // Extract the output which is between 'C' and next sequence.
-                parsedCommand.output = parts[i].replace(/^C\u0007\n/, '').trim();
-            } else if (part.startsWith('P;Cwd=')) {
-                // Extract the working directory from the sequence starting with 'P;Cwd='
-                // parsedCommand.cwd = part.slice(6).trim();
-                let cwd = part.slice(6);
-                cwd = cwd.replace(/\x07/g, ''); 
-                parsedCommand.cwd = cwd.trim();
-            }
-        }
-        console.log("COMMAND OUTPUT:" , parsedCommand.output);
-        if (parsedCommand.output === 'C\u0007') { 
-            console.log("PARSE OSC633B");
-            parsedCommand.output = this.extractOutputOfOSC633B(input);
-        }
-        return parsedCommand;
-    }
-
 }
