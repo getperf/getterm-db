@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { NotebookSessionWriter, SessionData as SessionCellData } from './notebook_session_writer';
 
 export class TerminalNotebookSessionPicker {
     private context: vscode.ExtensionContext;
@@ -34,10 +35,43 @@ export class TerminalNotebookSessionPicker {
                         vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
                         TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
                     }
-
+                    this.appendSessionCell(selectedSession);
                     // Handle the session selection (e.g., load data, start execution, etc.)
                 }
             })
         );
     }
+    appendSessionCell(selectedSession: string) {
+        console.log(`Method not implemented.${selectedSession}`);
+        const sessionCellData: SessionCellData = {
+            hostName: selectedSession,
+            startTime: new Date("2024-09-13T10:00:00"),
+            endTime: new Date("2024-09-13T12:00:00")
+        };
+        NotebookSessionWriter.addSessionDataToNotebook(sessionCellData);
+    }
+
+    // private async selectSessions() {
+    //     const sessions = await this.getAvailableSessions();
+    //     const selectedSession = await vscode.window.showQuickPick(sessions, {
+    //         placeHolder: 'Select a session',
+    //     });
+
+    //     if (selectedSession) {   
+    //         const notebookEditor = vscode.window.activeNotebookEditor;
+    //         // Remove current terminal notebook from session.
+    //         const currentTerminal = TerminalSessionManager.findTerminalByNotebookEditor(notebookEditor);
+    //         if (currentTerminal) {
+    //             TerminalSessionManager.setNotebookEditor(currentTerminal, undefined);
+    //         }
+    //         vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
+    //         const terminal = TerminalSessionManager.findTerminalByName(selectedSession);
+    //         if (terminal && notebookEditor) {
+    //             vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
+    //             TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
+    //         }
+
+    //         // Handle the session selection (e.g., load data, start execution, etc.)
+    //     }
+    // }
 }

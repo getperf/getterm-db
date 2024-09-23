@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
+import { Terminal } from 'xterm-headless';
 import { Util } from './util';
+import { XtermParser } from './xterm_parser';
 
  /** 
   シェル統合シーケンスのファイナライズ
@@ -57,18 +59,6 @@ export class ParsedCommand {
 }
 
 export class OSC633Parser {
-    static removeAnsiEscapeCodes(output: string): string {
-        // Regex to match ANSI escape codes
-        const ansiRegex = /\x1b\[[0-9;?]*[a-zA-Z]/g;
-    
-        // Remove ANSI escape codes
-        const cleanOutput = output.replace(ansiRegex, '');
-    
-        // Extract the actual command or result (in this case 'pwd')
-        const command = cleanOutput.trim();
-    
-        return command;
-    }
 
     static filterOSCSequenceHeader(buffer: string): string | null {
         // Define the sequences
@@ -102,35 +92,8 @@ export class OSC633Parser {
         // return buffer.slice(osc0EndIndex + oscEnd.length);
         return buffer;
     }
-
-    static cleaningMultiLineCommands(buffer: string): string {
-        // Split the input into lines
-        const lines = buffer.split('\n');
-        // Process the first line: remove prompt from start to "$ " if it exists
-        if (lines[0].includes('$ ')) {
-            lines[0] = lines[0].substring(lines[0].indexOf('$ ') + 2);
-        }
-        // Process remaining lines: remove prompt "> " if it exists
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i].startsWith('> ')) {
-                lines[i] = lines[i].substring(2);
-            }
-        }
-        // Join lines and remove the OSC-633 F,G escape codes
-        const cleanedOutput = lines.join('\n')
-            .replace(/\x1b\]633;F\x07/g, '') // Remove OSC 633;F
-            .replace(/\x1b\]633;G\x07/g, '') // Remove OSC 633;G
-            .replace(/\u001b\[\?2004[hl]/g, '') // Remove ANSI escape code related to bracketed paste mode.
-            .replace(/\u001b\[\d+C/g, '');     // Remove cursor forward sequences 
-        return cleanedOutput;
-    }
     
     static cleanCommandOutput(output: string): string {
-        // Replace the escape code with an empty string if it exists
-        const ansiEscapeRegex = /\x1B\[\d*C$/;
-        output = output.replace(ansiEscapeRegex, '').
-            replace(/\u001b\[\d+X/g, '');
-
         // Check if the string ends with "$" and has a preceding newline
         if (output.endsWith("$")) {
             const lastNewlineIndex = output.lastIndexOf("\n");
@@ -155,7 +118,7 @@ export class OSC633Parser {
     }
     
     // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
-    static parseOSC633AndCommand(input: string) : ParsedCommand | null {
+    static async parseOSC633AndCommand(input: string) : Promise<ParsedCommand | null> {
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
         const command = new ParsedCommand();
 
@@ -175,11 +138,20 @@ export class OSC633Parser {
         console.log("FILTER OUT:", buffer);
 
         // Extract command from the start of the buffer until the first OSC-633 sequence starts
+        const xtermParser = XtermParser.getInstance();
         const firstOSCMatch = buffer.match(/\x1B\]633;[A-ZP];/);
-        if (firstOSCMatch) {
+        if (firstOSCMatch)  {
             // Clean Multiple lines
-            const commandText = buffer.slice(0, firstOSCMatch.index).trim();
-            command.command = this.cleaningMultiLineCommands(commandText);
+            let commandText = buffer.slice(0, firstOSCMatch.index).trim();
+            // Handle backward search for Ctrl+U (0x15) and remove preceding content
+            const ctrlUIndex = commandText.lastIndexOf('\x1B[K');
+            console.log("CTRL-U : ", ctrlUIndex);
+            if (ctrlUIndex !== -1) {
+                commandText = commandText.slice(ctrlUIndex + 3);  // Cut everything before Ctrl+U
+            }
+
+            // command.command = this.cleaningMultiLineCommands(commandText);
+            command.command =  await xtermParser.parseTerminalBuffer(commandText);
             buffer = buffer.slice(firstOSCMatch.index);
         } else {
             Logger.error(`Failed to extract command from OSC-633 sequence : ${buffer}`);
@@ -187,8 +159,7 @@ export class OSC633Parser {
         }
 
         // Extract exclude the all OSC sequence as the output
-        let output =  buffer.replace(oscRegex, '').trim();
-        console.log("RESULT:", output);
+        let output =  await xtermParser.parseTerminalBuffer(buffer);
         command.output = this.cleanCommandOutput(output);
 
         let lastIndex = 0;
@@ -196,7 +167,6 @@ export class OSC633Parser {
         while ((match = oscRegex.exec(buffer)) !== null) {
             const oscType = match[1];  // A, B, C, D, E, P
             const oscData = match[2] || '';  // The oscData after the ; in the sequence
-            // console.log("CHECK: ", oscType, oscData, oscRegex.lastIndex);
             lastIndex = oscRegex.lastIndex;
             switch (oscType) {
                 case 'C':  // Command result starts
