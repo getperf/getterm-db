@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TerminalSessionManager } from './terminal_session_manager';
-import { NotebookSessionWriter, SessionData as SessionCellData } from './notebook_session_writer';
+import { NotebookSessionWriter } from './notebook_session_writer';
 
 export class TerminalNotebookSessionPicker {
     private context: vscode.ExtensionContext;
@@ -35,20 +35,10 @@ export class TerminalNotebookSessionPicker {
                         vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
                         TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
                     }
-                    this.appendSessionCell(selectedSession);
-                    // Handle the session selection (e.g., load data, start execution, etc.)
+                    NotebookSessionWriter.appendSessionTitleCell(selectedSession);
                 }
             })
         );
-    }
-    appendSessionCell(selectedSession: string) {
-        console.log(`Method not implemented.${selectedSession}`);
-        const sessionCellData: SessionCellData = {
-            hostName: selectedSession,
-            startTime: new Date("2024-09-13T10:00:00"),
-            endTime: new Date("2024-09-13T12:00:00")
-        };
-        NotebookSessionWriter.addSessionDataToNotebook(sessionCellData);
     }
 
     // private async selectSessions() {

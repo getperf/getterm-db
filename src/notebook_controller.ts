@@ -7,6 +7,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Logger } from './logger';
 import { RawNotebookCell, RawNotebookData } from './notebook_serializer';
 import { rejects } from 'assert';
+import { NotebookSessionWriter } from './notebook_session_writer';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export enum TerminalNotebookStatus {
@@ -175,6 +176,7 @@ export class TerminalNotebookController  {
 	
 			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
 			await vscode.commands.executeCommand('notebook.execute');
+			NotebookSessionWriter.appendSessionTitleCell("test");
 			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
 			const notebookEditor = vscode.window.activeNotebookEditor;
 			if (!notebookEditor) {

@@ -1,16 +1,26 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 
-export interface SessionData {
+export interface SessionMetaData {
     hostName: string;
-    startTime: Date;
-    endTime: Date;
+    startTime: Date | undefined;
+    endTime: Date | undefined;
 };
 
 export class NotebookSessionWriter {
     
+    public static appendSessionTitleCell(selectedSession: string) {
+        console.log(`Method not implemented.${selectedSession}`);
+        const sessionMetaData: SessionMetaData = {
+            hostName: selectedSession,
+            startTime: new Date(),
+            endTime: undefined,
+        };
+        NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData);
+    }
+
     // Static method to add session data to the notebook
-    public static async addSessionDataToNotebook(sessionData: SessionData) {
+    public static async addSessionDataToNotebook(sessionData: SessionMetaData) {
         const activeNotebook = vscode.window.activeNotebookEditor;
         if (!activeNotebook) {
             vscode.window.showErrorMessage("No active notebook found.");
@@ -19,9 +29,8 @@ export class NotebookSessionWriter {
         const notebookDocument = activeNotebook.notebook;
 		const currentRow = notebookDocument.cellCount;
 
-        const sessionYaml = NotebookSessionWriter.convertSessionToYaml(sessionData);
-        const markdownContent = `---\n${sessionYaml}---\n\n# Session Info\n- **Host**: ${sessionData.hostName}\n- **Start Time**: ${sessionData.startTime.toISOString()}\n- **End Time**: ${sessionData.endTime.toISOString()}\n`;
-
+        const sessionMetaData = NotebookSessionWriter.sessionToPandocTitleBlock(sessionData);
+        const markdownContent = `${sessionMetaData}\n\n### '${sessionData.hostName}' session start\n`;
         const newCell = new vscode.NotebookCellData(
             vscode.NotebookCellKind.Markup,
             markdownContent,
@@ -41,7 +50,11 @@ export class NotebookSessionWriter {
     }
 
     // Helper method to convert session data to YAML
-    private static convertSessionToYaml(sessionData: SessionData): string {
-        return `sshHost: "${sessionData.hostName}"\nstartTime: "${sessionData.startTime.toISOString()}"\nendTime: "${sessionData.endTime.toISOString()}"\n`;
+    private static sessionToPandocTitleBlock(sessionData: SessionMetaData): string {
+        let metaData = `% sshHost: "${sessionData.hostName}"\n`;
+        if (sessionData.startTime) {
+            metaData += `% startTime: "${sessionData.startTime.toLocaleString()}"\n`;
+        }
+        return metaData;
     }
 }
