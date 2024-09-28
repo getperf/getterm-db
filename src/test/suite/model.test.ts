@@ -157,4 +157,42 @@ suite('Database Models', function () {
     // assert.strictEqual(cells[0].notebookId, notebookId);
   });
 
+  test('should update command file modification fields correctly', async () => {
+    // Insert test data
+    const sessionId = await Session.create('test_profile', '/path/to/exe', ['arg1'], 'host', 'user');
+    const commandId = await Command.create(sessionId, 'ls -al', 'output', '/cwd', 0);
+
+    const updateMode = 'updated';
+    const updateFilePath = '/path/to/file';
+    const downloadFilePath = '/path/to/download';
+
+    // Update the command
+    await Command.updateFileModifyOperation(commandId, updateMode, updateFilePath, downloadFilePath);
+
+    // Verify the update
+    const command = await Command.getById(commandId);
+    assert.strictEqual(command.file_update_mode, updateMode, 'File update mode should be updated');
+    assert.strictEqual(command.update_file_path, updateFilePath, 'Update file path should be updated');
+    assert.strictEqual(command.download_file_path, downloadFilePath, 'Download file path should be updated');
+  });
+
+  test('should throw an error if no command is found', async () => {
+    const commandId = 999;  // Non-existing command
+    const updateMode = 'failed';
+    const updateFilePath = '/etc/hosts';
+    const downloadFilePath = null;
+
+    try {
+        await Command.updateFileModifyOperation(commandId, updateMode, updateFilePath, downloadFilePath);
+        assert.fail('Expected error but none was thrown');
+    } catch (err) {
+        // Safely handle the unknown error by checking if it's an instance of Error
+        if (err instanceof Error) {
+            assert.strictEqual(err.message, 'No rows were updated', 'Should throw no rows updated error');
+        } else {
+            assert.fail('Caught error is not an instance of Error');
+        }
+    }
+});
+
 });

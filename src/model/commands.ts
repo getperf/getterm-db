@@ -61,6 +61,36 @@ export class Command {
         });
     }
 
+    static async updateFileModifyOperation(
+        id: number,
+        updateMode: 'updated' | 'failed' | 'no_update',
+        updateFilePath: string, 
+        downloadFilePath: string | null
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                UPDATE commands 
+                SET file_update_mode = ?, 
+                    update_file_path = ?, 
+                    download_file_path = ?
+                WHERE id = ?
+            `;
+            Command.db.run(
+                sql,
+                [updateMode, updateFilePath, downloadFilePath, id],
+                function (err) {
+                    if (err) {
+                        reject(err);
+                    } else if (this.changes === 0) {
+                        reject(new Error('No rows were updated'));
+                    } else {
+                        resolve();
+                    }
+                }
+            );
+        });
+    }
+
     private static formatDateWithMilliseconds(date: Date): string {
         const padZero = (num: number) => num.toString().padStart(2, '0');
         const milliseconds = date.getMilliseconds().toString().padStart(3, '0'); // Milliseconds formatted to 3 digits

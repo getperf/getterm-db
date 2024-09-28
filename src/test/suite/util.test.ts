@@ -31,4 +31,28 @@ suite('Util Test Suite', () => {
         assert.strictEqual(actualOutput, expectedOutput);
     });
 
+    test('should return the file name for vi command', () => {
+        const result = Util.checkFileNameFromEditorCommand('vi myfile.txt');
+        assert.strictEqual(result, 'myfile.txt');
+    });
+
+    test('should return the file name for emacs command', () => {
+        const result = Util.checkFileNameFromEditorCommand('emacs script.sh');
+        assert.strictEqual(result, 'script.sh');
+    });
+
+    test('should return undefined for non-editor commands', () => {
+        const result = Util.checkFileNameFromEditorCommand('ls -al');
+        assert.strictEqual(result, undefined);
+    });
+
+    test('should return undefined if no file name is provided', () => {
+        const result = Util.checkFileNameFromEditorCommand('vi');
+        assert.strictEqual(result, undefined);
+    });
+
+    test('should handle extra spaces', () => {
+        const result = Util.checkFileNameFromEditorCommand('  nano   notes.txt  ');
+        assert.strictEqual(result, 'notes.txt');
+    });
 });

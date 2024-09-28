@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { exec } from 'child_process';
 
 export class Util {
+    private static editorCommands = ['vi', 'nano', 'emacs'];
+
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }
@@ -45,4 +47,18 @@ export class Util {
             vscode.window.showInformationMessage('Excel file opened successfully!');
         });
     }
+
+    /**
+     * Searches the input command buffer for an editor command and returns the file name.
+     * @param commandBuffer The string representing the command input (e.g., 'vi filename.txt')
+     * @returns The file name if an editor command is found, otherwise undefined.
+     */
+    static checkFileNameFromEditorCommand(commandBuffer: string): string | undefined {
+        const commandParts = commandBuffer.trim().split(/\s+/);
+        if (commandParts.length > 1 && this.editorCommands.includes(commandParts[0])) {
+            return commandParts[1];
+        }
+        return undefined;
+    }
+
 }

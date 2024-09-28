@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
+import { XtermParser } from './xterm_parser';
 
 class TerminalSession {
     start: Date = new Date();
@@ -7,6 +8,9 @@ class TerminalSession {
     commandId: number = 0;
     dataBuffer: string[]  = [];
     notebookEditor: vscode.NotebookEditor | undefined;
+    xtermParser: XtermParser | undefined;
+    updatingFlag : boolean = false;
+    UpdateFilePath : string | undefined;
 }
 
 export class TerminalSessionManager {
@@ -42,6 +46,30 @@ export class TerminalSessionManager {
         session.notebookEditor = notebookEditor;
         const title = notebookEditor?.notebook.uri.fsPath;
         Logger.info(`set terminal session manager notebook editor : ${title}`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+	}
+
+    static setXtermParser(terminal: vscode.Terminal, xtermParser: XtermParser|undefined) {
+        let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.xtermParser = xtermParser;
+        Logger.info(`set terminal session manager xterm parser`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+	}
+
+    static setUpdatingFlag(terminal: vscode.Terminal, updatingFlag: boolean) {
+        let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.updatingFlag = updatingFlag;
+        Logger.info(`set terminal session manager updating flag: ${updatingFlag}`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+	}
+
+    static setUpdateFilePath(terminal: vscode.Terminal, updateFilePath: string) {
+        let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.UpdateFilePath = updateFilePath;
+        Logger.info(`set terminal session manager update file path: ${updateFilePath}`);
         this.terminalSessions.set(terminal, session);
         return session;
 	}
@@ -92,6 +120,18 @@ export class TerminalSessionManager {
 
     static getNotebookEditor(terminal: vscode.Terminal): vscode.NotebookEditor|undefined {
         return this.terminalSessions.get(terminal)?.notebookEditor;
+    }
+
+    static getXtermParser(terminal: vscode.Terminal): XtermParser|undefined {
+        return this.terminalSessions.get(terminal)?.xtermParser;
+    }
+
+    static getUpdatingFlag(terminal: vscode.Terminal): boolean {
+        return this.terminalSessions.get(terminal)?.updatingFlag || false;
+    }
+
+    static getUpdateFilePath(terminal: vscode.Terminal): string | undefined {
+        return this.terminalSessions.get(terminal)?.UpdateFilePath;
     }
 
     static async getSessionIdWithRetry(terminal: vscode.Terminal): Promise<number | undefined> {

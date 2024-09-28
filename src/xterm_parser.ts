@@ -1,4 +1,6 @@
+import * as vscode from 'vscode';
 import { Terminal } from 'xterm-headless';
+import { TerminalSessionManager } from './terminal_session_manager';
 
 export class XtermParser {
     private static instance: XtermParser;
@@ -12,10 +14,16 @@ export class XtermParser {
     }
 
     public static getInstance(): XtermParser {
-        if (!XtermParser.instance) {
-            XtermParser.instance = new XtermParser();
+        const activeTerminal = vscode.window.activeTerminal;
+        if (!activeTerminal) {
+            return new XtermParser();
         }
-        return XtermParser.instance;
+        let xtermParser = TerminalSessionManager.getXtermParser(activeTerminal);
+        if (xtermParser) { return xtermParser; }
+
+        xtermParser = new XtermParser();
+        TerminalSessionManager.setXtermParser(activeTerminal, xtermParser);
+        return xtermParser;
     }
 
     public async parseTerminalBuffer(buffer: string, delay: number = 10): Promise<string> {

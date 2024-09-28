@@ -65,6 +65,11 @@ export class Database {
                             output TEXT,
                             cwd TEXT,
                             exit_code INTEGER,
+                            file_update_mode TEXT 
+                                CHECK(file_update_mode IN ('updated', 'failed', 'no_update')) 
+                                NOT NULL DEFAULT 'no_update',
+                            update_file_path TEXT,
+                            download_file_path TEXT,
                             start DATETIME,
                             end DATETIME,
                             FOREIGN KEY(session_id) REFERENCES sessions(id)
