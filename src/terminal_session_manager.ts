@@ -66,7 +66,7 @@ export class TerminalSessionManager {
         return session;
 	}
 
-    static setUpdateFilePath(terminal: vscode.Terminal, updateFilePath: string) {
+    static setUpdateFilePath(terminal: vscode.Terminal, updateFilePath: string | undefined) {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.UpdateFilePath = updateFilePath;
         Logger.info(`set terminal session manager update file path: ${updateFilePath}`);

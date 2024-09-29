@@ -9,6 +9,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
 import { OSC633Parser } from './osc633_parser';
+import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
@@ -79,6 +80,9 @@ export class SSHProvider {
             console.info("セッションからコマンドIDが取得できませんでした: ", terminalSession);
             return; 
         }
+        if (TerminalSessionManager.getUpdateFilePath(e.terminal)) {
+            console.log("DOWNLOAD PHASE 2");
+        }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);
         // await Command.updateEndTimestamp(commandId);
         await Command.updateEnd(commandId, endTime);
@@ -107,6 +111,39 @@ export class SSHProvider {
         if (parsedCommand.exitCode) {
             exit_code = parsedCommand.exitCode;
         }
+        // ここにファイル編集キャプチャーのコードを追加する
+        const editedFileDownloader = new EditedFileDownloader(e.terminal, parsedCommand);
+        if (editedFileDownloader.checkRunningMode()) {
+            switch(editedFileDownloader.mode) {
+                case EditedFileDownloaderMode.Caputure:
+                    await editedFileDownloader
+                        .storeTerminalSessions()
+                        .captureDownloadFile()
+                        .catch((err : Error) => console.error('Error:', err.message));
+                    break;
+                case EditedFileDownloaderMode.Save:
+                    await editedFileDownloader
+                        .resetTerminalSessions()
+                        .saveEditedFile()
+                        .then((downloader : EditedFileDownloader) => downloader.updateCommand(commandId))
+                        .then((downloader : EditedFileDownloader) => downloader.updateNotebook())
+                        .catch((err : Error) => console.error('Error:', err.message));
+            }
+            return;
+        }
+        // const downloaderMode = EditedFileDownloader.checkMode(e.terminal, parsedCommand);
+        // if (downloaderMode) {
+        //     switch (downloaderMode as EditedFileDownloaderMode) {
+        //         case EditedFileDownloaderMode.Caputure:
+        //             break;
+        //         case EditedFileDownloaderMode.Save:
+        //             break;
+        //         default:
+        //             break;
+        //     }
+        //     return;
+        // }
+
         await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);
         Logger.info(`end command handler, update commands table : ${command}.`);
