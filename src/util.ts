@@ -61,4 +61,19 @@ export class Util {
         return undefined;
     }
 
+    /**
+     * Remove undesirable characters (like quotes, etc.)
+     * Split by spaces, capitalize the first letter of each word (except the first), and join them
+     * @param text 
+     * @returns camel case text
+     */
+    static toCamelCase(text: string): string {
+        const sanitizedText = text.replace(/["'<>:*?|\\/]+/g, '');
+        return sanitizedText
+            .split(/\s+/)
+            .map((word, index) =>
+                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join('');
+    }    
 }

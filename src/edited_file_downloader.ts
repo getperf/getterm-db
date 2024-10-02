@@ -10,11 +10,15 @@ import { TerminalSessionManager } from './terminal_session_manager';
 export enum EditedFileDownloaderMode {
     Caputure,
     Save,
+    Skip,
+    Error,
     Unkown,
 };
 
 export class EditedFileDownloader {
+
     public mode: EditedFileDownloaderMode = EditedFileDownloaderMode.Unkown;
+    downloadFilePath: string | undefined;
     fileName: string | undefined;
     fileContent: string | undefined;
     terminal: vscode.Terminal;
@@ -25,65 +29,40 @@ export class EditedFileDownloader {
         this.parsedCommand = parsedCommand;
     }
 
-    /**
-     * Sets the file name to be downloaded.
-     * @param fileName The name of the file to be downloaded.
-     */
-    setFileName(fileName: string): EditedFileDownloader {
-        this.fileName = fileName;
-        return this;
-    }
-
-    setTerminal(terminal: vscode.Terminal): EditedFileDownloader {
-        this.terminal = terminal;
-        return this;
-    }
-
-    setParsedCommand(parsedCommand: ParsedCommand): EditedFileDownloader {
-        this.parsedCommand = parsedCommand;
-        return this;
-    }
-
     storeTerminalSessions(): EditedFileDownloader {
         if (!this.fileName) {
             throw new Error('File name is not set');
         }
-        TerminalSessionManager.setUpdatingFlag(this.terminal, true);
-        TerminalSessionManager.setUpdateFilePath(this.terminal, this.fileName);
+        TerminalSessionManager.setEditedFileDownloader(this.terminal, this);
         return this;
     }
 
     resetTerminalSessions(): EditedFileDownloader {
-        TerminalSessionManager.setUpdatingFlag(this.terminal, false);
-        TerminalSessionManager.setUpdateFilePath(this.terminal, undefined);
+        TerminalSessionManager.setEditedFileDownloader(this.terminal, undefined);
         return this;
     }
 
     checkRunningMode() : boolean {
-        const commandText = this.parsedCommand.command;
-        const updatingFlag = TerminalSessionManager.getUpdatingFlag(this.terminal);
-        if (updatingFlag) { 
-            this.mode =  EditedFileDownloaderMode.Save; 
-            return true;
+        if (this.mode in [EditedFileDownloaderMode.Caputure]) { 
+            this.mode = EditedFileDownloaderMode.Save;
+            return true; 
         }
+        const commandText = this.parsedCommand.command;
         const fileNameFromEditorCommand  = Util.checkFileNameFromEditorCommand(commandText);
         if (fileNameFromEditorCommand) { 
+            this.downloadFilePath = fileNameFromEditorCommand;
             this.mode = EditedFileDownloaderMode.Caputure; 
             return true;
         }
         return false;
     }
 
-
-    /**
-     * Confirm the download process.
-     */
     async showConfirmationMessage(): Promise<EditedFileDownloader> {
-        if (!this.fileName) {
-            throw new Error('File name is not set');
+        if (!this.downloadFilePath) {
+            throw new Error('File path to download is not set');
         }
         const confirm = await vscode.window.showInformationMessage(
-            `Do you want to download the file "${this.fileName}" that was edited?`,
+            `Do you want to download the file "${this.downloadFilePath}" that was edited?`,
             { modal: true },
             'Yes', 'No'
         );
@@ -94,31 +73,46 @@ export class EditedFileDownloader {
         }
     }
 
-    /**
-     * Downloads the content of the file from the remote system via the terminal.
-     */
     async captureDownloadFile(): Promise<EditedFileDownloader> {
-        if (!this.fileName) {
-            throw new Error('File name is not set');
+        if (!this.downloadFilePath) {
+            throw new Error('File path to download is not set');
         }
-        // try {
-        //     // Simulating the download by reading the file (this should be replaced with SSH logic)
-        //     const filePath = path.join('/remote/path', this.fileName);
-        //     this.fileContent = fs.readFileSync(filePath, 'utf8');
-        //     Logger.info(`Downloaded file: ${this.fileName}`);
-        //     return this;
-        // } catch (err) {
-        //     Logger.error(`Error downloading file: ${this.fileName} - ${err}`);
-        //     throw err;
-        // }
+        const catCommand = `cat ${this.downloadFilePath}`;
+        this.terminal.sendText(catCommand);
         return this;
     }
 
     async saveEditedFile(): Promise<EditedFileDownloader>  {
+        this.fileName = this.getFileName();
         if (!this.fileName) {
-            throw new Error('File name is not set');
+            throw new Error('Downloaded save file name is not set');
         }
-        return this;
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const filePath = path.join(workspaceRoot, this.fileName);
+        this.fileContent = this.parsedCommand.output;
+        try {
+            console.log("SAVEEDITEDFILE:", filePath, this.fileContent);
+            const res = await fs.promises.writeFile(filePath, this.fileContent);
+            console.log("SAVEEDITEDFILE2:", res);
+            Logger.info(`Downloaded file: ${this.fileName}`);
+            return this;
+        } catch (err) {
+            Logger.error(`Error downloading file: ${this.fileName} - ${err}`);
+            throw err;
+        }
+    }
+
+    getFileName(suffixNumber : number = 0): string | undefined {
+        if (!this.downloadFilePath) {
+            return;
+        }
+        const terminalName = Util.toCamelCase(this.terminal.name);
+        let baseName = path.basename(this.downloadFilePath);
+        if (suffixNumber > 0) {
+            return  `${baseName}@${terminalName}_${suffixNumber}`;
+        } else {
+            return  `${baseName}@${terminalName}`;
+        }
     }
 
     /**
@@ -126,18 +120,23 @@ export class EditedFileDownloader {
      * @param commandId The ID of the command to be updated.
      */
     async updateCommand(commandId: number): Promise<EditedFileDownloader> {
-        if (!this.fileName) {
+        if (!this.fileName || !this.downloadFilePath) {
             throw new Error('File name is not set');
         }
-        const downloadFilePath = path.join('/local/path', this.fileName); // Define local path
-        await Command.updateFileModifyOperation(commandId, 'updated', this.fileName, downloadFilePath);
-        Logger.info(`Command with ID ${commandId} updated with file path ${downloadFilePath}`);
+        await Command.updateFileModifyOperation(commandId, 'updated', this.fileName, this.downloadFilePath);
+        Logger.info(`Command with ID ${commandId} updated with ${this.fileName}`);
         return this;
     }
 
-    async updateNotebook(): Promise<EditedFileDownloader> {
+    async updateNotebook(commandId: number): Promise<EditedFileDownloader> {
         console.log("updateNotebook");
         return this;
     }
 
+    errorHandler(err: Error) {
+        vscode.window.showErrorMessage(
+            `Oops. Failed to download the edidted file.`
+        );
+        throw new Error('Method not implemented.');
+    }
 }

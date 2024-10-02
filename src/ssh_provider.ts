@@ -80,9 +80,6 @@ export class SSHProvider {
             console.info("セッションからコマンドIDが取得できませんでした: ", terminalSession);
             return; 
         }
-        if (TerminalSessionManager.getUpdateFilePath(e.terminal)) {
-            console.log("DOWNLOAD PHASE 2");
-        }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);
         // await Command.updateEndTimestamp(commandId);
         await Command.updateEnd(commandId, endTime);
@@ -112,37 +109,31 @@ export class SSHProvider {
             exit_code = parsedCommand.exitCode;
         }
         // ここにファイル編集キャプチャーのコードを追加する
-        const editedFileDownloader = new EditedFileDownloader(e.terminal, parsedCommand);
+        const editedFileDownloader = TerminalSessionManager.getEditedFileDownloader(e.terminal) 
+            || new EditedFileDownloader(e.terminal, parsedCommand);
         if (editedFileDownloader.checkRunningMode()) {
             switch(editedFileDownloader.mode) {
                 case EditedFileDownloaderMode.Caputure:
                     await editedFileDownloader
                         .storeTerminalSessions()
-                        .captureDownloadFile()
-                        .catch((err : Error) => console.error('Error:', err.message));
+                        .showConfirmationMessage()
+                        .then((downloader : EditedFileDownloader) => downloader.captureDownloadFile())
+                        .catch((err : Error) => editedFileDownloader.errorHandler(err));
                     break;
                 case EditedFileDownloaderMode.Save:
                     await editedFileDownloader
                         .resetTerminalSessions()
                         .saveEditedFile()
                         .then((downloader : EditedFileDownloader) => downloader.updateCommand(commandId))
-                        .then((downloader : EditedFileDownloader) => downloader.updateNotebook())
-                        .catch((err : Error) => console.error('Error:', err.message));
+                        .then((downloader : EditedFileDownloader) => downloader.updateNotebook(commandId))
+                        .catch((err : Error) => editedFileDownloader.errorHandler(err));
+                    break;
+                default:
+                    console.log(`skip edited file download for ${editedFileDownloader.mode}`);
+                    break;
             }
             return;
         }
-        // const downloaderMode = EditedFileDownloader.checkMode(e.terminal, parsedCommand);
-        // if (downloaderMode) {
-        //     switch (downloaderMode as EditedFileDownloaderMode) {
-        //         case EditedFileDownloaderMode.Caputure:
-        //             break;
-        //         case EditedFileDownloaderMode.Save:
-        //             break;
-        //         default:
-        //             break;
-        //     }
-        //     return;
-        // }
 
         await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         const command = await Command.getById(commandId);

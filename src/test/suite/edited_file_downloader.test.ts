@@ -10,51 +10,123 @@ import { Logger } from '../../logger';
 import proxyquire from 'proxyquire';
 import sinon from 'sinon'; 
 import { ParsedCommand } from '../../osc633_parser';
+import { TerminalSessionManager } from '../../terminal_session_manager';
 
 suite('EditedFileDownloader', () => {
-    const fileName = 'testfile.txt';
-    const fileContent = 'This is a test file content';
+    let sandbox: sinon.SinonSandbox;
+    let mockTerminal: vscode.Terminal;
+    let parsedCommand: ParsedCommand;
+    let downloader: EditedFileDownloader;
 
-    const fsMock = {
-        readFileSync: sinon.stub().returns(fileContent)
-    };
+    // const fileName = 'testfile.txt';
+    // const fileContent = 'This is a test file content';
+    // sandbox = sinon.createSandbox();
 
-    // Use proxyquire to mock 'fs' module
-    const { EditedFileDownloader } = proxyquire('../../edited_file_downloader', {
-        fs: fsMock
-    });
+    // const fsMock = {
+    //     readFileSync: sinon.stub().returns(fileContent),
+    //     writeFileSync: sandbox.stub()
+    // };
+
+    // // Use proxyquire to mock 'fs' module
+    // const { EditedFileDownloader } = proxyquire('../../edited_file_downloader', {
+    //     fs: fsMock
+    // });
 
     let db: sqlite3.Database;
+
     suiteSetup(function (done) {
         db = initializeTestDB(done);
-      });
-    
-      suiteTeardown(function (done) {
+        sandbox = sinon.createSandbox();
+        const fsStub = {
+            writeFileSync: sandbox.stub().returns(true),
+        };
+        const { EditedFileDownloader } = proxyquire('../../edited_file_downloader', {
+            'fs': fsStub,
+        });
+        mockTerminal = <vscode.Terminal><unknown>{ 
+            name: 'Test Terminal', 
+            sendText: sandbox.stub() 
+        };
+        parsedCommand = { command: 'vi /path/to/file', output: 'File content after download' } as ParsedCommand;
+        downloader = new EditedFileDownloader(mockTerminal, parsedCommand);
+
+    });
+
+    suiteTeardown(function (done) {
         db.close(done);
-      });
+        sandbox.restore();
+        // const writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
+    });
+
+    test('storeTerminalSessions should register session in TerminalSessionManager', () => {
+        const setEditedFileDownloaderSpy = sandbox.spy(TerminalSessionManager, 'setEditedFileDownloader');
+        downloader.fileName = 'testFile.txt';
+        downloader.storeTerminalSessions();
+        assert.strictEqual(setEditedFileDownloaderSpy.calledWith(mockTerminal, downloader), true);
+    });
     
+    test('storeTerminalSessions should throw error if fileName is not set', () => {
+        downloader.fileName = undefined;
+        assert.throws(() => downloader.storeTerminalSessions(), new Error('File name is not set'));
+    });
 
-    // test('should download a file and return its content via method chaining', async () => {
-    //     const terminal = <vscode.Terminal>{};
-    //     const sessionId = await Session.create('test_profile', '/path/to/exe', ['arg1'], 'host', 'user');
-    //     const commandId = await Command.create(sessionId, 'vi testfile.txt', 'output', '/cwd', 0);
-    //     const parsedCommand = new ParsedCommand();
+    test('captureDownloadFile should send the correct cat command to the terminal', async () => {
+        downloader.downloadFilePath = '/path/to/file';
+        await downloader.captureDownloadFile();
+        assert.strictEqual((mockTerminal.sendText as sinon.SinonStub).calledWith('cat /path/to/file'), true);
+    });
 
-        // const downloader = await EditedFileDownloader(terminal, parsedCommand)
-        //     .setTerminalSession()
-        //     .caputureEditedFile();
+    test('saveEditedFile should save file and log success', async () => {
+        sandbox.stub(vscode.workspace, 'workspaceFolders').value([{ uri: vscode.Uri.file('/workspace') }]);
+        // const writeFileSyncStub = sandbox.stub(fs, 'writeFileSync');
+        const writeFileStub = sandbox.stub(fs.promises, 'writeFile').resolves();
 
-        // assert.strictEqual(downloader.fileContent, fileContent, 'File content should match');
+        const logInfoStub = sandbox.stub(console, 'log');
+        downloader.downloadFilePath = '/path/to/file';
+        downloader.fileName = 'testFile.txt';
+        downloader.fileContent = 'File content after download';
+        
+        await downloader.saveEditedFile();
+        
+        assert.strictEqual(writeFileStub.calledWith('\\workspace\\file@testTerminal', 'File content after download'), true);
+        // assert.strictEqual(logInfoStub.calledWith('Downloaded file: testFile.txt'), true);
+    });
+
+    test('saveEditedFile should throw error if fileName is not set', async () => {
+        downloader.downloadFilePath = undefined;
+        await assert.rejects(() => downloader.saveEditedFile(), { message: 'Downloaded save file name is not set' });
+    });
+
+    // test('showConfirmationMessage should return promise on Yes', async () => {
+    //     const showInformationMessageStub = sandbox.stub(vscode.window, 'showInformationMessage');
+    //     showInformationMessageStub.resolves('Yes' as any); // This returns an object with a `title` property
+    //     downloader.downloadFilePath = '/path/to/file';
+    //     await assert.doesNotReject(async () => await downloader.showConfirmationMessage());
+    //     assert.strictEqual(showInformationMessageStub.called, true);
     // });
 
-    // test('should throw an error when file name is not set', async () => {
-    //     try {
-    //         await EditedFileDownloader
-    //             .create()
-    //             .download(); // File name is not set
-    //         assert.fail('Should have thrown an error');
-    //     } catch (err) {
-    //         assert.strictEqual((err as Error).message, 'File name is not set');
-    //     }
-    // });
+    test('showConfirmationMessage should reject on No', async () => {
+        const showInformationMessageStub = sandbox.stub(vscode.window, 'showInformationMessage').resolves('No' as any);
+        downloader.downloadFilePath = '/path/to/file';
+        await assert.rejects(() => downloader.showConfirmationMessage(), { message: 'User canceled the download' });
+        assert.strictEqual(showInformationMessageStub.called, true);
+    });
+
+    test('updateCommand should update the command table after downloading', async () => {
+        const commandUpdateStub = sandbox.stub(Command, 'updateFileModifyOperation').resolves();
+        downloader.fileName = 'testFile.txt';
+        downloader.downloadFilePath = '/path/to/file';
+        
+        await downloader.updateCommand(1);
+        
+        assert.strictEqual(commandUpdateStub.calledWith(1, 'updated', 'testFile.txt', '/path/to/file'), true);
+    });
+
+    test('errorHandler should display error message', () => {
+        const showErrorMessageStub = sandbox.stub(vscode.window, 'showErrorMessage');
+        const error = new Error('Test error');
+        assert.throws(() => downloader.errorHandler(error), new Error('Method not implemented.'));
+        assert.strictEqual(showErrorMessageStub.calledWith('Oops. Failed to download the edidted file.'), true);
+    });
+
 });
