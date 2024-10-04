@@ -10,6 +10,7 @@ import { Util } from './util';
 import { Logger } from './logger';
 import { OSC633Parser } from './osc633_parser';
 import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
+import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 
 export class SSHProvider {
     private context: vscode.ExtensionContext;
@@ -47,6 +48,10 @@ export class SSHProvider {
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`start command handler invoked`);
+        if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
+            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+            return;
+        }
         const sessionId = await TerminalSessionManager.getSessionIdWithRetry(e.terminal);
         if (!sessionId) {
             const terminalSession = TerminalSessionManager.get(e.terminal);
@@ -72,6 +77,10 @@ export class SSHProvider {
         let cwd = "";
         let exit_code = 0;
 
+        if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
+            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+            return;
+        }
         const endTime = new Date();
         await new Promise(resolve => setTimeout(resolve, 500));
         const commandId = TerminalSessionManager.getCommandId(e.terminal);
@@ -109,33 +118,47 @@ export class SSHProvider {
             exit_code = parsedCommand.exitCode;
         }
         // ここにファイル編集キャプチャーのコードを追加する
-        const editedFileDownloader = TerminalSessionManager.getEditedFileDownloader(e.terminal) 
-            || new EditedFileDownloader(e.terminal, parsedCommand);
-        if (editedFileDownloader.checkRunningMode()) {
-            switch(editedFileDownloader.mode) {
-                case EditedFileDownloaderMode.Caputure:
-                    await editedFileDownloader
-                        .storeTerminalSessions()
-                        .showConfirmationMessage()
-                        .then((downloader : EditedFileDownloader) => downloader.captureDownloadFile())
-                        .catch((err : Error) => editedFileDownloader.errorHandler(err));
-                    break;
-                case EditedFileDownloaderMode.Save:
-                    await editedFileDownloader
-                        .resetTerminalSessions()
-                        .saveEditedFile()
-                        .then((downloader : EditedFileDownloader) => downloader.updateCommand(commandId))
-                        .then((downloader : EditedFileDownloader) => downloader.updateNotebook(commandId))
-                        .catch((err : Error) => editedFileDownloader.errorHandler(err));
-                    break;
-                default:
-                    console.log(`skip edited file download for ${editedFileDownloader.mode}`);
-                    break;
-            }
-            return;
+        const downloader = new ConcernedFileDownloader(e.terminal, parsedCommand);
+        if (downloader.checkRunningMode()) {
+            console.log("ファイル編集モード:", downloader);
+            await downloader
+                .showConfirmationMessage()
+                .then((downloader : ConcernedFileDownloader) => downloader.captureConcernedFile())
+                .then((downloader : ConcernedFileDownloader) => downloader.saveConcernedFile())
+                .then((downloader : ConcernedFileDownloader) => downloader.updateCommand(commandId))
+                .catch((err : Error) => downloader.errorHandler(err));
+        } else {
+            await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         }
 
-        await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
+        // ここにファイル編集キャプチャーのコードを追加する
+        // const editedFileDownloader = TerminalSessionManager.getEditedFileDownloader(e.terminal) 
+        //     || new EditedFileDownloader(e.terminal, parsedCommand);
+        // if (editedFileDownloader.checkRunningMode()) {
+        //     console.log("ファイル編集モード:", editedFileDownloader);
+        //     switch(editedFileDownloader.mode) {
+        //         case EditedFileDownloaderMode.Caputure:
+        //             await editedFileDownloader
+        //                 .storeTerminalSessions()
+        //                 .showConfirmationMessage()
+        //                 .then((downloader : EditedFileDownloader) => downloader.captureDownloadFile())
+        //                 .catch((err : Error) => editedFileDownloader.errorHandler(err));
+        //             break;
+        //         case EditedFileDownloaderMode.Save:
+        //             await editedFileDownloader
+        //                 .resetTerminalSessions()
+        //                 .saveEditedFile()
+        //                 .then((downloader : EditedFileDownloader) => downloader.updateCommand(commandId))
+        //                 .then((downloader : EditedFileDownloader) => downloader.updateNotebook(commandId))
+        //                 .catch((err : Error) => editedFileDownloader.errorHandler(err));
+        //             break;
+        //         default:
+        //             console.log(`skip edited file download for ${editedFileDownloader.mode}`);
+        //             break;
+        //     }
+        //     return;
+        // }
+
         const command = await Command.getById(commandId);
         Logger.info(`end command handler, update commands table : ${command}.`);
         if (TerminalSessionManager.getNotebookEditor(e.terminal)) {

@@ -11,6 +11,7 @@ class TerminalSession {
     notebookEditor: vscode.NotebookEditor | undefined;
     xtermParser: XtermParser | undefined;
     editedFileDownloader: EditedFileDownloader | undefined;
+    shellIntegrationEventDisabled: boolean = false;
     // updatingFlag : boolean = false;
     // UpdateFilePath : string | undefined;
 }
@@ -68,6 +69,23 @@ export class TerminalSessionManager {
         return session;
 	}
 
+    static disableShellIntegrationEvent(terminal: vscode.Terminal) {
+        let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.shellIntegrationEventDisabled = true;
+        Logger.info(`set terminal session manager shell integration event disable`);
+        console.log(`set terminal session manager shell integration event disable`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+	}
+
+    static enableShellIntegrationEvent(terminal: vscode.Terminal) {
+        let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.shellIntegrationEventDisabled = false;
+        Logger.info(`set terminal session manager shell integration event enable`);
+        console.log(`set terminal session manager shell integration event enable`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+	}
 
     // static setUpdatingFlag(terminal: vscode.Terminal, updatingFlag: boolean) {
     //     let session = this.terminalSessions.get(terminal) || new TerminalSession();
@@ -139,6 +157,10 @@ export class TerminalSessionManager {
 
     static getEditedFileDownloader(terminal: vscode.Terminal): EditedFileDownloader|undefined {
         return this.terminalSessions.get(terminal)?.editedFileDownloader;
+    }
+
+    static isShellIntegrationEventDisabled(terminal: vscode.Terminal): boolean {
+        return this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;
     }
 
     // static getUpdatingFlag(terminal: vscode.Terminal): boolean {

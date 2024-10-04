@@ -7,7 +7,7 @@ import { ParsedCommand } from './osc633_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
 
-export enum EditedFileDownloaderMode {
+export enum DownloaderMode {
     Caputure,
     Save,
     Skip,
@@ -15,9 +15,9 @@ export enum EditedFileDownloaderMode {
     Unkown,
 };
 
-export class EditedFileDownloader {
+export class ConsernedFileDownloader {
 
-    public mode: EditedFileDownloaderMode = EditedFileDownloaderMode.Unkown;
+    public mode: DownloaderMode = DownloaderMode.Unkown;
     downloadFilePath: string | undefined;
     fileName: string | undefined;
     fileContent: string | undefined;
@@ -29,35 +29,22 @@ export class EditedFileDownloader {
         this.parsedCommand = parsedCommand;
     }
 
-    storeTerminalSessions(): EditedFileDownloader {
-        if (!this.downloadFilePath) {
-            throw new Error('Download file is not set');
-        }
-        TerminalSessionManager.setEditedFileDownloader(this.terminal, this);
-        return this;
-    }
-
-    resetTerminalSessions(): EditedFileDownloader {
-        TerminalSessionManager.setEditedFileDownloader(this.terminal, undefined);
-        return this;
-    }
-
     checkRunningMode() : boolean {
-        if (this.mode in [EditedFileDownloaderMode.Caputure]) { 
-            this.mode = EditedFileDownloaderMode.Save;
+        if (this.mode in [DownloaderMode.Caputure]) { 
+            this.mode = DownloaderMode.Save;
             return true; 
         }
         const commandText = this.parsedCommand.command;
         const fileNameFromEditorCommand  = Util.checkFileNameFromEditorCommand(commandText);
         if (fileNameFromEditorCommand) { 
             this.downloadFilePath = fileNameFromEditorCommand;
-            this.mode = EditedFileDownloaderMode.Caputure; 
+            this.mode = DownloaderMode.Caputure; 
             return true;
         }
         return false;
     }
 
-    async showConfirmationMessage(): Promise<EditedFileDownloader> {
+    async showConfirmationMessage(): Promise<ConsernedFileDownloader> {
         if (!this.downloadFilePath) {
             throw new Error('File path to download is not set');
         }
@@ -73,16 +60,17 @@ export class EditedFileDownloader {
         }
     }
 
-    async captureDownloadFile(): Promise<EditedFileDownloader> {
+    async captureConcernedFile(): Promise<ConsernedFileDownloader> {
         if (!this.downloadFilePath) {
             throw new Error('File path to download is not set');
         }
+        TerminalSessionManager.disableShellIntegrationEvent(this.terminal);
         const catCommand = `cat ${this.downloadFilePath}`;
         this.terminal.sendText(catCommand);
         return this;
     }
 
-    async saveEditedFile(): Promise<EditedFileDownloader>  {
+    async saveConcernedFile(): Promise<ConsernedFileDownloader>  {
         this.fileName = this.getFileName();
         if (!this.fileName) {
             throw new Error('Downloaded save file name is not set');
@@ -119,24 +107,27 @@ export class EditedFileDownloader {
      * Updates the command table after a file download operation.
      * @param commandId The ID of the command to be updated.
      */
-    async updateCommand(commandId: number): Promise<EditedFileDownloader> {
+    async updateCommand(commandId: number): Promise<ConsernedFileDownloader> {
         if (!this.fileName || !this.downloadFilePath) {
             throw new Error('File name is not set');
         }
         await Command.updateFileModifyOperation(commandId, 'updated', this.fileName, this.downloadFilePath);
         Logger.info(`Command with ID ${commandId} updated with ${this.fileName}`);
+        TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
         return this;
     }
 
-    async updateNotebook(commandId: number): Promise<EditedFileDownloader> {
+    async updateNotebook(commandId: number): Promise<ConsernedFileDownloader> {
         console.log("updateNotebook");
         return this;
     }
 
     errorHandler(err: Error) {
         vscode.window.showErrorMessage(
-            `Oops. Failed to download the edidted file.`
+            `Oops. Failed to download the concerned file: ${err.message}`
         );
-        throw new Error('Method not implemented.');
+        TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
+        // throw new Error('Method not implemented.');
+        return this;
     }
 }
