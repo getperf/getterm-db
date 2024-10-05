@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Command } from './model/commands';
 import { Logger } from './logger';
-import { ParsedCommand } from './osc633_parser';
+import { OSC633Parser, ParsedCommand } from './osc633_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
 
@@ -17,27 +17,27 @@ export enum DownloaderMode {
 
 export class ConsernedFileDownloader {
 
-    public mode: DownloaderMode = DownloaderMode.Unkown;
-    downloadFilePath: string | undefined;
-    fileName: string | undefined;
-    fileContent: string | undefined;
+    commandId: number;
     terminal: vscode.Terminal;
     parsedCommand: ParsedCommand;
+    public mode: DownloaderMode = DownloaderMode.Unkown;
+    commandAccessFile: string | undefined;
+    downloadFile: string | undefined;
+    fileContent: string | undefined;
+    workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
 
-    constructor(terminal : vscode.Terminal, parsedCommand: ParsedCommand) {
+    constructor(commandId : number, terminal : vscode.Terminal, parsedCommand: ParsedCommand) {
+        this.commandId = commandId;
         this.terminal = terminal;
         this.parsedCommand = parsedCommand;
     }
 
-    checkRunningMode() : boolean {
-        if (this.mode in [DownloaderMode.Caputure]) { 
-            this.mode = DownloaderMode.Save;
-            return true; 
-        }
+    detectFileAccessFromCommand() : boolean {
         const commandText = this.parsedCommand.command;
-        const fileNameFromEditorCommand  = Util.checkFileNameFromEditorCommand(commandText);
-        if (fileNameFromEditorCommand) { 
-            this.downloadFilePath = fileNameFromEditorCommand;
+        const commandAccessFile  = Util.checkFileNameFromEditorCommand(commandText);
+        if (commandAccessFile) {
+            console.log("Detect file access from command :", commandAccessFile); 
+            this.commandAccessFile = commandAccessFile;
             this.mode = DownloaderMode.Caputure; 
             return true;
         }
@@ -45,11 +45,11 @@ export class ConsernedFileDownloader {
     }
 
     async showConfirmationMessage(): Promise<ConsernedFileDownloader> {
-        if (!this.downloadFilePath) {
+        if (!this.commandAccessFile) {
             throw new Error('File path to download is not set');
         }
         const confirm = await vscode.window.showInformationMessage(
-            `Do you want to download the file "${this.downloadFilePath}" that was edited?`,
+            `Do you want to download the file "${this.commandAccessFile}" ?`,
             { modal: true },
             'Yes', 'No'
         );
@@ -60,74 +60,118 @@ export class ConsernedFileDownloader {
         }
     }
 
-    async captureConcernedFile(): Promise<ConsernedFileDownloader> {
-        if (!this.downloadFilePath) {
-            throw new Error('File path to download is not set');
+    async caputureCommandAccessFile(): Promise<ConsernedFileDownloader> {
+        if (!this.commandAccessFile) {
+            throw new Error('Not found command access file');
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal);
-        const catCommand = `cat ${this.downloadFilePath}`;
+        const catCommand = `cat ${this.commandAccessFile}`;
         this.terminal.sendText(catCommand);
         return this;
     }
 
-    async saveConcernedFile(): Promise<ConsernedFileDownloader>  {
-        this.fileName = this.getFileName();
-        if (!this.fileName) {
+    getUniqueDownloadFile(): string | undefined {
+        let downloadFile = this.getDownloadFile();
+        if (!downloadFile) {
+            return;
+        }
+        let filePath = path.join(this.workspaceRoot, downloadFile);
+        let file_suffix = 2;
+        console.log("FilePath1:", filePath);
+        while (fs.existsSync(filePath)) {
+            downloadFile = this.getDownloadFile(file_suffix);
+            if (!downloadFile) {
+                return;
+            }
+            filePath = path.join(this.workspaceRoot, downloadFile);
+            console.log("FilePath2:", filePath);
+            file_suffix ++;
+        }
+        console.log("FilePath3:", filePath);
+        return downloadFile;
+    }
+
+    async saveCommandAccessFile(): Promise<ConsernedFileDownloader>  {
+        this.downloadFile = this.getUniqueDownloadFile();
+        console.log("Download file : ", this.downloadFile);
+        if (!this.downloadFile) {
             throw new Error('Downloaded save file name is not set');
         }
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        const filePath = path.join(workspaceRoot, this.fileName);
-        this.fileContent = this.parsedCommand.output;
+        let filePath = path.join(this.workspaceRoot, this.downloadFile);
+
+        // cat コマンド実行後、data buffer がアイドルになるまで待つ必要がある。とりあえず1秒に設定
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const rawData = TerminalSessionManager.retrieveDataBuffer(this.terminal);
+        if (!rawData) { 
+            throw new Error('Could not get the buffer from session');
+        }
+        const parsedCommand = await OSC633Parser.parseOSC633AndCommand(rawData);
+        if (!parsedCommand) {
+            throw new Error('Could not parse the capture command');
+        }
         try {
-            console.log("SAVEEDITEDFILE:", filePath, this.fileContent);
-            const res = await fs.promises.writeFile(filePath, this.fileContent);
-            console.log("SAVEEDITEDFILE2:", res);
-            Logger.info(`Downloaded file: ${this.fileName}`);
+            const res = await fs.promises.writeFile(filePath, parsedCommand.output);
+            console.log("Save file:", filePath, res);
             return this;
         } catch (err) {
-            Logger.error(`Error downloading file: ${this.fileName} - ${err}`);
+            Logger.error(`Error downloading file: ${this.downloadFile} - ${err}`);
             throw err;
         }
     }
 
-    getFileName(suffixNumber : number = 0): string | undefined {
-        if (!this.downloadFilePath) {
+    getDownloadFile(suffixNumber : number = 0): string | undefined {
+        if (!this.commandAccessFile) {
             return;
         }
         const terminalName = Util.toCamelCase(this.terminal.name);
-        let baseName = path.basename(this.downloadFilePath);
+        const downloadFileName = path.basename(this.commandAccessFile);
         if (suffixNumber > 0) {
-            return  `${baseName}@${terminalName}_${suffixNumber}`;
+            return  `${terminalName}__${downloadFileName}_${suffixNumber}`;
         } else {
-            return  `${baseName}@${terminalName}`;
+            return  `${terminalName}__${downloadFileName}`;
         }
     }
 
-    /**
-     * Updates the command table after a file download operation.
-     * @param commandId The ID of the command to be updated.
-     */
-    async updateCommand(commandId: number): Promise<ConsernedFileDownloader> {
-        if (!this.fileName || !this.downloadFilePath) {
-            throw new Error('File name is not set');
+    async updateCommandSuccess(): Promise<ConsernedFileDownloader> {
+        if (!this.commandAccessFile) {
+            throw new Error('Not found command access file');
         }
-        await Command.updateFileModifyOperation(commandId, 'updated', this.fileName, this.downloadFilePath);
-        Logger.info(`Command with ID ${commandId} updated with ${this.fileName}`);
+        if (!this.downloadFile) {
+            throw new Error('Not found download file');
+        }
+        await Command.updateConceredFileOperation(
+            this.commandId, 
+            'downloaded', 
+            this.commandAccessFile,
+            this.downloadFile, 
+        );
+        const filePath = path.join(this.workspaceRoot, this.downloadFile);
+        const fileUri = vscode.Uri.file(filePath);
+
+        await Command.updatedWithoutTimestamp(
+            this.commandId, 
+            this.parsedCommand.command, 
+            `[Download file here](${fileUri.toString()})`, 
+            this.parsedCommand.cwd, 
+            this.parsedCommand.exitCode || 0,
+        );
+        Logger.info(`Command with ID ${this.commandId} updated`);
         TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
         return this;
     }
 
-    async updateNotebook(commandId: number): Promise<ConsernedFileDownloader> {
-        console.log("updateNotebook");
-        return this;
-    }
-
-    errorHandler(err: Error) {
+    async errorHandler(err: Error) {
         vscode.window.showErrorMessage(
-            `Oops. Failed to download the concerned file: ${err.message}`
+            `Download canceled : ${err.message}`
         );
         TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
-        // throw new Error('Method not implemented.');
+        await Command.updatedWithoutTimestamp(
+            this.commandId, 
+            this.parsedCommand.command, 
+            ``, 
+            this.parsedCommand.cwd, 
+            this.parsedCommand.exitCode || 0,
+        );
         return this;
     }
 }

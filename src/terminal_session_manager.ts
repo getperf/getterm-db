@@ -73,7 +73,7 @@ export class TerminalSessionManager {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.shellIntegrationEventDisabled = true;
         Logger.info(`set terminal session manager shell integration event disable`);
-        console.log(`set terminal session manager shell integration event disable`);
+        console.log("DisableFlag1(on):", session.shellIntegrationEventDisabled);
         this.terminalSessions.set(terminal, session);
         return session;
 	}
@@ -82,7 +82,7 @@ export class TerminalSessionManager {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.shellIntegrationEventDisabled = false;
         Logger.info(`set terminal session manager shell integration event enable`);
-        console.log(`set terminal session manager shell integration event enable`);
+        console.log("DisableFlag2(off):", session.shellIntegrationEventDisabled);
         this.terminalSessions.set(terminal, session);
         return session;
 	}
@@ -160,6 +160,8 @@ export class TerminalSessionManager {
     }
 
     static isShellIntegrationEventDisabled(terminal: vscode.Terminal): boolean {
+        const flag = this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;
+        console.log("DisableFlag3(is):", flag);
         return this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;
     }
 

@@ -111,24 +111,26 @@ export class SSHProvider {
             );
             return;
         }
-        output = parsedCommand.output;
-        commandText = parsedCommand.command;
-        cwd = parsedCommand.cwd;
-        if (parsedCommand.exitCode) {
-            exit_code = parsedCommand.exitCode;
-        }
         // ここにファイル編集キャプチャーのコードを追加する
-        const downloader = new ConcernedFileDownloader(e.terminal, parsedCommand);
-        if (downloader.checkRunningMode()) {
-            console.log("ファイル編集モード:", downloader);
+        const downloader = new ConcernedFileDownloader(commandId, e.terminal, parsedCommand);
+        if (downloader.detectFileAccessFromCommand()) {
             await downloader
                 .showConfirmationMessage()
-                .then((downloader : ConcernedFileDownloader) => downloader.captureConcernedFile())
-                .then((downloader : ConcernedFileDownloader) => downloader.saveConcernedFile())
-                .then((downloader : ConcernedFileDownloader) => downloader.updateCommand(commandId))
+                .then((downloader : ConcernedFileDownloader) => 
+                    downloader.caputureCommandAccessFile())
+                .then((downloader : ConcernedFileDownloader) => 
+                    downloader.saveCommandAccessFile())
+                .then((downloader : ConcernedFileDownloader) => 
+                    downloader.updateCommandSuccess())
                 .catch((err : Error) => downloader.errorHandler(err));
         } else {
-            await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
+                output = parsedCommand.output;
+                commandText = parsedCommand.command;
+                cwd = parsedCommand.cwd;
+                if (parsedCommand.exitCode) {
+                    exit_code = parsedCommand.exitCode;
+                }
+                await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         }
 
         // ここにファイル編集キャプチャーのコードを追加する

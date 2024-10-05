@@ -27,11 +27,11 @@ export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
               command TEXT,
               output TEXT,
               cwd TEXT,
-              file_update_mode TEXT 
-                CHECK(file_update_mode IN ('updated', 'failed', 'no_update')) 
-                NOT NULL DEFAULT 'no_update',
-              update_file_path TEXT,
-              download_file_path TEXT,
+              file_operation_mode TEXT 
+                  CHECK(file_operation_mode IN ('downloaded', 'failed', 'canceled')) 
+                  NOT NULL DEFAULT 'canceled',
+              command_access_file TEXT,
+              download_file TEXT,
               exit_code INTEGER,
               start DATETIME,
               end DATETIME,

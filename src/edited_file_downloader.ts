@@ -123,7 +123,7 @@ export class EditedFileDownloader {
         if (!this.fileName || !this.downloadFilePath) {
             throw new Error('File name is not set');
         }
-        await Command.updateFileModifyOperation(commandId, 'updated', this.fileName, this.downloadFilePath);
+        await Command.updateConceredFileOperation(commandId, 'downloaded', this.fileName, this.downloadFilePath);
         Logger.info(`Command with ID ${commandId} updated with ${this.fileName}`);
         return this;
     }

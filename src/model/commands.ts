@@ -61,23 +61,23 @@ export class Command {
         });
     }
 
-    static async updateFileModifyOperation(
+    static async updateConceredFileOperation(
         id: number,
-        updateMode: 'updated' | 'failed' | 'no_update',
-        updateFilePath: string, 
-        downloadFilePath: string | null
+        updateMode: 'downloaded' | 'failed' | 'canceled',
+        commandAccessFile: string, 
+        downloadFile: string | null
     ): Promise<void> {
         return new Promise((resolve, reject) => {
             const sql = `
                 UPDATE commands 
-                SET file_update_mode = ?, 
-                    update_file_path = ?, 
-                    download_file_path = ?
+                SET file_operation_mode = ?, 
+                    command_access_file = ?, 
+                    download_file = ?
                 WHERE id = ?
             `;
             Command.db.run(
                 sql,
-                [updateMode, updateFilePath, downloadFilePath, id],
+                [updateMode, commandAccessFile, downloadFile, id],
                 function (err) {
                     if (err) {
                         reject(err);
