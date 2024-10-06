@@ -187,4 +187,25 @@ export class OSC633Parser {
         }
         return command;
     }
+
+    // Function to remove control sequences (e.g., color codes, escape sequences)
+    removeControlSequences(text: string): string {
+        // This regex matches ANSI escape sequences used for colors and control characters
+        const controlSequenceRegex = /\x1b\[[0-9;]*[a-zA-Z]/g;
+        return text.replace(controlSequenceRegex, '');
+    }
+
+    static async extractCommandOutput(terminalBuffer: string, command: string): Promise<string> {
+        const commandPosition = terminalBuffer.lastIndexOf(command);  // Find the last occurrence of the command
+        const xtermParser = XtermParser.getInstance();
+        if (commandPosition === -1) {
+            throw new Error(`Command not found in terminal buffer: ${command}`);
+        }
+    
+        // Remove everything before the command
+        const bufferOutputPart = terminalBuffer.substring(commandPosition + command.length + 1);
+        const output = await xtermParser.parseTerminalBuffer(bufferOutputPart);
+        return this.cleanCommandOutput(output);
+    }
+    
 }
