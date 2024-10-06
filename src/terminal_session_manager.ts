@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 import { XtermParser } from './xterm_parser';
-import { EditedFileDownloader } from './edited_file_downloader';
+// import { EditedFileDownloader } from './edited_file_downloader';
 
 class TerminalSession {
     start: Date = new Date();
@@ -10,7 +10,7 @@ class TerminalSession {
     dataBuffer: string[]  = [];
     notebookEditor: vscode.NotebookEditor | undefined;
     xtermParser: XtermParser | undefined;
-    editedFileDownloader: EditedFileDownloader | undefined;
+    // editedFileDownloader: EditedFileDownloader | undefined;
     shellIntegrationEventDisabled: boolean = false;
     // updatingFlag : boolean = false;
     // UpdateFilePath : string | undefined;
@@ -61,13 +61,13 @@ export class TerminalSessionManager {
         return session;
 	}
 
-    static setEditedFileDownloader(terminal: vscode.Terminal, editedFileDownloader: EditedFileDownloader|undefined) {
-        let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.editedFileDownloader = editedFileDownloader;
-        Logger.info(`set terminal session manager edited file downloader`);
-        this.terminalSessions.set(terminal, session);
-        return session;
-	}
+    // static setEditedFileDownloader(terminal: vscode.Terminal, editedFileDownloader: EditedFileDownloader|undefined) {
+    //     let session = this.terminalSessions.get(terminal) || new TerminalSession();
+    //     session.editedFileDownloader = editedFileDownloader;
+    //     Logger.info(`set terminal session manager edited file downloader`);
+    //     this.terminalSessions.set(terminal, session);
+    //     return session;
+	// }
 
     static disableShellIntegrationEvent(terminal: vscode.Terminal) {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
@@ -155,9 +155,9 @@ export class TerminalSessionManager {
         return this.terminalSessions.get(terminal)?.xtermParser;
     }
 
-    static getEditedFileDownloader(terminal: vscode.Terminal): EditedFileDownloader|undefined {
-        return this.terminalSessions.get(terminal)?.editedFileDownloader;
-    }
+    // static getEditedFileDownloader(terminal: vscode.Terminal): EditedFileDownloader|undefined {
+    //     return this.terminalSessions.get(terminal)?.editedFileDownloader;
+    // }
 
     static isShellIntegrationEventDisabled(terminal: vscode.Terminal): boolean {
         const flag = this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;

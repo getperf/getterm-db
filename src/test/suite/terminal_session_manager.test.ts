@@ -4,7 +4,7 @@ import { TerminalSessionManager } from '../../terminal_session_manager';
 import { XtermParser } from '../../xterm_parser';
 import { MockOutputChannel } from './logger.test';
 import { Logger, LogLevel } from '../../logger';
-import { EditedFileDownloader } from '../../edited_file_downloader';
+// import { EditedFileDownloader } from '../../edited_file_downloader';
 import { ParsedCommand } from '../../osc633_parser';
 
 suite('TerminalSessionManager Tests', () => {
@@ -123,15 +123,15 @@ suite('TerminalSessionManager Tests', () => {
     assert.strictEqual(result, xtermParser, 'XtermParser should be set correctly');
   });
 
-  test('should set and get editedFileDownloader correctly', () => {
-    const terminal = <vscode.Terminal>{};
-    const parsedCommand = new ParsedCommand();
-    const editedFileDownloader = new EditedFileDownloader(terminal, parsedCommand);
+  // test('should set and get editedFileDownloader correctly', () => {
+  //   const terminal = <vscode.Terminal>{};
+  //   const parsedCommand = new ParsedCommand();
+  //   const editedFileDownloader = new EditedFileDownloader(terminal, parsedCommand);
 
-    TerminalSessionManager.setEditedFileDownloader(terminal, editedFileDownloader);
-    const result = TerminalSessionManager.getEditedFileDownloader(terminal);
-    assert.strictEqual(result, editedFileDownloader, 'EditedFileDownloader should be set correctly');
-  });
+  //   TerminalSessionManager.setEditedFileDownloader(terminal, editedFileDownloader);
+  //   const result = TerminalSessionManager.getEditedFileDownloader(terminal);
+  //   assert.strictEqual(result, editedFileDownloader, 'EditedFileDownloader should be set correctly');
+  // });
 
   // test('should set and get updatingFlag correctly', () => {
   //   const terminal = <vscode.Terminal>{};
@@ -150,16 +150,16 @@ suite('TerminalSessionManager Tests', () => {
   //   assert.strictEqual(result, filePath, 'UpdateFilePath should be set correctly');
   // });
 
-  test('should return undefined or default values for non-existent terminal sessions', () => {
-    const terminal = <vscode.Terminal>{};
+  // test('should return undefined or default values for non-existent terminal sessions', () => {
+  //   const terminal = <vscode.Terminal>{};
 
-    // Get values from a terminal with no session
-    const xtermParser = TerminalSessionManager.getXtermParser(terminal);
-    const editedFileDownloader = TerminalSessionManager.getEditedFileDownloader(terminal);
+  //   // Get values from a terminal with no session
+  //   const xtermParser = TerminalSessionManager.getXtermParser(terminal);
+  //   const editedFileDownloader = TerminalSessionManager.getEditedFileDownloader(terminal);
 
-    // Assert that values are undefined or default values
-    assert.strictEqual(xtermParser, undefined, 'XtermParser should be undefined');
-    assert.strictEqual(editedFileDownloader, undefined, 'EditedFileDownloader should be undefined');
-  });
+  //   // Assert that values are undefined or default values
+  //   assert.strictEqual(xtermParser, undefined, 'XtermParser should be undefined');
+  //   assert.strictEqual(editedFileDownloader, undefined, 'EditedFileDownloader should be undefined');
+  // });
 });
   

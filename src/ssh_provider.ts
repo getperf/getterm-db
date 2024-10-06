@@ -9,7 +9,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
 import { OSC633Parser } from './osc633_parser';
-import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
+// import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 
 export class SSHProvider {
