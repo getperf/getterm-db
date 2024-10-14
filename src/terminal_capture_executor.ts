@@ -3,6 +3,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Session } from './model/sessions';
 import { Logger } from './logger';
 import { Config } from './config';
+import { TerminalSessionMode } from './terminal_session';
 
 export class TerminalCaptureExecutor {
     private context: vscode.ExtensionContext;
@@ -40,6 +41,7 @@ export class TerminalCaptureExecutor {
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
         const sessionId = await Session.create(remoteProfile, 'Capture from existing terminal', [], '', '');
         const session = await Session.getById(sessionId);
+        session.terminalSessionMode = TerminalSessionMode.Captured;
         console.log("セッション履歴登録：", session);
         TerminalSessionManager.setSessionId(terminal, sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);

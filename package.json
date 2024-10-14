@@ -47,6 +47,11 @@
         "command": "getterm-db.selectSession",
         "title": "Select Session",
         "category": "Notebook"
+      },
+      {
+        "command": "getterm-db.stopCapture",
+        "title": "Stop Capture",
+        "category": "Notebook"
       }
     ],
     "terminal": {
@@ -67,6 +72,10 @@
       "notebook/toolbar": [
         {
           "command": "getterm-db.selectSession",
+          "group": "navigation"
+        },
+        {
+          "command": "getterm-db.stopCapture",
           "group": "navigation"
         }
       ],

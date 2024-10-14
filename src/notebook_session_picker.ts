@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { NotebookSessionWriter } from './notebook_session_writer';
+import { TerminalSessionMode } from './terminal_session';
 
 export class TerminalNotebookSessionPicker {
     private context: vscode.ExtensionContext;
@@ -37,7 +38,18 @@ export class TerminalNotebookSessionPicker {
                     }
                     NotebookSessionWriter.appendSessionTitleCell(selectedSession);
                 }
-            })
+            }),
+            vscode.commands.registerCommand('getterm-db.stopCapture', async () => {
+                vscode.window.showInformationMessage(`You selected: Stop Capture`);
+                const notebookEditor = vscode.window.activeNotebookEditor;
+                const currentTerminal = TerminalSessionManager.findTerminalByNotebookEditor(notebookEditor);
+                if (currentTerminal) {
+                    const session = TerminalSessionManager.get(currentTerminal);
+                    if (session){
+                        session.terminalSessionMode = TerminalSessionMode.CaptureStopped;
+                    }
+                }
+            }),
         );
     }
 

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { exec } from 'child_process';
 
 export class Util {
-    private static editorCommands = ['vi', 'nano', 'emacs'];
+    private static editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;

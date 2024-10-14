@@ -77,6 +77,11 @@ export class SSHProvider {
         let cwd = "";
         let exit_code = 0;
 
+        const session = TerminalSessionManager.get(e.terminal);
+        if (!session) {
+            return;
+        }
+        console.log("セッションモード：", session.terminalSessionMode);
         if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
             console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
             return;
@@ -93,15 +98,17 @@ export class SSHProvider {
         // await Command.updateEndTimestamp(commandId);
         await Command.updateEnd(commandId, endTime);
         Logger.info(`end command handler, wait few seconds.`);
-        const rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+        let rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
         if (!rawData) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
             console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);
             return; 
         }
         console.log("command end id:", commandId);
-        console.log("command buffer:", rawData);
-        Logger.info(`end command handler, retrieve data : ${rawData}.`);
+        // let result = OSC633Parser.extractAfterOSC633CommandSequence(rawData);
+        // console.log("command text:", result.commandText);
+        // console.log("remained text:", result.remainingText);
+        // Logger.info(`end command handler, retrieve data : ${rawData}.`);
         // const osc633Messages = this.parseOSC633Simple(rawData);
         // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
         const parsedCommand = await OSC633Parser.parseOSC633AndCommand(rawData);

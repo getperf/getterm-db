@@ -1,20 +1,8 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 import { XtermParser } from './xterm_parser';
-// import { EditedFileDownloader } from './edited_file_downloader';
-
-class TerminalSession {
-    start: Date = new Date();
-    sessionId: number = 0;
-    commandId: number = 0;
-    dataBuffer: string[]  = [];
-    notebookEditor: vscode.NotebookEditor | undefined;
-    xtermParser: XtermParser | undefined;
-    // editedFileDownloader: EditedFileDownloader | undefined;
-    shellIntegrationEventDisabled: boolean = false;
-    // updatingFlag : boolean = false;
-    // UpdateFilePath : string | undefined;
-}
+import { ParsedCommand } from './osc633_parser';
+import { TerminalSession, TerminalSessionMode } from './terminal_session';
 
 export class TerminalSessionManager {
     private static terminalSessions: Map<vscode.Terminal, TerminalSession> = new Map();
@@ -22,6 +10,7 @@ export class TerminalSessionManager {
     static setSessionId(terminal: vscode.Terminal, sessionId:number): TerminalSession {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.sessionId = sessionId;
+        session.terminalSessionMode = TerminalSessionMode.SessionStarted;
         Logger.info(`set terminal session manager session id : ${sessionId}`);
         this.terminalSessions.set(terminal, session);
         return session;
@@ -37,7 +26,7 @@ export class TerminalSessionManager {
 
     static setDataBuffer(terminal: vscode.Terminal, dataBuffer:string[]): TerminalSession {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.dataBuffer = dataBuffer;
+        session.consoleBuffer = dataBuffer;
         Logger.debug(`set terminal session manager data buffer : ${dataBuffer}`);
         this.terminalSessions.set(terminal, session);
         return session;
@@ -47,6 +36,7 @@ export class TerminalSessionManager {
 		// throw new Error('Method not implemented.');
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.notebookEditor = notebookEditor;
+        session.terminalSessionMode = TerminalSessionMode.Captured;
         const title = notebookEditor?.notebook.uri.fsPath;
         Logger.info(`set terminal session manager notebook editor : ${title}`);
         this.terminalSessions.set(terminal, session);
@@ -71,18 +61,18 @@ export class TerminalSessionManager {
 
     static disableShellIntegrationEvent(terminal: vscode.Terminal) {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.shellIntegrationEventDisabled = true;
+        session.disableShellIntegrationHandlers = true;
         Logger.info(`set terminal session manager shell integration event disable`);
-        console.log("DisableFlag1(on):", session.shellIntegrationEventDisabled);
+        console.log("DisableFlag1(on):", session.disableShellIntegrationHandlers);
         this.terminalSessions.set(terminal, session);
         return session;
 	}
 
     static enableShellIntegrationEvent(terminal: vscode.Terminal) {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.shellIntegrationEventDisabled = false;
+        session.disableShellIntegrationHandlers = false;
         Logger.info(`set terminal session manager shell integration event enable`);
-        console.log("DisableFlag2(off):", session.shellIntegrationEventDisabled);
+        console.log("DisableFlag2(off):", session.disableShellIntegrationHandlers);
         this.terminalSessions.set(terminal, session);
         return session;
 	}
@@ -105,7 +95,7 @@ export class TerminalSessionManager {
 
     static pushDataBuffer(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        const bufferLen = session.dataBuffer.push(data);
+        const bufferLen = session.consoleBuffer.push(data);
         Logger.info(`append terminal session manager data buffer : ${data}`);
         this.terminalSessions.set(terminal, session);
         return bufferLen;
@@ -125,8 +115,8 @@ export class TerminalSessionManager {
 
     static retrieveDataBuffer(terminal: vscode.Terminal): string {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        const dataBuffer = session.dataBuffer?.join('');
-        session.dataBuffer = [];
+        const dataBuffer = session.consoleBuffer?.join('');
+        session.consoleBuffer = [];
         this.terminalSessions.set(terminal, session);
         return dataBuffer;
     }
@@ -144,7 +134,7 @@ export class TerminalSessionManager {
     }
 
     static getDataBuffer(terminal: vscode.Terminal): string[]|undefined {
-        return this.terminalSessions.get(terminal)?.dataBuffer;
+        return this.terminalSessions.get(terminal)?.consoleBuffer;
     }
 
     static getNotebookEditor(terminal: vscode.Terminal): vscode.NotebookEditor|undefined {
@@ -160,9 +150,9 @@ export class TerminalSessionManager {
     // }
 
     static isShellIntegrationEventDisabled(terminal: vscode.Terminal): boolean {
-        const flag = this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;
+        const flag = this.terminalSessions.get(terminal)?.disableShellIntegrationHandlers || false;
         console.log("DisableFlag3(is):", flag);
-        return this.terminalSessions.get(terminal)?.shellIntegrationEventDisabled || false;
+        return this.terminalSessions.get(terminal)?.disableShellIntegrationHandlers || false;
     }
 
     // static getUpdatingFlag(terminal: vscode.Terminal): boolean {

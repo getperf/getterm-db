@@ -24,7 +24,7 @@ suite('TerminalSessionManager Tests', () => {
     assert.ok(session, 'Session should exist for the terminal');
     assert.strictEqual(session?.sessionId, sessionId, 'Session ID should match');
     assert.strictEqual(session?.commandId, commandId, 'Command ID should match');
-    assert.deepStrictEqual(session?.dataBuffer, dataBuffer, 'Data buffer should match');
+    assert.deepStrictEqual(session?.consoleBuffer, dataBuffer, 'Data buffer should match');
 
     assert.strictEqual(TerminalSessionManager.getSessionId(terminal), sessionId, 'Session ID should match');
     assert.strictEqual(TerminalSessionManager.getCommandId(terminal), commandId, 'Command ID should match');
@@ -55,7 +55,7 @@ suite('TerminalSessionManager Tests', () => {
     assert.ok(session, 'Session should exist for the terminal');
     assert.strictEqual(session?.sessionId, sessionId2, 'Updated session ID should match');
     assert.strictEqual(session?.commandId, commandId2, 'Updated command ID should match');
-    assert.deepStrictEqual(session?.dataBuffer, dataBuffer2, 'Updated data buffer should match');
+    assert.deepStrictEqual(session?.consoleBuffer, dataBuffer2, 'Updated data buffer should match');
   });
 
   test('Create a new session if no existing session is found', () => {
@@ -76,7 +76,7 @@ suite('TerminalSessionManager Tests', () => {
     assert.ok(session, 'Session should exist for the new terminal');
     assert.strictEqual(session?.sessionId, sessionId, 'Session ID should match');
     assert.strictEqual(session?.commandId, commandId, 'Command ID should match');
-    assert.deepStrictEqual(session?.dataBuffer, dataBuffer, 'Data buffer should match');
+    assert.deepStrictEqual(session?.consoleBuffer, dataBuffer, 'Data buffer should match');
   });
 
   test('Create a new session id if no existing session is found', () => {

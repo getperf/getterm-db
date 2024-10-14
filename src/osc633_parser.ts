@@ -60,38 +60,38 @@ export class ParsedCommand {
 
 export class OSC633Parser {
 
-    static filterOSCSequenceHeader(buffer: string): string | null {
-        // Define the sequences
-        const oscAAndBSequence = '\x1b]633;A\x07\x1b]633;B\x07';
-        const osc0Start = '\x1b]0;';
-        const oscEnd = '\x07';
-        console.log("FILTER IN:", buffer);
-        // Find the start and end of the sequences
-        const oscAAndBIndex = buffer.indexOf(oscAAndBSequence);
-        if (oscAAndBIndex !== 0) {
-            // If the buffer does not start with OSC A, return it unchanged
-            return buffer;
-        }
-        buffer = buffer.slice(oscAAndBSequence.length);
-        // const osc0StartIndex = buffer.indexOf(osc0Start, oscAAndBIndex);
-        const osc0StartIndex = buffer.indexOf(osc0Start);
-        if (osc0StartIndex === -1) {
-            // If there's no OSC 0 sequence, return the buffer unchanged
-            return buffer;
-        }
-        buffer = buffer.slice(osc0StartIndex + osc0Start.length);
+    // static filterOSCSequenceHeader(buffer: string): string | null {
+    //     // Define the sequences
+    //     const oscAAndBSequence = '\x1b]633;A\x07\x1b]633;B\x07';
+    //     const osc0Start = '\x1b]0;';
+    //     const oscEnd = '\x07';
+    //     console.log("FILTER IN:", buffer);
+    //     // Find the start and end of the sequences
+    //     const oscAAndBIndex = buffer.indexOf(oscAAndBSequence);
+    //     if (oscAAndBIndex !== 0) {
+    //         // If the buffer does not start with OSC A, return it unchanged
+    //         return buffer;
+    //     }
+    //     buffer = buffer.slice(oscAAndBSequence.length);
+    //     // const osc0StartIndex = buffer.indexOf(osc0Start, oscAAndBIndex);
+    //     const osc0StartIndex = buffer.indexOf(osc0Start);
+    //     if (osc0StartIndex === -1) {
+    //         // If there's no OSC 0 sequence, return the buffer unchanged
+    //         return buffer;
+    //     }
+    //     buffer = buffer.slice(osc0StartIndex + osc0Start.length);
     
-        const osc0EndIndex = buffer.indexOf(oscEnd);
-        if (osc0EndIndex === -1) {
-            // If there's no terminating BEL, return the buffer unchanged
-            return buffer;
-        }
-        buffer = buffer.slice(osc0EndIndex + oscEnd.length);
+    //     const osc0EndIndex = buffer.indexOf(oscEnd);
+    //     if (osc0EndIndex === -1) {
+    //         // If there's no terminating BEL, return the buffer unchanged
+    //         return buffer;
+    //     }
+    //     buffer = buffer.slice(osc0EndIndex + oscEnd.length);
     
-        // Return the part of the buffer after the OSC 0 sequence
-        // return buffer.slice(osc0EndIndex + oscEnd.length);
-        return buffer;
-    }
+    //     // Return the part of the buffer after the OSC 0 sequence
+    //     // return buffer.slice(osc0EndIndex + oscEnd.length);
+    //     return buffer;
+    // }
     
     static cleanCommandOutput(output: string): string {
         // Check if the string ends with "$" and has a preceding newline
@@ -106,23 +106,24 @@ export class OSC633Parser {
     }
 
     // OSC 633 開始シーケンスが複数含まれるかを判別
-    static hasMultipleOSCStartSequences(buffer: string): boolean {
-        // Regular expression to match OSC-633;A sequence
-        const regex = /\u001b\]633;A\u0007/g;
+    // static hasMultipleOSCStartSequences(buffer: string): boolean {
+    //     // Regular expression to match OSC-633;A sequence
+    //     const regex = /\u001b\]633;A\u0007/g;
         
-        // Find all matches of the escape sequence in the buffer
-        const matches = buffer.match(regex);
+    //     // Find all matches of the escape sequence in the buffer
+    //     const matches = buffer.match(regex);
         
-        // Check if two or more matches are found
-        return matches !== null && matches.length >= 2;
-    }
+    //     // Check if two or more matches are found
+    //     return matches !== null && matches.length >= 2;
+    // }
     
     // OSC 633 を解析する関数。onDidWriteTerminalData でバッファリングしたデータを解析する
     static async parseOSC633AndCommand(input: string) : Promise<ParsedCommand | null> {
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
         const command = new ParsedCommand();
 
-        if (this.hasMultipleOSCStartSequences(input)) {
+        const commandResult = this.extractAfterOSC633CommandSequence(input);
+        if (!commandResult) {
             Logger.error(`
                 Detected multiple OSC-633 start escape sequences in buffer. 
                 Exits with an error because it is difficult to parse :
@@ -130,33 +131,43 @@ export class OSC633Parser {
             `);
             return null;
         }
-        let buffer = this.filterOSCSequenceHeader(input);
-        if (!buffer) {
-            Logger.error(`Failed to parse header of OSC-633 sequence : ${input}`);
-            return null;
-        }
+        // if (this.hasMultipleOSCStartSequences(input)) {
+        //     Logger.error(`
+        //         Detected multiple OSC-633 start escape sequences in buffer. 
+        //         Exits with an error because it is difficult to parse :
+        //         ${input}
+        //     `);
+        //     return null;
+        // }
+        // let buffer = this.filterOSCSequenceHeader(input);
+        // if (!buffer) {
+        //     Logger.error(`Failed to parse header of OSC-633 sequence : ${input}`);
+        //     return null;
+        // }
+        let buffer = commandResult.remainingText;
         console.log("FILTER OUT:", buffer);
 
         // Extract command from the start of the buffer until the first OSC-633 sequence starts
         const xtermParser = XtermParser.getInstance();
-        const firstOSCMatch = buffer.match(/\x1B\]633;[A-ZP];/);
-        if (firstOSCMatch)  {
-            // Clean Multiple lines
-            let commandText = buffer.slice(0, firstOSCMatch.index).trim();
-            // Handle backward search for Ctrl+U (0x15) and remove preceding content
-            const ctrlUIndex = commandText.lastIndexOf('\x1B[K');
-            console.log("CTRL-U : ", ctrlUIndex);
-            if (ctrlUIndex !== -1) {
-                commandText = commandText.slice(ctrlUIndex + 3);  // Cut everything before Ctrl+U
-            }
+        // const firstOSCMatch = buffer.match(/\x1B\]633;[A-ZP];/);
+        // if (firstOSCMatch)  {
+        //     // Clean Multiple lines
+        //     let commandText = buffer.slice(0, firstOSCMatch.index).trim();
+        //     // Handle backward search for Ctrl+U (0x15) and remove preceding content
+        //     const ctrlUIndex = commandText.lastIndexOf('\x1B[K');
+        //     console.log("CTRL-U : ", ctrlUIndex);
+        //     if (ctrlUIndex !== -1) {
+        //         commandText = commandText.slice(ctrlUIndex + 3);  // Cut everything before Ctrl+U
+        //     }
 
-            // command.command = this.cleaningMultiLineCommands(commandText);
-            command.command =  await xtermParser.parseTerminalBuffer(commandText);
-            buffer = buffer.slice(firstOSCMatch.index);
-        } else {
-            Logger.error(`Failed to extract command from OSC-633 sequence : ${buffer}`);
-            return null;
-        }
+        //     // command.command = this.cleaningMultiLineCommands(commandText);
+        //     command.command =  await xtermParser.parseTerminalBuffer(commandText);
+        //     buffer = buffer.slice(firstOSCMatch.index);
+        // } else {
+        //     Logger.error(`Failed to extract command from OSC-633 sequence : ${buffer}`);
+        //     return null;
+        // }
+        command.command =  await xtermParser.parseTerminalBuffer(commandResult.commandText);
 
         // Extract exclude the all OSC sequence as the output
         let output =  await xtermParser.parseTerminalBuffer(buffer);
@@ -189,11 +200,11 @@ export class OSC633Parser {
     }
 
     // Function to remove control sequences (e.g., color codes, escape sequences)
-    removeControlSequences(text: string): string {
-        // This regex matches ANSI escape sequences used for colors and control characters
-        const controlSequenceRegex = /\x1b\[[0-9;]*[a-zA-Z]/g;
-        return text.replace(controlSequenceRegex, '');
-    }
+    // removeControlSequences(text: string): string {
+    //     // This regex matches ANSI escape sequences used for colors and control characters
+    //     const controlSequenceRegex = /\x1b\[[0-9;]*[a-zA-Z]/g;
+    //     return text.replace(controlSequenceRegex, '');
+    // }
 
     static async extractCommandOutput(terminalBuffer: string, command: string): Promise<string> {
         const commandPosition = terminalBuffer.lastIndexOf(command);  // Find the last occurrence of the command
@@ -207,5 +218,25 @@ export class OSC633Parser {
         const output = await xtermParser.parseTerminalBuffer(bufferOutputPart);
         return this.cleanCommandOutput(output);
     }
-    
+
+    static extractAfterOSC633CommandSequence(input: string): { commandText: string, remainingText: string } | null {
+        // 「\x1b]633;E;」から始まり、";\x07" で終わる部分を正規表現で検索
+        const regex = /\x1b\]633;E;(.*?);\x07/;
+        
+        // 後方一致で最も最後に現れるパターンを検索
+        const match = input.match(regex);
+        if (match && match.index !== undefined) {
+            console.log("マッチしたインデックス：", match.index);
+            const commandText = match[1];  // コマンドテキストの値
+            const beforeKeyword = input.slice(0, match.index);  // キーワードより前の文字列
+            // const afterKeyword = input.slice(match.index + match[0].length);  // キーワードより後の文字列
+            const afterKeyword = input.slice(match.index);  // キーワードより後の文字列
+            
+            return {
+                commandText,
+                remainingText: afterKeyword
+            };
+        }
+        return null;  // マッチしない場合
+    }        
 }
