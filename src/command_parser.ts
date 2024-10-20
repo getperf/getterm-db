@@ -58,7 +58,7 @@ export class ParsedCommand {
     cwd = '';
 }
 
-export class OSC633Parser {
+export class CommandParser {
 
     // static filterOSCSequenceHeader(buffer: string): string | null {
     //     // Define the sequences

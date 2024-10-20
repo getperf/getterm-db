@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SSHProvider } from './ssh_provider';
+import { ConsoleEventProvider } from './console_event_provider';
 import { TerminalNotebookProvider } from './notebook_provider';
 import { NotebookCopyButtonProvider } from './notebook_copy_button_provider';
 import { CellExecutionTimeProvider } from './notebook_execution_time_provider';
@@ -10,12 +10,14 @@ import { RemoteShellExecutor } from './remote_shell_executor';
 import { PowerShellExecutor } from './powershell_executor';
 import { TerminalCaptureExecutor } from './terminal_capture_executor';
 import { TerminalNotebookExporter } from './notebook_exporter';
+import { TerminalSessionManager } from './terminal_session_manager';
 
 export function activate(context: vscode.ExtensionContext) {
 
 	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
 	Logger.setup(outputChannel);
 	initializeDatabase();
+	TerminalSessionManager.initializeInstance();
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);
 	new CellExecutionTimeProvider(context);
@@ -24,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 	new PowerShellExecutor(context);
 	new TerminalCaptureExecutor(context);
 	new TerminalNotebookExporter(context);
-	new SSHProvider(context, terminalNotebookProvider.controller);
+	new ConsoleEventProvider(context, terminalNotebookProvider.controller);
 }
 
 export function deactivate() {}

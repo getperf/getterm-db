@@ -21,6 +21,16 @@ export class Command {
         });
     }
 
+    static async createEmptyRow(session_id: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const query = `INSERT INTO commands (session_id, command, output, cwd, exit_code, start) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime'))`;
+            Command.db.run(query, [session_id, '', '', '', 0], function (err) {
+                if (err) {reject(err);}
+                resolve(this.lastID); // Get the last inserted ID
+            });
+        });
+    }
+
     static async getById(id: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const query = `SELECT * FROM commands WHERE id = ?`;

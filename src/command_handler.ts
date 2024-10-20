@@ -8,66 +8,62 @@ import { TerminalNotebookController } from './notebook_controller';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
-import { OSC633Parser } from './osc633_parser';
+import { CommandParser } from './command_parser';
 // import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
+import { ConsoleEventProvider } from './console_event_provider';
+import { TerminalSession, TerminalSessionMode } from './terminal_session';
 
-export class SSHProvider {
-    private context: vscode.ExtensionContext;
-    // private  remotePath = '/tmp/vscode-shell-integration.sh';
-    // private db!: Promise<Database>;
+export class CommandHandler {
     private notebookController : TerminalNotebookController;
+    private sessionId : number | undefined;
 
-    constructor(context: vscode.ExtensionContext, notebookController: TerminalNotebookController) {
-        this.context = context;
-        this.notebookController = notebookController;
-        this.registerEventHandlers();
+    constructor(consoleEventProvider: ConsoleEventProvider) {
+        this.notebookController = consoleEventProvider.notebookController;
     }
 
-    private registerEventHandlers(): void {
-        this.context.subscriptions.push(
-            vscode.window.onDidChangeTerminalState(() => {
-                Logger.info("terminal state change event invoked");
-                vscode.window.showInformationMessage('シェル統合変化イベント');
-            }),
-            vscode.window.onDidStartTerminalShellExecution(
-                async e => this.commandStartHandler(e)
-            ),
-            vscode.window.onDidEndTerminalShellExecution(
-                async e => this.commandEndHandler(e)
-            ),
-            vscode.window.onDidWriteTerminalData(
-                async e => this.terminalDataWriteEventHandler(e)
-            )
-        );
-    }
-
-    async terminalDataWriteEventHandler(e:  vscode.TerminalDataWriteEvent) {
-        TerminalSessionManager.pushDataBufferExcludingOpening(e.terminal, e.data);
-    }
+    varidateTerminalSession(session: TerminalSession | undefined) : boolean {
+        if (!session) {
+            throw new Error("terminal session not found");
+        }
+        if (session.disableShellIntegrationHandlers) {
+            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+            return false;
+        }
+        if (session.terminalSessionMode !== TerminalSessionMode.Capturing &&
+            session.terminalSessionMode !== TerminalSessionMode.CaptureStart
+        ) {
+            console.info("キャプチャーモードでないため、コマンド検知をスキップします");
+            return false;
+        }
+        if (!session.sessionId) {
+            // const terminalSession = TerminalSessionManager.get(e.terminal);
+            console.info("セッションidが取得できませんでした : ", session);
+            return false;
+        }
+        return true;
+    } 
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`start command handler invoked`);
-        if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
-            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+        const session = TerminalSessionManager.get(e.terminal);
+        if (!session || !this.varidateTerminalSession(session)) {
             return;
         }
-        const sessionId = await TerminalSessionManager.getSessionIdWithRetry(e.terminal);
+        const sessionId = session.sessionId;
         if (!sessionId) {
-            const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.info("セッションidが取得できませんでした : ", terminalSession);
+            console.info("セッションidが取得できませんでした : ", session);
             return;
         }
         Logger.info(`start command handler, session id : ${sessionId}`);
-
-        let output = "";
-        let commandText = "";
-        let cwd = "";
-        let exit_code = 0;
-        const commandId = await Command.create(sessionId, commandText, output, cwd, exit_code);
+        const commandId = await Command.createEmptyRow(sessionId);
         TerminalSessionManager.setCommandId(e.terminal, commandId);
         console.log("command start id:", commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
+        session.changeModeCapturing();
+        let rawData = session.consoleBuffer?.join('');
+		const result = CommandParser.extractAfterOSC633CommandSequence(rawData);
+        console.log("START COMMAND: ", result);
     }
 
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
@@ -77,21 +73,27 @@ export class SSHProvider {
         let cwd = "";
         let exit_code = 0;
 
-        const session = TerminalSessionManager.get(e.terminal);
-        if (!session) {
-            return;
-        }
-        console.log("セッションモード：", session.terminalSessionMode);
-        if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
-            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
-            return;
-        }
         const endTime = new Date();
         await new Promise(resolve => setTimeout(resolve, 500));
-        const commandId = TerminalSessionManager.getCommandId(e.terminal);
-        if (commandId === undefined) { 
-            const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.info("セッションからコマンドIDが取得できませんでした: ", terminalSession);
+        const session = TerminalSessionManager.get(e.terminal);
+        if (!session || !this.varidateTerminalSession(session)) {
+            return;
+        }
+        // if (!session) {
+        //     throw new Error("terminal session not found");
+        // }
+        // console.log("セッションモード：", session.terminalSessionMode);
+        // if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
+        //     console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+        //     return;
+        // }
+        // session.shellExecutionEventBusy = true;
+        // const commandId = TerminalSessionManager.getCommandId(e.terminal);
+        const commandId = session.commandId;
+        // if (commandId === undefined) { 
+        if (!commandId) { 
+            // const terminalSession = TerminalSessionManager.get(e.terminal);
+            console.info("セッションからコマンドIDが取得できませんでした: ", session);
             return; 
         }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);
@@ -111,7 +113,7 @@ export class SSHProvider {
         // Logger.info(`end command handler, retrieve data : ${rawData}.`);
         // const osc633Messages = this.parseOSC633Simple(rawData);
         // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
-        const parsedCommand = await OSC633Parser.parseOSC633AndCommand(rawData);
+        const parsedCommand = await CommandParser.parseOSC633AndCommand(rawData);
         if (!parsedCommand) {
             vscode.window.showErrorMessage(
                 `Oops. Failed to parse the capture data. Command could not be recorded.`
@@ -173,6 +175,10 @@ export class SSHProvider {
         if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
             await this.notebookController.updateNotebook(commandId);
         }
+        session.changeModeCapturing();
+        // if (session.terminalSessionMode === TerminalSessionMode.CaptureStart) {
+        //     session.terminalSessionMode = TerminalSessionMode.Capturing;
+        // }
     }
 }
                                                         

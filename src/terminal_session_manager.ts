@@ -1,16 +1,53 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 import { XtermParser } from './xterm_parser';
-import { ParsedCommand } from './osc633_parser';
+import { ParsedCommand } from './command_parser';
 import { TerminalSession, TerminalSessionMode } from './terminal_session';
 
 export class TerminalSessionManager {
+    private static instance: TerminalSessionManager | null = null;
     private static terminalSessions: Map<vscode.Terminal, TerminalSession> = new Map();
+
+    public static initializeInstance(): TerminalSessionManager {
+        if (!this.instance) {
+            this.instance = new TerminalSessionManager();
+            this.instance.startMonitor();
+        }
+        return this.instance;
+    }
+
+    private startMonitor() {
+        setInterval(() => {
+            this.checkAllSessionStatus();
+        }, 5000); // 5秒ごとに実行
+    }
+
+    private checkAllSessionStatus() {
+        TerminalSessionManager.terminalSessions.forEach((session, terminal) => {
+            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Busy: ${session.dataWriteEventBusy}, ${session.shellExecutionEventBusy}`);
+            const now = new Date();
+            if (session.shellIntegrationNotActive()) {
+                // console.log("シェル統合無効化検知：", session.notificationDeadline(now));
+                if (session.notificationDeadline(now)) {
+                    vscode.window.showInformationMessage(
+                        `シェル統合を有効化してください`
+                    );
+                    // session.nextNotification = new Date(now.getTime() + 30000); // 30秒後
+                    session.setNextNotification(now);
+                }
+            }
+            if (session.shellExecutionEventBusy) {
+                session.nextNotification = null;
+            }
+            session.dataWriteEventBusy = false;
+            session.shellExecutionEventBusy = false;
+        });
+    }
 
     static setSessionId(terminal: vscode.Terminal, sessionId:number): TerminalSession {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.sessionId = sessionId;
-        session.terminalSessionMode = TerminalSessionMode.SessionStarted;
+        session.terminalSessionMode = TerminalSessionMode.Start;
         Logger.info(`set terminal session manager session id : ${sessionId}`);
         this.terminalSessions.set(terminal, session);
         return session;
@@ -36,7 +73,7 @@ export class TerminalSessionManager {
 		// throw new Error('Method not implemented.');
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.notebookEditor = notebookEditor;
-        session.terminalSessionMode = TerminalSessionMode.Captured;
+        session.terminalSessionMode = TerminalSessionMode.CaptureStart;
         const title = notebookEditor?.notebook.uri.fsPath;
         Logger.info(`set terminal session manager notebook editor : ${title}`);
         this.terminalSessions.set(terminal, session);
@@ -95,6 +132,7 @@ export class TerminalSessionManager {
 
     static pushDataBuffer(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.dataWriteEventBusy = true;
         const bufferLen = session.consoleBuffer.push(data);
         Logger.info(`append terminal session manager data buffer : ${data}`);
         this.terminalSessions.set(terminal, session);
@@ -103,9 +141,10 @@ export class TerminalSessionManager {
 
     static pushDataBufferExcludingOpening(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
+        session.dataWriteEventBusy = true;
         const currentTime = new Date();
         const execDuration = (currentTime.getTime() - session.start.getTime()) / 1000; 
-        console.log("EXEC DURATION : ", execDuration);
+        // console.log("EXEC DURATION : ", execDuration);
         if (execDuration < 1 || !terminal.shellIntegration) {
             Logger.warn(`skip data buffering for shell integration opening session. : ${execDuration}`);
             return 0;

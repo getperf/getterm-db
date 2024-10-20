@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { OSC633Parser, ParsedCommand } from '../../osc633_parser';
+import { CommandParser, ParsedCommand } from '../../command_parser';
 
 suite('OSC633Parser Tests', () => {
 
@@ -10,7 +10,7 @@ suite('OSC633Parser Tests', () => {
         const expectedExitCode = 0;
         const expectedCwd = '/home/';
 
-        const parsed = await OSC633Parser.parseOSC633AndCommand(input);
+        const parsed = await CommandParser.parseOSC633AndCommand(input);
         
         assert.notEqual(parsed, null);
         assert.strictEqual(parsed?.command, expectedCommand, 'Command should be "pwd"');
@@ -21,7 +21,7 @@ suite('OSC633Parser Tests', () => {
 
     test('Handle Empty or Incomplete Input', async () => {
         const input = '';
-        const parsed = await OSC633Parser.parseOSC633AndCommand(input);
+        const parsed = await CommandParser.parseOSC633AndCommand(input);
 
         assert.equal(parsed, null);
     });
@@ -29,7 +29,7 @@ suite('OSC633Parser Tests', () => {
     test('Handle OSC 633 B with Additional Text', async () => {
         const input = `some command\u001B]633;E;some command;\u0007\u001B]633;C\u0007\u001B]633;D;0\u0007\u001B]633;P;Cwd=/some/dir\u0007\u001B]633;A\u0007\u001B]633;B\u0007output text\n[some@host ~]$`;
         const expectedOutput = 'output text';
-        const parsed = await OSC633Parser.parseOSC633AndCommand(input);
+        const parsed = await CommandParser.parseOSC633AndCommand(input);
 
         assert.notEqual(parsed, null);
         assert.strictEqual(parsed?.output, expectedOutput, `Output should be "${expectedOutput}"`);

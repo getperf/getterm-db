@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SSHProvider } from './ssh_provider';
+import { ConsoleEventProvider } from './console_event_provider';
 import path from 'path';
 import { Command } from './model/commands';
 import { NotebookCleaner } from './notebook_cleaner';

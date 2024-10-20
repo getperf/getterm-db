@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import proxyquire from 'proxyquire';
 import { initializeTestDB } from './initialize_test_db';
 import { ConsernedFileDownloader } from '../../concerned_file_downloader';
-import { ParsedCommand } from '../../osc633_parser';
+import { ParsedCommand } from '../../command_parser';
 import * as fs from 'fs';
 import { Command } from '../../model/commands';
 import { Session } from '../../model/sessions';

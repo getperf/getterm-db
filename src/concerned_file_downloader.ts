@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Command } from './model/commands';
 import { Logger } from './logger';
-import { OSC633Parser, ParsedCommand } from './osc633_parser';
+import { CommandParser, ParsedCommand } from './command_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
 
@@ -150,7 +150,7 @@ export class ConsernedFileDownloader {
         }
         const commandText = `cat ${this.commandAccessFile}`;
         // Parse the command output
-        const output = await OSC633Parser.extractCommandOutput(rawData, commandText); 
+        const output = await CommandParser.extractCommandOutput(rawData, commandText); 
         try {
             await fs.promises.writeFile(filePath, output);
             console.log("Save file : ", filePath);

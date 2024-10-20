@@ -41,7 +41,7 @@ export class TerminalCaptureExecutor {
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
         const sessionId = await Session.create(remoteProfile, 'Capture from existing terminal', [], '', '');
         const session = await Session.getById(sessionId);
-        session.terminalSessionMode = TerminalSessionMode.Captured;
+        session.terminalSessionMode = TerminalSessionMode.Capturing;
         console.log("セッション履歴登録：", session);
         TerminalSessionManager.setSessionId(terminal, sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
