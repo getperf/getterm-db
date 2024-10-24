@@ -23,6 +23,7 @@ export enum DownloaderMode {
  */
 
 export class ConsernedFileDownloader {
+    private editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
     // ID of the file editing command. eg vi test.txt
     commandId: number; 
@@ -39,6 +40,9 @@ export class ConsernedFileDownloader {
     // File path of edited command
     commandAccessFile: string | undefined; 
 
+    // sudo command
+    sudoCommand : string | null = null;
+
     // Download file path
     downloadFile: string | undefined; 
 
@@ -53,12 +57,40 @@ export class ConsernedFileDownloader {
         this.terminal = terminal;
         this.parsedCommand = parsedCommand;
     }
+    
+    /**
+     * Searches the input command buffer for an editor command and returns the file name.
+     * @param commandBuffer The string representing the command input (e.g., 'vi filename.txt')
+     * @returns The file name if an editor command is found, otherwise undefined.
+     */
+    checkFileNameFromEditorCommand(commandBuffer: string): string | undefined {
+        // console.log("commandBuffer: ", commandBuffer);
+        const commandParts = commandBuffer.trim().split(/\s+/);
+        const editorIndex = commandParts.findIndex(part => 
+            this.editorCommands.some(editor => part.includes(editor))
+        );
+        if (editorIndex === -1) {
+            this.sudoCommand = null;
+            return undefined;
+        }
+        const fileName = commandParts[editorIndex + 1];
+        if (!fileName) {
+            this.sudoCommand = null;
+            return undefined;
+        }
+        if (commandParts[0] === 'sudo') {
+            this.sudoCommand = commandParts.slice(0, editorIndex).join(' ').trim();
+        } else {
+            this.sudoCommand = null;
+        }
+        return fileName;
+    }
 
     // Detects if the command is trying to access a file
     detectFileAccessFromCommand() : boolean {
         const commandText = this.parsedCommand.command;
         // Check if command accesses a file
-        const commandAccessFile  = Util.checkFileNameFromEditorCommand(commandText); 
+        const commandAccessFile  = this.checkFileNameFromEditorCommand(commandText); 
         if (commandAccessFile) {
             console.log("Detect file access from command :", commandAccessFile); 
             this.commandAccessFile = commandAccessFile;
@@ -92,7 +124,7 @@ export class ConsernedFileDownloader {
             throw new Error('Not found command access file');
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
-        const catCommand = `cat ${this.commandAccessFile}`;
+        const catCommand = `${this.sudoCommand} cat ${this.commandAccessFile}`;
         this.terminal.sendText(catCommand); // Send 'cat' command to terminal
         this.mode = DownloaderMode.Save;
         return this;
@@ -148,7 +180,7 @@ export class ConsernedFileDownloader {
         if (!rawData) { 
             throw new Error('Could not get the buffer from session');
         }
-        const commandText = `cat ${this.commandAccessFile}`;
+        const commandText = `${this.sudoCommand} cat ${this.commandAccessFile}`;
         // Parse the command output
         const output = await CommandParser.extractCommandOutput(rawData, commandText); 
         try {

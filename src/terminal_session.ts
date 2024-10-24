@@ -25,16 +25,23 @@ export class TerminalSession {
     disableShellIntegrationHandlers: boolean = false;
 
     isShellIntegrationRunning: boolean = false;
+    commandRunning: boolean = false;
     nextNotification: Date | null = null;
 
     shellExecutionEventBusy: boolean = false;
-    dataWriteEventBusy: boolean = false;
+    terminalTraffic: number = 0;
 
     public shellIntegrationNotActive() : boolean {
-        return (this.terminalSessionMode === TerminalSessionMode.Capturing &&
-            this.dataWriteEventBusy &&
+        // return (this.terminalSessionMode === TerminalSessionMode.Capturing &&
+        //     this.terminalTraffic &&
+        //     !this.shellExecutionEventBusy
+        // );
+        if (this.terminalSessionMode === TerminalSessionMode.Capturing &&
             !this.shellExecutionEventBusy
-        );
+        ) {
+            if (this.terminalTraffic > 100) { return true; }
+        }
+        return false;
     }
 
     public notificationDeadline(now : Date) : boolean {
@@ -45,8 +52,9 @@ export class TerminalSession {
         this.nextNotification = new Date(now.getTime() + 30000); // 30秒後
     }
 
-    public changeModeCapturing() {
+    public changeModeCapturing(commandRunning: boolean) {
         this.shellExecutionEventBusy = true;
+        this.commandRunning = commandRunning;
         if (this.terminalSessionMode === TerminalSessionMode.CaptureStart) {
             this.terminalSessionMode = TerminalSessionMode.Capturing;
         }

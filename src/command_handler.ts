@@ -60,7 +60,7 @@ export class CommandHandler {
         TerminalSessionManager.setCommandId(e.terminal, commandId);
         console.log("command start id:", commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
-        session.changeModeCapturing();
+        session.changeModeCapturing(true);
         let rawData = session.consoleBuffer?.join('');
 		const result = CommandParser.extractAfterOSC633CommandSequence(rawData);
         console.log("START COMMAND: ", result);
@@ -175,7 +175,7 @@ export class CommandHandler {
         if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
             await this.notebookController.updateNotebook(commandId);
         }
-        session.changeModeCapturing();
+        session.changeModeCapturing(false);
         // if (session.terminalSessionMode === TerminalSessionMode.CaptureStart) {
         //     session.terminalSessionMode = TerminalSessionMode.Capturing;
         // }

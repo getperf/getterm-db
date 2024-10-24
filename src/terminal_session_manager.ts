@@ -24,9 +24,9 @@ export class TerminalSessionManager {
 
     private checkAllSessionStatus() {
         TerminalSessionManager.terminalSessions.forEach((session, terminal) => {
-            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Busy: ${session.dataWriteEventBusy}, ${session.shellExecutionEventBusy}`);
+            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Busy: ${session.terminalTraffic}, ${session.shellExecutionEventBusy}`);
             const now = new Date();
-            if (session.shellIntegrationNotActive()) {
+            if (!session.commandRunning && session.shellIntegrationNotActive()) {
                 // console.log("シェル統合無効化検知：", session.notificationDeadline(now));
                 if (session.notificationDeadline(now)) {
                     vscode.window.showInformationMessage(
@@ -39,7 +39,7 @@ export class TerminalSessionManager {
             if (session.shellExecutionEventBusy) {
                 session.nextNotification = null;
             }
-            session.dataWriteEventBusy = false;
+            session.terminalTraffic = 0;
             session.shellExecutionEventBusy = false;
         });
     }
@@ -132,7 +132,7 @@ export class TerminalSessionManager {
 
     static pushDataBuffer(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.dataWriteEventBusy = true;
+        session.terminalTraffic += data.length;
         const bufferLen = session.consoleBuffer.push(data);
         Logger.info(`append terminal session manager data buffer : ${data}`);
         this.terminalSessions.set(terminal, session);
@@ -141,7 +141,7 @@ export class TerminalSessionManager {
 
     static pushDataBufferExcludingOpening(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
-        session.dataWriteEventBusy = true;
+        session.terminalTraffic += data.length;
         const currentTime = new Date();
         const execDuration = (currentTime.getTime() - session.start.getTime()) / 1000; 
         // console.log("EXEC DURATION : ", execDuration);
