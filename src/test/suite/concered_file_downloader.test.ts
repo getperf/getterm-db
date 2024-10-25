@@ -109,9 +109,9 @@ suite('ConsernedFileDownloader Test Suite', () => {
         TerminalSessionManager.pushDataBuffer(mockTerminal, 'cat /path/to/file; this is a test');
 
         assert.strictEqual(downloader.detectFileAccessFromCommand(), true);
-    //     await downloader.saveCommandAccessFile();
+        await downloader.saveCommandAccessFile();
 
-    //     assert.strictEqual(uniqueFileStub.calledOnce, true);
+        assert.strictEqual(uniqueFileStub.calledOnce, true);
     });
 
     test('updateCommandSuccess should mark command as downloaded', async () => {

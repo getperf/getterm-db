@@ -18,7 +18,9 @@ export class SwitchUserCommandHandler {
         return false;
     }
 
-    updateCommand(): void {
-        Command.create(this.session_id, this.commandText, '', '', 0);
+    async updateCommand(): Promise<number> {
+        const commandId = await Command.create(this.session_id, this.commandText, '', '', 0);
+        await Command.updateEnd(commandId, new Date());
+        return commandId;
     }
 }

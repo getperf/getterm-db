@@ -13,6 +13,7 @@ import { CommandParser } from './command_parser';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 import { ConsoleEventProvider } from './console_event_provider';
 import { TerminalSession, TerminalSessionMode } from './terminal_session';
+import { SwitchUserCommandHandler } from './switch_user_command_handler';
 
 export class CommandHandler {
     private notebookController : TerminalNotebookController;
@@ -52,18 +53,35 @@ export class CommandHandler {
         }
         const sessionId = session.sessionId;
         if (!sessionId) {
-            console.info("セッションidが取得できませんでした : ", session);
+            console.info("セッションidを取得できませんでした : ", session);
             return;
         }
         Logger.info(`start command handler, session id : ${sessionId}`);
+
+        let rawData = session.consoleBuffer?.join('');
+        console.log("RAWDATA:", rawData);
+		const result = CommandParser.extractAfterOSC633CommandSequence(rawData);
+        // console.log("START COMMAND: ", result);
+        // if (!result) {
+        //     console.info("コマンドを取得できませんでした : ", rawData);
+        //     return;
+        // }
+        // su コマンド検知
+        const suCommandHandler = new SwitchUserCommandHandler(sessionId, rawData);
+        if (suCommandHandler.detectSuCommand()) {
+            const commandId = await suCommandHandler.updateCommand();
+            if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
+                await this.notebookController.updateNotebook(commandId);
+            }
+            let rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+            console.log("RAWDATA2:", rawData);
+            return;
+        }
         const commandId = await Command.createEmptyRow(sessionId);
         TerminalSessionManager.setCommandId(e.terminal, commandId);
         console.log("command start id:", commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
         session.changeModeCapturing(true);
-        let rawData = session.consoleBuffer?.join('');
-		const result = CommandParser.extractAfterOSC633CommandSequence(rawData);
-        console.log("START COMMAND: ", result);
     }
 
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
