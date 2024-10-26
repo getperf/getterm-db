@@ -29,7 +29,10 @@ export class TerminalSessionManager {
             if (!session.commandRunning && session.shellIntegrationNotActive()) {
                 // console.log("シェル統合無効化検知：", session.notificationDeadline(now));
                 if (session.notificationDeadline(now)) {
-                    vscode.window.showInformationMessage(
+                    // vscode.window.showInformationMessage(
+                    //     `シェル統合を有効化してください`
+                    // );
+                    console.log(
                         `シェル統合を有効化してください`
                     );
                     // session.nextNotification = new Date(now.getTime() + 30000); // 30秒後

@@ -125,8 +125,9 @@ export class ConsernedFileDownloader {
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
         // const catCommand = `${this.sudoCommand} cat ${this.commandAccessFile}`;
-        const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
-            `cat ${this.commandAccessFile}`;
+        // const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
+        //     `cat ${this.commandAccessFile}`;
+        const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
         this.terminal.sendText(commandText); // Send 'cat' command to terminal
         this.mode = DownloaderMode.Save;
         return this;
@@ -183,8 +184,10 @@ export class ConsernedFileDownloader {
             throw new Error('Could not get the buffer from session');
         }
 
-        const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
-            `cat ${this.commandAccessFile}`;
+        const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
+
+        // const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
+        //     `cat ${this.commandAccessFile}`;
         const output = await CommandParser.extractCommandOutput(rawData, commandText); 
         try {
             await fs.promises.writeFile(filePath, output);

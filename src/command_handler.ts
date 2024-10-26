@@ -67,7 +67,7 @@ export class CommandHandler {
         //     return;
         // }
         // su コマンド検知
-        const suCommandHandler = new SwitchUserCommandHandler(sessionId, rawData);
+        const suCommandHandler = new SwitchUserCommandHandler(this, sessionId, rawData);
         if (suCommandHandler.detectSuCommand()) {
             const commandId = await suCommandHandler.updateCommand();
             if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
@@ -125,6 +125,7 @@ export class CommandHandler {
             return; 
         }
         console.log("command end id:", commandId);
+
         // let result = OSC633Parser.extractAfterOSC633CommandSequence(rawData);
         // console.log("command text:", result.commandText);
         // console.log("remained text:", result.remainingText);
