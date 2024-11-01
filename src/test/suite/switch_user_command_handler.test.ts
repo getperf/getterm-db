@@ -1,3 +1,4 @@
+import vscode from 'vscode';
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { SwitchUserCommandHandler } from '../../switch_user_command_handler';
@@ -5,12 +6,12 @@ import { Command } from '../../model/commands';
 import { CommandHandler } from '../../command_handler';
 
 suite('SwitchUserCommandHandler Tests', () => {
-    let commandHandlerMock: CommandHandler;
+    // let commandHandlerMock: CommandHandler;
+    let mockTerminal: vscode.Terminal;
     const sessionId = 1;
     setup(() => {
         // Command.create メソッドをモックにする
-        // createStub = sinon.stub(Command, 'create');
-        commandHandlerMock = sinon.createStubInstance(CommandHandler);
+        // commandHandlerMock = sinon.createStubInstance(CommandHandler);
         sinon.stub(Command, 'create').callsFake(async (sessionId: number, command: string) => {
             return Promise.resolve(1);  // ダミーのコマンドIDを返します
         });
@@ -25,19 +26,19 @@ suite('SwitchUserCommandHandler Tests', () => {
 
     test('detectSuCommand should return true if su command is detected', () => {
         const commandBuffer = "pwd\x1b[?25l\x1b[10;20Hsu -\x1b[?25h";
-        const handler = new SwitchUserCommandHandler(commandHandlerMock, sessionId, commandBuffer);
+        const handler = new SwitchUserCommandHandler(mockTerminal, sessionId, commandBuffer);
         assert.strictEqual(handler.detectSuCommand(), true);
     });
 
     test('detectSuCommand should return false if su command is not detected', () => {
         const commandBuffer = "pwd\x1b[?25l\x1b[10;20Hecho Hello\x1b[?25h";
-        const handler = new SwitchUserCommandHandler(commandHandlerMock, sessionId, commandBuffer);
+        const handler = new SwitchUserCommandHandler(mockTerminal, sessionId, commandBuffer);
         assert.strictEqual(handler.detectSuCommand(), false);
     });
 
     test('updateCommand should call Command.create with parsed command', async () => {
         const commandBuffer = "sudo su -";
-        const handler = new SwitchUserCommandHandler(commandHandlerMock, sessionId, commandBuffer);
+        const handler = new SwitchUserCommandHandler(mockTerminal, sessionId, commandBuffer);
         const commandId = await handler.updateCommand();
 
         // モックのアサーション

@@ -36,7 +36,7 @@ export class TerminalNotebookSessionPicker {
                         vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
                         TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
                     }
-                    NotebookSessionWriter.appendSessionTitleCell(selectedSession);
+                    NotebookSessionWriter.appendSessionStartCell(selectedSession);
                 }
             }),
             vscode.commands.registerCommand('getterm-db.stopCapture', async () => {

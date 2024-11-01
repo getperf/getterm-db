@@ -142,6 +142,7 @@ export class TerminalNotebookController  {
         }
         // const sessionId = SSHProvider.getSessionIdForTerminal(activeTerminal);
 		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
+		const sessionName = TerminalSessionManager.getSessionName(activeTerminal) || 'unkown session';
 		if (!sessionId) {
             vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
             return;
@@ -176,7 +177,9 @@ export class TerminalNotebookController  {
 	
 			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
 			await vscode.commands.executeCommand('notebook.execute');
-			NotebookSessionWriter.appendSessionTitleCell("test");
+
+			// NotebookSessionWriter.appendSessionTitleCell("test");
+			NotebookSessionWriter.appendSessionStartCell(sessionName);			
 			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
 			const notebookEditor = vscode.window.activeNotebookEditor;
 			if (!notebookEditor) {

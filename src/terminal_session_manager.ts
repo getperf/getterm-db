@@ -24,10 +24,11 @@ export class TerminalSessionManager {
 
     private checkAllSessionStatus() {
         TerminalSessionManager.terminalSessions.forEach((session, terminal) => {
-            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Busy: ${session.terminalTraffic}, ${session.shellExecutionEventBusy}`);
+            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Traffic: ${session.terminalTraffic}, Run: ${session.commandRunning}, Active: ${session.shellIntegrationNotActive()}`);
+
             const now = new Date();
-            if (!session.commandRunning && session.shellIntegrationNotActive()) {
-                // console.log("シェル統合無効化検知：", session.notificationDeadline(now));
+            if (session.shellIntegrationNotActive()) {
+                console.log("シェル統合無効化検知：", session.notificationDeadline(now));
                 if (session.notificationDeadline(now)) {
                     // vscode.window.showInformationMessage(
                     //     `シェル統合を有効化してください`
@@ -50,6 +51,7 @@ export class TerminalSessionManager {
     static setSessionId(terminal: vscode.Terminal, sessionId:number): TerminalSession {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.sessionId = sessionId;
+        session.sessionName = terminal.name;
         session.terminalSessionMode = TerminalSessionMode.Start;
         Logger.info(`set terminal session manager session id : ${sessionId}`);
         this.terminalSessions.set(terminal, session);
@@ -166,6 +168,10 @@ export class TerminalSessionManager {
     static get(terminal: vscode.Terminal): TerminalSession|undefined {
         return this.terminalSessions.get(terminal);
     }
+
+	static getSessionName(terminal: vscode.Terminal): string|undefined {
+        return this.terminalSessions.get(terminal)?.sessionName;
+	}
 
     static getSessionId(terminal: vscode.Terminal): number|undefined {
         return this.terminalSessions.get(terminal)?.sessionId;

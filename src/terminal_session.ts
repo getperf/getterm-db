@@ -17,6 +17,7 @@ export class TerminalSession {
     commandId: number = 0;
     private _terminalSessionMode = TerminalSessionMode.Close;
 
+    sessionName?: string;
     consoleBuffer: string[]  = [];
     notebookEditor: vscode.NotebookEditor | undefined;
     xtermParser: XtermParser | undefined;
@@ -36,12 +37,18 @@ export class TerminalSession {
         //     this.terminalTraffic &&
         //     !this.shellExecutionEventBusy
         // );
-        if (this.terminalSessionMode === TerminalSessionMode.Capturing &&
-            !this.shellExecutionEventBusy
-        ) {
+        // if (this.terminalSessionMode === TerminalSessionMode.Capturing &&
+        //     !this.shellExecutionEventBusy
+        // ) {
+        if (this.captureActive()) {
             if (this.terminalTraffic > 100) { return true; }
         }
         return false;
+    }
+
+    public captureActive() : boolean {
+        return (this.terminalSessionMode === TerminalSessionMode.Capturing || 
+            this.terminalSessionMode === TerminalSessionMode.CaptureStart);
     }
 
     public notificationDeadline(now : Date) : boolean {
@@ -55,6 +62,7 @@ export class TerminalSession {
     public changeModeCapturing(commandRunning: boolean) {
         this.shellExecutionEventBusy = true;
         this.commandRunning = commandRunning;
+        this.terminalTraffic = 0;
         if (this.terminalSessionMode === TerminalSessionMode.CaptureStart) {
             this.terminalSessionMode = TerminalSessionMode.Capturing;
         }

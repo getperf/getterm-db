@@ -1,27 +1,43 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 
+enum SessionMode {
+    Sart = 'start',
+    Closed = 'closed',
+};
+
 export interface SessionMetaData {
     hostName: string;
+    sessionMode: SessionMode,
     startTime: Date | undefined;
     endTime: Date | undefined;
 };
 
 export class NotebookSessionWriter {
     
-    public static appendSessionTitleCell(selectedSession: string) {
-        console.log(`Method not implemented.${selectedSession}`);
+    public static appendSessionStartCell(selectedSession: string, notebook?: vscode.NotebookEditor | undefined) {
         const sessionMetaData: SessionMetaData = {
             hostName: selectedSession,
+            sessionMode: SessionMode.Sart,
             startTime: new Date(),
             endTime: undefined,
         };
-        NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData);
+        NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData, notebook);
+    }
+
+    public static appendSessionClosedCell(selectedSession: string, notebook?: vscode.NotebookEditor | undefined) {
+        const sessionMetaData: SessionMetaData = {
+            hostName: selectedSession,
+            sessionMode: SessionMode.Closed,
+            startTime: undefined,
+            endTime: new Date(),
+        };
+        NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData, notebook);
     }
 
     // Static method to add session data to the notebook
-    public static async addSessionDataToNotebook(sessionData: SessionMetaData) {
-        const activeNotebook = vscode.window.activeNotebookEditor;
+    public static async addSessionDataToNotebook(sessionData: SessionMetaData, notebook?: vscode.NotebookEditor | undefined) {
+        const activeNotebook = notebook || vscode.window.activeNotebookEditor;
         if (!activeNotebook) {
             vscode.window.showErrorMessage("No active notebook found.");
             return;
@@ -30,7 +46,7 @@ export class NotebookSessionWriter {
 		const currentRow = notebookDocument.cellCount;
 
         const sessionMetaData = NotebookSessionWriter.sessionToPandocTitleBlock(sessionData);
-        const markdownContent = `${sessionMetaData}\n\n### '${sessionData.hostName}' session start\n`;
+        const markdownContent = `${sessionMetaData}\n\n### '${sessionData.hostName}' session ${sessionData.sessionMode}\n`;
         const newCell = new vscode.NotebookCellData(
             vscode.NotebookCellKind.Markup,
             markdownContent,
@@ -54,6 +70,9 @@ export class NotebookSessionWriter {
         let metaData = `% sshHost: "${sessionData.hostName}"\n`;
         if (sessionData.startTime) {
             metaData += `% startTime: "${sessionData.startTime.toLocaleString()}"\n`;
+        }
+        if (sessionData.endTime) {
+            metaData += `% endTime: "${sessionData.endTime.toLocaleString()}"\n`;
         }
         return metaData;
     }

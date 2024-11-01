@@ -11,6 +11,7 @@ import { Logger } from './logger';
 import { CommandParser } from './command_parser';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 import { CommandHandler } from './command_handler';
+import { SessionHandler } from './session_handler';
 
 export class ConsoleEventProvider {
     private context: vscode.ExtensionContext;
@@ -28,6 +29,17 @@ export class ConsoleEventProvider {
                 Logger.info("terminal state change event invoked");
                 vscode.window.showInformationMessage('シェル統合変化イベント');
             }),
+            // vscode.window.onDidCloseTerminal((terminal) => {
+            //     console.log(`Terminal closed: ${terminal.name}`);
+            //     vscode.window.showInformationMessage(`Closed terminal: ${terminal.name}`);
+            //     async terminal => this.sessionCloseEvent(terminal)
+            // }),
+            vscode.window.onDidOpenTerminal(
+                async terminal => this.sessionOpenEvent(terminal)
+            ),
+            vscode.window.onDidCloseTerminal(
+                async terminal => this.sessionCloseEvent(terminal)
+            ),
             vscode.window.onDidStartTerminalShellExecution(
                 async e => this.commandStartEvent(e)
             ),
@@ -38,6 +50,16 @@ export class ConsoleEventProvider {
                 async e => this.terminalDataWriteEvent(e)
             )
         );
+    }
+
+    async sessionOpenEvent(terminal:  vscode.Terminal) {
+        const sessionHandler = new SessionHandler(this);
+        sessionHandler.handleSessionOpen(terminal);
+    }
+
+    async sessionCloseEvent(terminal:  vscode.Terminal) {
+        const sessionHandler = new SessionHandler(this);
+        sessionHandler.handleSessionClose(terminal);
     }
 
     async terminalDataWriteEvent(e:  vscode.TerminalDataWriteEvent) {
