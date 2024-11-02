@@ -147,6 +147,7 @@ export class TerminalSessionManager {
     static pushDataBufferExcludingOpening(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.terminalTraffic += data.length;
+        Logger.debug(`ConsoleData: ${data}`);
         const currentTime = new Date();
         const execDuration = (currentTime.getTime() - session.start.getTime()) / 1000; 
         // console.log("EXEC DURATION : ", execDuration);
@@ -193,23 +194,11 @@ export class TerminalSessionManager {
         return this.terminalSessions.get(terminal)?.xtermParser;
     }
 
-    // static getEditedFileDownloader(terminal: vscode.Terminal): EditedFileDownloader|undefined {
-    //     return this.terminalSessions.get(terminal)?.editedFileDownloader;
-    // }
-
     static isShellIntegrationEventDisabled(terminal: vscode.Terminal): boolean {
         const flag = this.terminalSessions.get(terminal)?.disableShellIntegrationHandlers || false;
         console.log("DisableFlag3(is):", flag);
         return this.terminalSessions.get(terminal)?.disableShellIntegrationHandlers || false;
     }
-
-    // static getUpdatingFlag(terminal: vscode.Terminal): boolean {
-    //     return this.terminalSessions.get(terminal)?.updatingFlag || false;
-    // }
-
-    // static getUpdateFilePath(terminal: vscode.Terminal): string | undefined {
-    //     return this.terminalSessions.get(terminal)?.UpdateFilePath;
-    // }
 
     static async getSessionIdWithRetry(terminal: vscode.Terminal): Promise<number | undefined> {
         let retries = 3;

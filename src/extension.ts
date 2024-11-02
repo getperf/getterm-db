@@ -3,7 +3,7 @@ import { ConsoleEventProvider } from './console_event_provider';
 import { TerminalNotebookProvider } from './notebook_provider';
 import { NotebookCopyButtonProvider } from './notebook_copy_button_provider';
 import { CellExecutionTimeProvider } from './notebook_execution_time_provider';
-import { Logger } from './logger';
+import { Logger, LogLevel } from './logger';
 import { TerminalNotebookSessionPicker } from './notebook_session_picker';
 import { initializeDatabase } from './database';
 import { RemoteShellExecutor } from './remote_shell_executor';
@@ -15,7 +15,8 @@ import { TerminalSessionManager } from './terminal_session_manager';
 export function activate(context: vscode.ExtensionContext) {
 
 	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
-	Logger.setup(outputChannel);
+	Logger.setup(outputChannel, context);
+	// Logger.setLogLevel(LogLevel.DEBUG);
 	initializeDatabase();
 	TerminalSessionManager.initializeInstance();
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);

@@ -12,6 +12,7 @@ suite('SwitchUserCommandHandler Tests', () => {
     setup(() => {
         // Command.create メソッドをモックにする
         // commandHandlerMock = sinon.createStubInstance(CommandHandler);
+        mockTerminal = { name: 'Test Terminal' } as unknown as vscode.Terminal;
         sinon.stub(Command, 'create').callsFake(async (sessionId: number, command: string) => {
             return Promise.resolve(1);  // ダミーのコマンドIDを返します
         });
@@ -24,16 +25,16 @@ suite('SwitchUserCommandHandler Tests', () => {
         sinon.restore(); // モックを解除
     });
 
-    test('detectSuCommand should return true if su command is detected', () => {
+    test('detectSuCommand should return true if su command is detected', async () => {
         const commandBuffer = "pwd\x1b[?25l\x1b[10;20Hsu -\x1b[?25h";
         const handler = new SwitchUserCommandHandler(mockTerminal, sessionId, commandBuffer);
-        assert.strictEqual(handler.detectSuCommand(), true);
+        assert.strictEqual(await handler.detectSuCommand(), true);
     });
 
-    test('detectSuCommand should return false if su command is not detected', () => {
+    test('detectSuCommand should return false if su command is not detected', async () => {
         const commandBuffer = "pwd\x1b[?25l\x1b[10;20Hecho Hello\x1b[?25h";
         const handler = new SwitchUserCommandHandler(mockTerminal, sessionId, commandBuffer);
-        assert.strictEqual(handler.detectSuCommand(), false);
+        assert.strictEqual(await handler.detectSuCommand(), false);
     });
 
     test('updateCommand should call Command.create with parsed command', async () => {
@@ -48,14 +49,4 @@ suite('SwitchUserCommandHandler Tests', () => {
 
     });
 
-    // test('Should detect su command and call Command.create', () => {
-    //     const handler = new SwitchUserCommandHandler(1, 'sudo su -');
-
-    //     const detected = handler.detectSuCommand();
-    //     assert.strictEqual(detected, true, 'su command should be detected');
-
-    //     handler.updateCommand();
-    //     assert.ok(createStub.called, 'Command.create should be called once');
-    //     // assert.ok(createStub.calledWith(1, 'sudo su -', '', '', 0), 'Command.create should be called with correct arguments');
-    // });
 });

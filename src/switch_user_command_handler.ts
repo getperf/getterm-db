@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Command } from "./model/commands";
 import { XtermParser } from './xterm_parser';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { Logger } from './logger';
 
 /**
  * SwitchUserCommandHandler manages detection and handling of `su` commands within a terminal session.
@@ -27,17 +28,30 @@ export class SwitchUserCommandHandler {
     }
 
     /**
-     * Detects the presence of an `su` command within the command buffer.
-     * Note: If the entire line is cleared using Ctrl-U before issuing `su -`, this method will not detect it
-     * due to simplified escape sequence handling.
-     * @returns true if `su` command is detected, otherwise false.
+     * Detects the presence of an `su` command in the terminal output.
+     * 
+     * This method first logs the command buffer content for debugging, then
+     * parses the terminal output buffer using the XtermParser instance. Escape
+     * sequences are replaced with spaces, making the plain text easier to search
+     * for the `su` command. After parsing, it examines the last line of the command
+     * buffer output for any instance of the `su` command.
+     * 
+     * @returns {Promise<boolean>} - Returns `true` if the `su` command is detected, 
+     * otherwise returns `false`.
      */
-    detectSuCommand(): boolean {
-        // Replaces escape sequences with spaces to detect the `su` command in plain text
-        const commandText = this.commandBuffer
-            .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, ' ')
-            .replace(/\s+/g, ' ').trim();
-        const commandParts = commandText.trim().split(/\s+/);
+    async detectSuCommand(): Promise<boolean> {
+        Logger.debug(`Detecting su command from buffer: ${this.commandBuffer}`);
+        
+        // Parse the terminal buffer for plain-text command detection
+        const xtermParser = XtermParser.getInstance();
+        const commandText = await xtermParser.parseTerminalBuffer(this.commandBuffer);
+        
+        // Extract and trim the last line of the parsed command output
+        const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
+        Logger.debug(`Checking su command in last line: ${commandLastLine}`);
+        
+        // Split the command line text into parts and check for 'su' command
+        const commandParts = commandLastLine.trim().split(/\s+/);
         if (commandParts.includes('su')) {
             console.log("Detected 'su' command.");
             return true;
@@ -65,7 +79,7 @@ export class SwitchUserCommandHandler {
      * @returns A Promise resolving to true if an `su` command is handled, otherwise false.
      */
     async handleSuCommand():Promise<boolean> {
-        if (this.detectSuCommand()) {
+        if (await this.detectSuCommand()) {
             await this.updateCommand();
             TerminalSessionManager.retrieveDataBuffer(this.terminal);
             return true;

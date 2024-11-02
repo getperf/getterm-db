@@ -11,9 +11,24 @@ export class Logger {
     private static outputChannel: vscode.OutputChannel;
     private static logLevel = LogLevel.INFO;
 
-    static setup(outputChannel: vscode.OutputChannel) {
+    static setup(outputChannel: vscode.OutputChannel, context?: vscode.ExtensionContext) {
         Logger.outputChannel = outputChannel;
         Logger.logLevel = LogLevel.INFO;
+
+        // Register VSCode command to change log level
+        const setLogLevelCommand = vscode.commands.registerCommand('getterm-db.setLogLevel', async () => {
+            const selectedLevel = await vscode.window.showQuickPick(
+                Object.values(LogLevel),
+                { placeHolder: 'Select log level' }
+            );
+            if (selectedLevel) {
+                Logger.setLogLevel(selectedLevel as LogLevel);
+                vscode.window.showInformationMessage(`Log level set to ${selectedLevel}`);
+            }
+        });
+        if (context) {
+            context.subscriptions.push(setLogLevelCommand);
+        }
     }
 
     static setLogLevel(logLevel: LogLevel) {
