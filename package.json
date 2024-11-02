@@ -24,6 +24,10 @@
         "title": "Hello World"
       },
       {
+        "command": "getterm-db.setLogLevel",
+        "title": "Getterm: Set Log Level"
+      },
+      {
         "command": "getterm-db.showRemoteSSHView",
         "title": "Getterm: Show remote SSH view"
       },
