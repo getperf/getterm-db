@@ -8,6 +8,8 @@ import { Logger } from './logger';
 import { RawNotebookCell, RawNotebookData } from './notebook_serializer';
 import { rejects } from 'assert';
 import { NotebookSessionWriter } from './notebook_session_writer';
+import { config } from 'process';
+import { Config } from './config';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export enum TerminalNotebookStatus {
@@ -108,8 +110,11 @@ export class TerminalNotebookController  {
 	private async createEmptyNotebook() {
         const terminalNotebookFilename = this.createTerminalNotebookFilename();
         Logger.info(`create notebook filename : ${terminalNotebookFilename}`);
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
+		const notebookHome = Config.getInstance().getNotebookHome();
+		Logger.info(`notebook home : ${notebookHome}`);
+		// const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const terminalNotebookFilePath = path.join(notebookHome, terminalNotebookFilename);
+        // const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
         const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
 		try {
 			const cells : Array<vscode.NotebookCellData> = [];

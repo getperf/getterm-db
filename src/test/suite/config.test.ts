@@ -7,6 +7,7 @@ import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
 suite('Config Tests', function() {
     let workspaceRoot: string;
     let configFilePath: string;
+    let gettermHome: string;
 
     suiteSetup(function() {
         // ワークスペースディレクトリを取得
@@ -16,7 +17,8 @@ suite('Config Tests', function() {
         // }
         // workspaceRoot = workspaceFolders[0].uri.fsPath;
         workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        configFilePath = path.join(workspaceRoot, ConfigFile);
+        gettermHome= path.join(workspaceRoot, ".getterm");
+        configFilePath = path.join(gettermHome, ConfigFile);
         if (fs.existsSync(configFilePath)) {
             fs.unlinkSync(configFilePath);
         }
@@ -30,6 +32,10 @@ suite('Config Tests', function() {
 
     setup(function() {
         // 設定ファイルが存在しない場合にのみ作成
+        console.log("GETTERM_HOME:", gettermHome);
+        if (!fs.existsSync(gettermHome)) {
+            fs.mkdirSync(gettermHome);
+        }
         if (!fs.existsSync(configFilePath)) {
             fs.writeFileSync(configFilePath, JSON.stringify({
                 sqliteDbPath: SessionDb,

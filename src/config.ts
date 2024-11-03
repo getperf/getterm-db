@@ -2,13 +2,18 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Logger } from './logger';
+import { Note } from './model/notes';
 
 export const SessionDb = 'session.db';
-export const ConfigFile = '.getterm.json';
+export const ConfigFile = 'config.json';
 export const ConfigVersion = '1.0';
+export const NotebookHome = 'notebook';
+export const DownloadHome = 'download';
 
 interface Settings {
     sqliteDbPath?: string;
+    notebookHome?: string;
+    downloadHome?: string;
     terminalProfiles?: string[];
     version?: string;
 }
@@ -17,12 +22,41 @@ export class Config {
     private static instance: Config;
     private settings: Settings = {};
     private configFilePath: string;
+    private gettermHome: string;
 
     private constructor() {
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        this.configFilePath = path.join(workspaceRoot, ConfigFile);
+        // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        // this.configFilePath = path.join(workspaceRoot, ConfigFile);
+        this.gettermHome = this.getGettermHome();
+        this.configFilePath = path.join(this.gettermHome, ConfigFile);
+
+        this.ensureDirectoryExists(); // Create .getterm directory if it doesn’t exist
         this.loadSettings();
         this.registerFileSystemWatcher();
+    }
+
+    // Retrieve the path for the .getterm directory
+    public getGettermHome(): string {
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        return path.join(workspaceRoot, '.getterm');
+    }
+
+    // Ensure the .getterm directory exists
+    private ensureDirectoryExists() {
+        if (!fs.existsSync(this.gettermHome)) {
+            fs.mkdirSync(this.gettermHome);
+            Logger.info(`Created config directory: ${this.gettermHome}`);
+        }
+        // const notebookHome = path.join(this.gettermHome, 'notebook');
+        const notebookHome = this.getNotebookHome();
+        if (!fs.existsSync(notebookHome)) {
+            fs.mkdirSync(notebookHome);
+        }
+        const downloadHome = path.join(this.gettermHome, 'download');
+        if (!fs.existsSync(downloadHome)) {
+            fs.mkdirSync(downloadHome);
+        }
+
     }
 
     public static getInstance(): Config {
@@ -42,6 +76,8 @@ export class Config {
             Logger.warn(`initialize config file ${this.configFilePath}`);
             this.settings = {
                 sqliteDbPath: SessionDb,
+                notebookHome: NotebookHome,
+                downloadHome: DownloadHome,
                 terminalProfiles: [],
                 version: ConfigVersion,
             };
@@ -56,6 +92,11 @@ export class Config {
     public set<T extends keyof Settings>(key: T, value: Settings[T]): void {
         this.settings[key] = value;
         this.saveSettings();
+    }
+
+    public getNotebookHome() : string {
+        const notebookHome = this.get('notebookHome') || NotebookHome;
+        return path.join(this.gettermHome, notebookHome);
     }
 
     private saveSettings(): void {

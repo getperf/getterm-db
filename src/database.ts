@@ -10,9 +10,12 @@ import { Cell } from './model/cells';
 
 export async function  initializeDatabase() : Promise<Database> {
     const config = Config.getInstance();
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+    const gettermHome = config.getGettermHome();
+    console.log("GettermHome: ", gettermHome);
+    // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
     const sqliteDbPath = config.get('sqliteDbPath') as string;
-    const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+    // const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+    const sqliteDbAbsolutePath = path.join(gettermHome, sqliteDbPath);
     const db = new Database(sqliteDbAbsolutePath);
     await db.initialize();
     return db;

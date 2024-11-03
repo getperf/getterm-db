@@ -6,17 +6,13 @@ import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
 import * as vscode from 'vscode';
 
 suite('Database Class', () => {
-    // const workspaceRoot = __dirname;
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+    const gettermHome= path.join(workspaceRoot, ".getterm");
     let sqliteDbPath : string;
     let db: Database;
 
     suiteSetup(() => {
-        sqliteDbPath = path.join(workspaceRoot, SessionDb);
-    });
-
-    suiteSetup(() => {
-        // suite全体のセットアップをここで行うことも可能
+        sqliteDbPath = path.join(gettermHome, SessionDb);
     });
 
     suiteTeardown(async () => {
@@ -33,17 +29,17 @@ suite('Database Class', () => {
         await db.initialize();
     });
 
-    teardown(() => {
-        // try {
-        //     require('fs').unlinkSync(sqliteDbPath);
-        // } catch (err) {
-        //     console.error('テストDBファイルの削除に失敗しました:', err);
-        // }
-    });
+    // teardown(() => {
+    //     // try {
+    //     //     require('fs').unlinkSync(sqliteDbPath);
+    //     // } catch (err) {
+    //     //     console.error('テストDBファイルの削除に失敗しました:', err);
+    //     // }
+    // });
 
     test('should create a new database with the correct path', async () => {
         const sqliteDbPath = Config.getInstance().get('sqliteDbPath') as string;
-        const expectedPath = path.join(workspaceRoot, sqliteDbPath);
+        const expectedPath = path.join(gettermHome, sqliteDbPath);
         console.log("DB PATH: ", db.sqliteDbPath, expectedPath);
         assert.strictEqual(db.sqliteDbPath, expectedPath, 'データベースのパスが正しく設定されていません');
     });
@@ -67,7 +63,7 @@ suite('Database Class', () => {
     });
 
     test('should throw an error if trying to get DB instance before initialization', () => {
-        const uninitializedDb = new Database(workspaceRoot);
+        const uninitializedDb = new Database(gettermHome);
         // assert.throws(() => uninitializedDb.getDBInstance(), /データベースが初期化されていません。/, '初期化されていないデータベースインスタンスが取得されました');
         assert.throws(() => uninitializedDb.getDBInstance());
     });
@@ -82,7 +78,4 @@ suite('Database Class', () => {
         await assert.rejects(invalidDb.initialize());
     });
 });
-function async(arg0: () => void) {
-    throw new Error('Function not implemented.');
-}
 
