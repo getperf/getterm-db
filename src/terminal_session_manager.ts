@@ -8,6 +8,8 @@ export class TerminalSessionManager {
     private static instance: TerminalSessionManager | null = null;
     private static terminalSessions: Map<vscode.Terminal, TerminalSession> = new Map();
 
+    private readonly monitorInterval = 2000;
+
     public static initializeInstance(): TerminalSessionManager {
         if (!this.instance) {
             this.instance = new TerminalSessionManager();
@@ -19,7 +21,7 @@ export class TerminalSessionManager {
     private startMonitor() {
         setInterval(() => {
             this.checkAllSessionStatus();
-        }, 5000); // 5秒ごとに実行
+        }, this.monitorInterval); // 5秒ごとに実行
     }
 
     private checkAllSessionStatus() {
@@ -28,11 +30,20 @@ export class TerminalSessionManager {
 
             const now = new Date();
             if (session.shellIntegrationNotActive()) {
-                console.log("シェル統合無効化検知：", session.notificationDeadline(now));
-                if (session.notificationDeadline(now)) {
+                console.log("シェル統合無効化検知：", session.notificationSuppressionDeadline(now));
+                if (session.notificationSuppressionDeadline(now)) {
                     // vscode.window.showInformationMessage(
                     //     `シェル統合を有効化してください`
                     // );
+                    vscode.window.showInformationMessage(
+                        "シェル統合スクリプトを有効化してください",
+                        "有効化手順"
+                        // "https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation"
+                    ).then((selection) => {
+                        if (selection) {
+                            vscode.env.openExternal(vscode.Uri.parse("https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation"));
+                        }
+                    });
                     console.log(
                         `シェル統合を有効化してください`
                     );
