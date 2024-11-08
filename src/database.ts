@@ -30,10 +30,11 @@ export class Database {
     public async initialize(): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
+                console.log(`initialize database: ${this.sqliteDbPath}`);
                 this.db = new sqlite3.Database(this.sqliteDbPath, (err) => {
                     console.log("ERROR DEBUG : ", err);
                     if (err) {
-                        return reject(new Error(`database initialize error : ${err.message}`));
+                        return reject(new Error(`database initialize error ${this.sqliteDbPath} : ${err.message}`));
                     } else {
                         resolve();
                     }

@@ -6,6 +6,7 @@ import { Logger } from './logger';
 import { CommandParser, ParsedCommand } from './command_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { Config } from './config';
 
 // Downloader mode types to handle different states of downloading file
 export enum DownloaderMode {
@@ -21,7 +22,6 @@ export enum DownloaderMode {
  * executes "cat file name" in that case, saves the execution result in a file, 
  * and updates the command management table.
  */
-
 export class ConsernedFileDownloader {
     private editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
@@ -30,6 +30,9 @@ export class ConsernedFileDownloader {
 
     // Terminal from which the command is executed
     terminal: vscode.Terminal; 
+
+    // Short name that can be used as a file name
+    termnalShortName: string;
 
     // Parsed command object
     parsedCommand: ParsedCommand; 
@@ -43,18 +46,19 @@ export class ConsernedFileDownloader {
     // sudo command
     sudoCommand : string | null = null;
 
+    // Download home directory
+	downloadHome = Config.getInstance().getDownloadHome();
+
     // Download file path
     downloadFile: string | undefined; 
 
     // Content after cat command reading
     fileContent: string | undefined; 
 
-    // Workspace root directory
-    workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || ''; 
-
     constructor(commandId : number, terminal : vscode.Terminal, parsedCommand: ParsedCommand) {
         this.commandId = commandId;
         this.terminal = terminal;
+        this.termnalShortName= Util.toCamelCase(terminal.name); // CamelCase conversion of terminal name
         this.parsedCommand = parsedCommand;
     }
     
@@ -86,7 +90,10 @@ export class ConsernedFileDownloader {
         return fileName;
     }
 
-    // Detects if the command is trying to access a file
+    /**
+     * Detects if the current command involves file access and switches the mode if necessary.
+     * @returns True if file access is detected in the command; otherwise, false.
+     */
     detectFileAccessFromCommand() : boolean {
         const commandText = this.parsedCommand.command;
         // Check if command accesses a file
@@ -100,7 +107,12 @@ export class ConsernedFileDownloader {
         return false;
     }
 
-    // Asks the user for confirmation to download the accessed file
+    /**
+     * Prompts the user for confirmation to download the accessed file.
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * instance if confirmed; otherwise, rejects.
+     * @throws An error if the file path is not set.
+     */
     async showConfirmationMessage(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
             throw new Error('File path to download is not set');
@@ -118,42 +130,56 @@ export class ConsernedFileDownloader {
         }
     }
 
-    // Captures the file content by running the 'cat' command
+    /**
+     * Captures the content of the accessed file by executing a 'cat' command in the terminal.
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * instance after capturing.
+     * @throws An error if the command access file is not found.
+     */
     async caputureCommandAccessFile(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
             throw new Error('Not found command access file');
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
-        // const catCommand = `${this.sudoCommand} cat ${this.commandAccessFile}`;
-        // const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
-        //     `cat ${this.commandAccessFile}`;
         const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
         this.terminal.sendText(commandText); // Send 'cat' command to terminal
         this.mode = DownloaderMode.Save;
         return this;
     }
 
-    // Generates a name for the downloaded file
+    /**
+     * Generates a download filename, appending a suffix if specified.
+     * @param {number} suffixNumber - Optional number to append to the filename for uniqueness.
+     * @returns {string | undefined} The download filename or undefined if no file path is set.
+     */
     getDownloadFile(suffixNumber : number = 0): string | undefined {
         if (!this.commandAccessFile) {
             return;
         }
-        const terminalName = Util.toCamelCase(this.terminal.name); // CamelCase conversion of terminal name
         const downloadFileName = path.basename(this.commandAccessFile); // Extract base file name
-        if (suffixNumber > 0) {
-            return  `${terminalName}__${downloadFileName}_${suffixNumber}`;
-        } else {
-            return  `${terminalName}__${downloadFileName}`;
-        }
+        return suffixNumber > 0 ? `${downloadFileName}_${suffixNumber}` : downloadFileName;
     }
 
-    // Generate download filenames by ensuring that downloaded filenames are unique
+    /**
+     * Generates an absolute path for the download file within the designated directory.
+     * @param downloadFile - The name of the file to be downloaded.
+     * @returns The full path to the download file in the specified terminal directory.
+     */
+    getAbsoluteDownloadPath(downloadFile: string): string {
+        return path.join(this.downloadHome, this.termnalShortName, downloadFile);
+    }
+
+    /**
+     * Generates a unique filename for the downloaded file by checking for existing files
+     * and appending a numeric suffix if necessary to avoid naming conflicts.
+     * @returns {string | undefined} The unique filename, or undefined if no filename is generated.
+     */
     getUniqueDownloadFile(): string | undefined {
         let downloadFile = this.getDownloadFile();
         if (!downloadFile) {
             return;
         }
-        let filePath = path.join(this.workspaceRoot, downloadFile);
+        let filePath = this.getAbsoluteDownloadPath(downloadFile);
         let file_suffix = 2;
         // Check if file exists and modify name to ensure uniqueness
         while (fs.existsSync(filePath)) {
@@ -161,20 +187,38 @@ export class ConsernedFileDownloader {
             if (!downloadFile) {
                 return;
             }
-            filePath = path.join(this.workspaceRoot, downloadFile);
+            filePath = this.getAbsoluteDownloadPath(downloadFile);
             file_suffix ++;
         }
         return downloadFile;
     }
 
-    // Saves the captured file content to the workspace
+    /**
+     * Ensures that the designated download directory (".getterm" folder) exists.
+     * Creates the directory if it does not exist.
+     */
+    private ensureDownloadDirectoryExists() {
+        const downloadDirectory = path.join(this.downloadHome, this.termnalShortName);
+        if (!fs.existsSync(downloadDirectory)) {
+            fs.mkdirSync(downloadDirectory);
+            Logger.info(`Created config directory: ${downloadDirectory}`);
+        }
+    }
+
+    /**
+     * Saves the captured file content from the terminal to the download directory.
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the 
+     * downloader instance after saving.
+     * @throws Throws an error if the buffer retrieval or file save operation fails.
+     */
     async saveCommandAccessFile(): Promise<ConsernedFileDownloader>  {
+        this.ensureDownloadDirectoryExists();
         this.downloadFile = this.getUniqueDownloadFile(); // Get unique file name
         console.log("Download file : ", this.downloadFile);
         if (!this.downloadFile) {
             throw new Error('Downloaded save file name is not set');
         }
-        let filePath = path.join(this.workspaceRoot, this.downloadFile);
+        let filePath = this.getAbsoluteDownloadPath(this.downloadFile);
 
         // Wait for terminal data buffer to stabilize (1 second)
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -185,9 +229,6 @@ export class ConsernedFileDownloader {
         }
 
         const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
-
-        // const commandText = this.sudoCommand ? this.sudoCommand + ' ' : '' +
-        //     `cat ${this.commandAccessFile}`;
         const output = await CommandParser.extractCommandOutput(rawData, commandText); 
         try {
             await fs.promises.writeFile(filePath, output);
@@ -199,7 +240,13 @@ export class ConsernedFileDownloader {
         }
     }
 
-    // Updates the command entry in the database after success
+    /**
+     * Updates the command database entry to reflect a successful file download.
+     * Links the downloaded file to the command and provides access from the database entry.
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * instance after updating.
+     * @throws Throws an error if the file or command ID is missing.
+     */
     async updateCommandSuccess(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
             throw new Error('Not found command access file');
@@ -213,7 +260,7 @@ export class ConsernedFileDownloader {
             this.commandAccessFile,
             this.downloadFile, 
         );
-        const filePath = path.join(this.workspaceRoot, this.downloadFile);
+        const filePath = this.getAbsoluteDownloadPath(this.downloadFile);
         const fileUri = vscode.Uri.file(filePath);
 
         await Command.updatedWithoutTimestamp(
@@ -229,7 +276,13 @@ export class ConsernedFileDownloader {
         return this;
     }
 
-    // Handles errors during the file download process
+    /**
+     * Handles any errors encountered during the file download process.
+     * Notifies the user, updates the command status, and resets to error mode.
+     * @param {Error} err - The error that occurred during processing.
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * instance after handling the error.
+     */
     async errorHandler(err: Error) {
         vscode.window.showErrorMessage(
             `Download canceled : ${err.message}`

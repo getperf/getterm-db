@@ -57,7 +57,13 @@ export class NotebookSessionWriter {
 		const range = new vscode.NotebookRange(currentRow, currentRow + 1);
 		const edit = new vscode.NotebookEdit(range, [newCell]);
 
-		const workspaceEdit = new vscode.WorkspaceEdit();
+        // Update notebook metadata with sessionId
+        // const newMetadata = { ...notebookDocument.metadata, sessionId: sessionData.sessionId };
+        const newMetadata = { ...notebookDocument.metadata, sessionId: 12 };
+
+        const workspaceEdit = new vscode.WorkspaceEdit();
+        // workspaceEdit.replaceNotebookMetadata(notebookDocument.uri, newMetadata);
+        // workspaceEdit.replace(notebookDocument.uri, new vscode.Range(0,0), "newText", newMetadata);
 		workspaceEdit.set(notebookDocument.uri, [edit]);
 		await vscode.workspace.applyEdit(workspaceEdit);
 

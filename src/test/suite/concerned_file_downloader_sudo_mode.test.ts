@@ -9,6 +9,8 @@ suite('ConsernedFileDownloader sudo mode Test Suite', () => {
     let parsedCommand: ParsedCommand;
 
     setup(function () {
+        mockTerminal = { name: 'Test Terminal' } as unknown as vscode.Terminal;
+        parsedCommand = { command: 'vi /path/to/file', output: 'File content after download' } as ParsedCommand;
         downloader = new ConsernedFileDownloader(1, mockTerminal, parsedCommand);
     });
 

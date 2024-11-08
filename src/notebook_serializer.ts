@@ -39,21 +39,21 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 			Logger.error(`Initialize notebook because parse failed : ${error}`);
 			rawData = { cells: [] };
 		}
-        const sessionId = rawData.metadata?.sessionId;
-		Logger.info(`initialize notebook, session id : ${sessionId}`);
+        // const sessionId = rawData.metadata?.sessionId;
+		// Logger.info(`initialize notebook, session id : ${sessionId}`);
 		let cells: Array<vscode.NotebookCellData> = [];
         // セッションid が登録されておらず、session.db にも履歴がない場合はエラーとする
-        if (!sessionId) {
-            const message = `The notebook could not be opened because the session was unknown.`;
-			vscode.window.showErrorMessage(message);
-            return new vscode.NotebookData(cells);
-        }
-        const session = Session.getById(sessionId);
-        if (!session) {
-            const message = `The note could not be opened because the session was not registered in the DB.`;
-			vscode.window.showErrorMessage(message);
-            return new vscode.NotebookData(cells);
-        }
+        // if (!sessionId) {
+        //     const message = `The notebook could not be opened because the session was unknown.`;
+		// 	vscode.window.showErrorMessage(message);
+        //     return new vscode.NotebookData(cells);
+        // }
+        // const session = Session.getById(sessionId);
+        // if (!session) {
+        //     const message = `The note could not be opened because the session was not registered in the DB.`;
+		// 	vscode.window.showErrorMessage(message);
+        //     return new vscode.NotebookData(cells);
+        // }
         const startTime = new Date().toISOString();
         rawData.cells.forEach( item => {
             const cell = new vscode.NotebookCellData(
@@ -71,13 +71,13 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
             cells.push(cell);
         });
         const notebookData = new vscode.NotebookData(cells);
-		if (sessionId) {
-			Logger.info(`set session id in notebook : ${sessionId}`);
-			notebookData.metadata = { custom: { sessionId: sessionId } };
-		} else {
-			// Set the start time to the current time if not present
-			// notebookData.metadata = { custom: { startTime: new Date().toISOString() } };
-		}
+		// if (sessionId) {
+		// 	Logger.info(`set session id in notebook : ${sessionId}`);
+		// 	notebookData.metadata = { custom: { sessionId: sessionId } };
+		// } else {
+		// 	// Set the start time to the current time if not present
+		// 	// notebookData.metadata = { custom: { startTime: new Date().toISOString() } };
+		// }
 		return notebookData;
 	}
 

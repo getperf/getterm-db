@@ -12,6 +12,9 @@ suite('Database Class', () => {
     let db: Database;
 
     suiteSetup(() => {
+        if (!fs.existsSync(gettermHome)) {
+            fs.mkdirSync(gettermHome);
+        }
         sqliteDbPath = path.join(gettermHome, SessionDb);
     });
 

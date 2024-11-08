@@ -68,6 +68,7 @@ export class CommandHandler {
             if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
                 await this.notebookController.updateNotebook(suCommandHandler.commandId);
             }
+            session.terminalSessionMode = TerminalSessionMode.CaptureStart;
             return;
         }
 

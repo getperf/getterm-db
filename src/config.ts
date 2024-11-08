@@ -99,6 +99,11 @@ export class Config {
         return path.join(this.gettermHome, notebookHome);
     }
 
+    public getDownloadHome() : string {
+        const downloadHome = this.get('downloadHome') || DownloadHome;
+        return path.join(this.gettermHome, downloadHome);
+    }
+
     private saveSettings(): void {
         const data = JSON.stringify(this.settings, null, 2);
         // fs.writeFileSync(this.configFilePath, data, 'utf8');

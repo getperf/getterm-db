@@ -70,7 +70,7 @@ export class TerminalSession {
      * appears inactive.
      */
     public shellIntegrationNotActive() : boolean {
-        if (!this.captureActive()) {
+        if (this.terminalSessionMode !== TerminalSessionMode.CaptureStart) {
             return false;
         }
         Logger.debug(`Determines if shell integration is inactive: ${this.terminalTraffic}, ${this.shellExecutionEventBusy}`);
@@ -84,8 +84,9 @@ export class TerminalSession {
      * Checks if the session is in an active capturing state.
      */
     public captureActive() : boolean {
-        return (this.terminalSessionMode === TerminalSessionMode.Capturing || 
-            this.terminalSessionMode === TerminalSessionMode.CaptureStart);
+        // return (this.terminalSessionMode === TerminalSessionMode.Capturing || 
+        //     this.terminalSessionMode === TerminalSessionMode.CaptureStart);
+        return (this.terminalSessionMode === TerminalSessionMode.CaptureStart);
     }
 
     /**
