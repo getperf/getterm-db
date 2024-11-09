@@ -104,14 +104,6 @@ export class TerminalSessionManager {
         return session;
 	}
 
-    // static setEditedFileDownloader(terminal: vscode.Terminal, editedFileDownloader: EditedFileDownloader|undefined) {
-    //     let session = this.terminalSessions.get(terminal) || new TerminalSession();
-    //     session.editedFileDownloader = editedFileDownloader;
-    //     Logger.info(`set terminal session manager edited file downloader`);
-    //     this.terminalSessions.set(terminal, session);
-    //     return session;
-	// }
-
     static disableShellIntegrationEvent(terminal: vscode.Terminal) {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.disableShellIntegrationHandlers = true;
@@ -129,22 +121,6 @@ export class TerminalSessionManager {
         this.terminalSessions.set(terminal, session);
         return session;
 	}
-
-    // static setUpdatingFlag(terminal: vscode.Terminal, updatingFlag: boolean) {
-    //     let session = this.terminalSessions.get(terminal) || new TerminalSession();
-    //     session.updatingFlag = updatingFlag;
-    //     Logger.info(`set terminal session manager updating flag: ${updatingFlag}`);
-    //     this.terminalSessions.set(terminal, session);
-    //     return session;
-	// }
-
-    // static setUpdateFilePath(terminal: vscode.Terminal, updateFilePath: string | undefined) {
-    //     let session = this.terminalSessions.get(terminal) || new TerminalSession();
-    //     session.UpdateFilePath = updateFilePath;
-    //     Logger.info(`set terminal session manager update file path: ${updateFilePath}`);
-    //     this.terminalSessions.set(terminal, session);
-    //     return session;
-	// }
 
     static pushDataBuffer(terminal: vscode.Terminal, data:string): number {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
@@ -238,7 +214,16 @@ export class TerminalSessionManager {
                 return terminal;
             }
         }
-        return undefined;  // Return undefined if no matching terminal name is found
+        return undefined; 
+    }
+
+    static findByName(terminalName: string): TerminalSession | undefined {
+        for (const [terminal, session] of TerminalSessionManager.terminalSessions.entries()) {
+            if (terminal.name === terminalName) {
+                return session;
+            }
+        }
+        return undefined; 
     }
 
     static findTerminalByNotebookEditor(notebookEditor: vscode.NotebookEditor | undefined) {

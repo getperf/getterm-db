@@ -35,7 +35,8 @@ export class SessionHandler {
         }
         session.terminalSessionMode = TerminalSessionMode.Close;
         const sessionName = session.sessionName || 'unkown session';
-        NotebookSessionWriter.appendSessionClosedCell(sessionName);
+        NotebookSessionWriter.appendSessionClosedCell(session);
+        Session.updateEnd(session.sessionId, new Date());
         // Perform additional cleanup or session logging here
         // Example: remove session data from storage, free up resources, etc.
     }

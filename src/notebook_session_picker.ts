@@ -48,11 +48,12 @@ export class TerminalNotebookSessionPicker {
                 TerminalSessionManager.setNotebookEditor(currentTerminal, undefined);
             }
             vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
+            const session = TerminalSessionManager.findByName(selectedSession);
             const terminal = TerminalSessionManager.findTerminalByName(selectedSession);
-            if (terminal && notebookEditor) {
+            if (session && terminal && notebookEditor) {
                 vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
                 TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
-                NotebookSessionWriter.appendSessionStartCell(selectedSession);
+                NotebookSessionWriter.appendSessionStartCell(session);
                 TerminalNotebookSessionPicker.showExplorerAndOutline();
             }
 

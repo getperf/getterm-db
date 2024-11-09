@@ -1,4 +1,5 @@
 import * as sqlite3 from 'sqlite3';
+import { Util } from '../util';
 
 export class Session {
     private static db: sqlite3.Database;
@@ -35,6 +36,17 @@ export class Session {
         return new Promise((resolve, reject) => {
             const query = `UPDATE sessions SET profile_name = ?, execute_path = ?, execute_args = ?, remote_host = ?, remote_user = ? WHERE id = ?`;
             Session.db.run(query, [profile_name, execute_path, JSON.stringify(execute_args), remote_host, user, id], (err) => {
+                if (err) {reject(err);}
+                resolve();
+            });
+        });
+    }
+
+    static async updateEnd(id: number, date: Date): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const query = `UPDATE commands SET end = ? WHERE id = ?`;
+            const formattedDateTime = Util.formatDateWithMilliseconds(date); // Format 
+            Session.db.run(query, [formattedDateTime, id], (err) => {
                 if (err) {reject(err);}
                 resolve();
             });

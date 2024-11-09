@@ -3,6 +3,12 @@ import { Util } from '../../util';
 
 suite('Util Test Suite', () => {
 
+    test("formats date with milliseconds correctly", () => {
+        const date = new Date('2023-10-12T15:30:45.123');
+        const formattedDate = Util.formatDateWithMilliseconds(date);
+        assert.strictEqual(formattedDate, "2023-10-12 15:30:45.123");
+    });    
+
     test('Should clean delete sequences correctly', () => {
         const input = 'ls -ltr\b\u001B[K\b\u001B[Kr'; // 'ls -ltr\b\u001B[K\b\u001B[Kr' should become 'ls -tr'
         const expectedOutput = 'ls -lr';

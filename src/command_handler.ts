@@ -9,6 +9,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
 import { CommandParser } from './command_parser';
+import { XtermParser } from './xterm_parser';
 // import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 import { ConsoleEventProvider } from './console_event_provider';
@@ -61,6 +62,12 @@ export class CommandHandler {
 
         let rawData = session.consoleBuffer?.join('');
         console.log("RAWDATA:", rawData);
+
+        const xtermParser = XtermParser.getInstance();
+        const commandText = await xtermParser.parseTerminalBuffer(rawData);       
+        const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
+        console.log(`command in first line: ${commandLastLine}`);
+        session.detectedCommandByStartEvent = commandLastLine;
 
         // su コマンド検知ハンドラ
         const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, rawData);
@@ -133,6 +140,7 @@ export class CommandHandler {
             );
             return;
         }
+        console.log( `Command start detected: ${session.detectedCommandByStartEvent}, end: ${parsedCommand.command}`);
         // ここにファイル編集キャプチャーのコードを追加する
         const downloader = new ConcernedFileDownloader(commandId, e.terminal, parsedCommand);
         if (downloader.detectFileAccessFromCommand()) {

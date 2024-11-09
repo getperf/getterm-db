@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
+import { TerminalSession } from './terminal_session';
 
 enum SessionMode {
     Sart = 'start',
@@ -8,29 +9,29 @@ enum SessionMode {
 
 export interface SessionMetaData {
     hostName: string;
+    sessionId: number;
     sessionMode: SessionMode,
-    startTime: Date | undefined;
-    endTime: Date | undefined;
+    currentTime: Date | undefined;
 };
 
 export class NotebookSessionWriter {
     
-    public static appendSessionStartCell(selectedSession: string, notebook?: vscode.NotebookEditor | undefined) {
+    public static appendSessionStartCell(session: TerminalSession, notebook?: vscode.NotebookEditor | undefined) {
         const sessionMetaData: SessionMetaData = {
-            hostName: selectedSession,
+            sessionId: session.sessionId,
+            hostName: session.sessionName || 'undefined',
             sessionMode: SessionMode.Sart,
-            startTime: new Date(),
-            endTime: undefined,
+            currentTime: new Date(),
         };
         NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData, notebook);
     }
 
-    public static appendSessionClosedCell(selectedSession: string, notebook?: vscode.NotebookEditor | undefined) {
+    public static appendSessionClosedCell(session: TerminalSession, notebook?: vscode.NotebookEditor | undefined) {
         const sessionMetaData: SessionMetaData = {
-            hostName: selectedSession,
+            sessionId: session.sessionId,
+            hostName: session.sessionName || 'undefined',
             sessionMode: SessionMode.Closed,
-            startTime: undefined,
-            endTime: new Date(),
+            currentTime: new Date(),
         };
         NotebookSessionWriter.addSessionDataToNotebook(sessionMetaData, notebook);
     }
@@ -57,13 +58,7 @@ export class NotebookSessionWriter {
 		const range = new vscode.NotebookRange(currentRow, currentRow + 1);
 		const edit = new vscode.NotebookEdit(range, [newCell]);
 
-        // Update notebook metadata with sessionId
-        // const newMetadata = { ...notebookDocument.metadata, sessionId: sessionData.sessionId };
-        const newMetadata = { ...notebookDocument.metadata, sessionId: 12 };
-
         const workspaceEdit = new vscode.WorkspaceEdit();
-        // workspaceEdit.replaceNotebookMetadata(notebookDocument.uri, newMetadata);
-        // workspaceEdit.replace(notebookDocument.uri, new vscode.Range(0,0), "newText", newMetadata);
 		workspaceEdit.set(notebookDocument.uri, [edit]);
 		await vscode.workspace.applyEdit(workspaceEdit);
 
@@ -73,12 +68,10 @@ export class NotebookSessionWriter {
 
     // Helper method to convert session data to YAML
     private static sessionToPandocTitleBlock(sessionData: SessionMetaData): string {
-        let metaData = `% sshHost: "${sessionData.hostName}"\n`;
-        if (sessionData.startTime) {
-            metaData += `% startTime: "${sessionData.startTime.toLocaleString()}"\n`;
-        }
-        if (sessionData.endTime) {
-            metaData += `% endTime: "${sessionData.endTime.toLocaleString()}"\n`;
+        let metaData = `% sessionId: "${sessionData.sessionId}"\n`;
+        metaData += `% sessionMode: "${sessionData.sessionMode}"\n`;
+        if (sessionData.currentTime) {
+            metaData += `% currentTime: "${sessionData.currentTime.toLocaleString()}"\n`;
         }
         return metaData;
     }

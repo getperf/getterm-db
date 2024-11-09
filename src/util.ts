@@ -4,6 +4,14 @@ import { exec } from 'child_process';
 export class Util {
     private static editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
+    static formatDateWithMilliseconds(date: Date): string {
+        const padZero = (num: number) => num.toString().padStart(2, '0');
+        const milliseconds = date.getMilliseconds().toString().padStart(3, '0'); // Milliseconds formatted to 3 digits
+    
+        return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ` +
+               `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}.${milliseconds}`;
+    }
+
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }

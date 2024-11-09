@@ -1,4 +1,5 @@
 import * as sqlite3 from 'sqlite3';
+import { Util } from '../util';
 
 export class Command {
     private static db: sqlite3.Database;
@@ -101,18 +102,18 @@ export class Command {
         });
     }
 
-    private static formatDateWithMilliseconds(date: Date): string {
-        const padZero = (num: number) => num.toString().padStart(2, '0');
-        const milliseconds = date.getMilliseconds().toString().padStart(3, '0'); // Milliseconds formatted to 3 digits
+    // private static formatDateWithMilliseconds(date: Date): string {
+    //     const padZero = (num: number) => num.toString().padStart(2, '0');
+    //     const milliseconds = date.getMilliseconds().toString().padStart(3, '0'); // Milliseconds formatted to 3 digits
     
-        return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ` +
-               `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}.${milliseconds}`;
-    }
+    //     return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ` +
+    //            `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}.${milliseconds}`;
+    // }
 
     static async updateEnd(id: number, date: Date): Promise<void> {
         return new Promise((resolve, reject) => {
             const query = `UPDATE commands SET end = ? WHERE id = ?`;
-            const formattedDateTime = this.formatDateWithMilliseconds(date); // Format 
+            const formattedDateTime = Util.formatDateWithMilliseconds(date); // Format 
             Command.db.run(query, [formattedDateTime, id], (err) => {
                 if (err) {reject(err);}
                 resolve();

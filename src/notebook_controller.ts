@@ -174,8 +174,11 @@ export class TerminalNotebookController  {
             vscode.window.showInformationMessage('No active terminal is currently selected.');
             return;
         }
-		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
-		const sessionName = TerminalSessionManager.getSessionName(activeTerminal) || 'unkown session';
+		const session = TerminalSessionManager.get(activeTerminal);
+		// const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
+		// const sessionName = TerminalSessionManager.getSessionName(activeTerminal) || 'unkown session';
+		const sessionId = session?.sessionId;
+		// const sessionName = session?.sessionName;
 		if (!sessionId) {
             vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
             return;
@@ -212,7 +215,7 @@ export class TerminalNotebookController  {
 			await vscode.commands.executeCommand('notebook.execute');
 			TerminalNotebookSessionPicker.showExplorerAndOutline();
 
-			NotebookSessionWriter.appendSessionStartCell(sessionName);			
+			NotebookSessionWriter.appendSessionStartCell(session);			
 			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
 			const notebookEditor = vscode.window.activeNotebookEditor;
 			if (!notebookEditor) {
