@@ -32,7 +32,7 @@ export class TerminalSession {
     // Current operational mode of the session
     private _terminalSessionMode = TerminalSessionMode.Close;  
 
-    detectedCommandByStartEvent?: string;
+    startEventCommand?: string;
 
     // Buffer holding output data for the session
     consoleBuffer: string[]  = [];

@@ -65,10 +65,15 @@ export class CommandHandler {
 
         const xtermParser = XtermParser.getInstance();
         const commandText = await xtermParser.parseTerminalBuffer(rawData);       
-        const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
-        console.log(`command in first line: ${commandLastLine}`);
-        session.detectedCommandByStartEvent = commandLastLine;
-
+        console.log(`command in first line1: ${commandText}`);
+        // const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
+        // console.log(`command in first line2: ${commandLastLine}`);
+        // const commandLine2 = Util.extractCommandAfterLastPrompt(commandText);
+        // console.log(`command in first line3: ${commandLine2}`);
+        // const commandAfterLastPrompt = Util.extractCommandAfterLastPrompt(commandText);
+        // const commandAfterLastPrompt2 = Util.removeBackslashNewline(commandAfterLastPrompt);
+        // session.startEventCommand = Util.removeLeadingLineWithWhitespace(commandAfterLastPrompt2);
+        session.startEventCommand = Util.extractCommandByStartEvent(commandText);
         // su コマンド検知ハンドラ
         const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, rawData);
         if (await suCommandHandler.handleSuCommand()) {
@@ -85,6 +90,16 @@ export class CommandHandler {
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
+    selectCompleteCommand(startCommand: string | undefined, endCommand: string): string {
+        if (!startCommand) {return endCommand;}
+        if (!endCommand) {return startCommand;}
+        // startCommand にパイプが含まれる場合はそれを選択
+        if (startCommand.includes("|")) {
+            return startCommand;
+        }
+        return startCommand.length >= endCommand.length ? startCommand : endCommand;
+    }
+    
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`end command handler invoked`);
         let output = "";
@@ -140,7 +155,10 @@ export class CommandHandler {
             );
             return;
         }
-        console.log( `Command start detected: ${session.detectedCommandByStartEvent}, end: ${parsedCommand.command}`);
+
+        console.log( `Command start detected: ${session.startEventCommand}, end: ${parsedCommand.command}`);
+        const completeCommand = this.selectCompleteCommand(session.startEventCommand, parsedCommand.command);
+        parsedCommand.command = completeCommand;
         // ここにファイル編集キャプチャーのコードを追加する
         const downloader = new ConcernedFileDownloader(commandId, e.terminal, parsedCommand);
         if (downloader.detectFileAccessFromCommand()) {

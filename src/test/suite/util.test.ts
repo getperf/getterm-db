@@ -37,6 +37,34 @@ suite('Util Test Suite', () => {
         assert.strictEqual(actualOutput, expectedOutput);
     });
 
+    test('extractCommandAfterLastPrompt should return command after last prompt', () => {
+        const input = `
+            user@host$ echo Hello
+            user@host$ ls -l`;
+        assert.strictEqual(Util.extractCommandAfterLastPrompt(input), 'ls -l');
+    });
+
+    test('removeBackslashNewline should remove backslash-newline sequences', () => {
+        const input = 'echo Hello \\\n> World';
+        assert.strictEqual(Util.removeBackslashNewline(input), 'echo Hello World');
+    });
+
+    test('removeLeadingLineWithWhitespace should remove line before 20+ whitespace', () => {
+        const input = `
+            ignoreThisLine
+                         actual command`;
+        assert.strictEqual(Util.removeLeadingLineWithWhitespace(input), 'actual command');
+    });
+
+    test('extractCommandByStartEvent should return cleaned command', () => {
+        const input = `
+            ignoreThisLine
+            user@host$ echo Hello \\
+            > World
+                         actual command`;
+        assert.strictEqual(Util.extractCommandByStartEvent(input), 'actual command');
+    });
+
     // test('should return the file name for vi command', () => {
     //     const result = Util.checkFileNameFromEditorCommand('vi myfile.txt');
     //     assert.strictEqual(result, 'myfile.txt');

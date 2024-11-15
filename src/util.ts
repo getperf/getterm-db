@@ -12,6 +12,65 @@ export class Util {
                `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}.${milliseconds}`;
     }
 
+    /**
+     * Extracts the command text following the last prompt in a multi-line input.
+     * If a prompt pattern is found, it returns the text after the last occurrence.
+     * If no prompt pattern is detected, it returns the entire trimmed input.
+     *
+     * @param input - The multi-line input text from which to extract the command.
+     * @returns The command text after the last detected prompt.
+     */
+    static extractCommandAfterLastPrompt(input: string): string {
+        const promptPattern = /[^\s]+[$#]\s+/g;
+        let lastPromptIndex = -1;
+        let match: RegExpExecArray | null;
+        while ((match = promptPattern.exec(input)) !== null) {
+            lastPromptIndex = match.index + match[0].length;
+        }
+        return lastPromptIndex !== -1 ? input.substring(lastPromptIndex).trim() : input.trim();
+    }
+    
+    /**
+     * Removes backslash-newline sequences (`\ \n >`) from a multi-line command,
+     * allowing command continuation lines to be combined into a single line.
+     *
+     * @param command - The multi-line command string containing backslash-newline sequences.
+     * @returns The single-line command string after removing backslash-newline sequences.
+     */
+    static removeBackslashNewline(command: string): string {
+        return command.replace(/\\\n>\s/g, '');
+    }
+
+    /**
+     * Formats the buffer output from xterm.js when `ctrl+u` (command cancellation) is used in the console.
+     * In xterm.js, `ctrl+u` is interpreted directly by the shell (e.g., bash, zsh), which clears the entire line.
+     * After this operation, the terminal buffer often contains an unintended long whitespace segment before the new command entry.
+     * 
+     * This method addresses these cases by removing the first line if the second line contains 20 or more whitespace characters
+     * before the command text, which may result from `ctrl+u` interactions in the terminal buffer.
+     *
+     * @param command - The command buffer output potentially containing lines with leading whitespace after `ctrl+u` use.
+     * @returns - The formatted command string, with unnecessary leading whitespace lines removed.
+     */
+    static removeLeadingLineWithWhitespace(command: string): string {
+        // 正規表現で20文字以上の空白を含む2行目を検出し、2行目のコマンドのみを抽出
+        return command.replace(/^.*\n\s{20,}(.+)$/s, '$1');
+    }
+
+    /**
+     * Extracts the command text for execution from a raw command input.
+     * It first identifies the last command after a prompt, removes continuation sequences,
+     * and removes any lines with excessive indentation.
+     *
+     * @param commandText - The full raw command input from which to extract the executable command.
+     * @returns The cleaned command text ready for execution.
+     */
+    static extractCommandByStartEvent(commandText: string): string {
+        const command1 = Util.extractCommandAfterLastPrompt(commandText);
+        const command2 = Util.removeBackslashNewline(command1);
+        return Util.removeLeadingLineWithWhitespace(command2);
+    }
+   
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }
