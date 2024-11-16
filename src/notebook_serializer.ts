@@ -19,6 +19,7 @@ export interface RawNotebookCell {
 	id?: number;
 	kind: vscode.NotebookCellKind;
 	editable?: boolean;
+    // metadata?: { id: number };
 }
 
 interface Cmd {

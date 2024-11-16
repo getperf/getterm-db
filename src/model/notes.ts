@@ -113,7 +113,7 @@ export class Note {
                 `SELECT cel.position, cel.type, cel.content, 
                     cmd.output, cmd.start, cmd.end, cmd.exit_code
                 FROM cells AS cel
-                LEFT JOIN commands AS cmd ON cmd.id = cel.id
+                LEFT JOIN commands AS cmd ON cmd.id = cel.command_id
                 WHERE notebook_id = ?`,
                 [id],
                 (err, rows: ReportRow[]) => {

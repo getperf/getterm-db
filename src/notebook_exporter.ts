@@ -7,6 +7,26 @@ import path from 'path';
 import { RawNotebookCell, RawNotebookData, TerminalNotebookSerializer } from "./notebook_serializer";
 import { Util } from "./util";
 
+// 列定義の型
+type ColumnDefinition = {
+  header: string;
+  key: string;
+  width: number;
+  alignment: Partial<ExcelJS.Alignment>;
+};
+
+// 列定義
+const columns: ColumnDefinition[] = [
+  { header: 'No', key: 'position', width: 5, alignment: { vertical: 'top', horizontal: 'left' } },
+  { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
+  { header: 'Content', key: 'content', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
+  { header: 'Output', key: 'output', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
+  { header: 'Start Time', key: 'start', width: 12, alignment: { vertical: 'top', horizontal: 'right' } },
+  { header: 'End Time', key: 'end', width: 12, alignment: { vertical: 'top', horizontal: 'right' } },
+  { header: 'Duration', key: 'duration', width: 10, alignment: { vertical: 'top', horizontal: 'right' } },
+  { header: 'Exit', key: 'exit_code', width: 5, alignment: { vertical: 'top', horizontal: 'center' } },
+];
+
 export class TerminalNotebookExporter {
   private context: vscode.ExtensionContext;
   private isSaving = false;
@@ -61,58 +81,129 @@ export class TerminalNotebookExporter {
     }
   }
 
+  /**
+   * Formats a cell in the worksheet.
+   */
+  formatCell(cell: ExcelJS.Cell, colNumber: number, rowIndex: number) {
+    // Add border to each cell
+    cell.border = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
+
+    // Set alignment to top and wrap text
+    cell.alignment = {
+      vertical: 'top',
+      wrapText: true,
+    };
+
+    // Apply alignment from the column definitions
+    const columnDef = columns[colNumber - 1]; // 1-based index
+    if (columnDef?.alignment) {
+      cell.alignment = columnDef.alignment;
+    }
+
+    // Apply special styles for the header row
+    if (rowIndex === 1) {
+      cell.font = { bold: true }; // Bold header
+      // Left-aligned
+      cell.alignment = { horizontal: 'left', vertical: 'middle' }; 
+    }
+  }
+
+  /**
+   * Calculates the row height based on the content length.
+   */
+  calculateRowHeight(values: string[]): number {
+    const estimatedHeight = values.reduce((maxHeight, text) => {
+      const textLength = text.length;
+      const estimatedLineCount = Math.ceil(textLength / 20); // Estimate line count based on width
+      return Math.max(maxHeight, estimatedLineCount);
+    }, 1);
+
+    return estimatedHeight * 15; // Multiply by a base height factor
+  }
+
+  /**
+   * Adjusts the height of a row based on its content.
+   */
+  adjustRowHeight(row: ExcelJS.Row, rowIndex: number) {
+    if (rowIndex === 1) {
+      row.height = 25; // Header row
+      return;
+    }
+
+    const validValues = (row.values as (string | undefined)[] || [])
+      .filter((val, index) => index !== 0 && typeof val === 'string')
+      .map((val) => val || '');
+
+    row.height = this.calculateRowHeight(validValues);
+  }
+
   async reportTerminalNotebook() {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
     const document = vscode.window.activeNotebookEditor?.notebook;
     if (!document) {
-      vscode.window.showErrorMessage("no active notebook editor found");
+      vscode.window.showErrorMessage("No active notebook editor found");
       return;
     }
+  
     const notebookTitle = document.uri.path;
     const note = await Note.getByTitle(notebookTitle);
     if (!note) {
-      vscode.window.showErrorMessage("オープン中のターミナルノートブックは保存されていません");
+      vscode.window.showErrorMessage("The open terminal notebook has not been saved");
       return;
     }
+  
     const notebookId = note.id;
     const rows = await Note.reportQuery(notebookId);
+  
     // Create Excel Workbook and Worksheet
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('note report');
+    const worksheet = workbook.addWorksheet('Note Report');
+  
     // Add Columns
-    worksheet.columns = [
-      { header: 'Position', key: 'position', width: 10 },
-      { header: 'Type', key: 'type', width: 15 },
-      { header: 'Content', key: 'content', width: 40 },
-      { header: 'Output', key: 'output', width: 40 },
-      { header: 'Start Time', key: 'start', width: 20 },
-      { header: 'End Time', key: 'end', width: 20 },
-      { header: 'Exit Code', key: 'exit_code', width: 10 },
-    ];
-
+    worksheet.columns = columns.map((col) => ({
+      header: col.header,
+      key: col.key,
+      width: col.width,
+    }));
+  
     for (const row of rows) {
+      const startTime = new Date(row.start);
+      const endTime = new Date(row.end);
+      const durationFormatted = Util.calculateDuration(startTime, endTime);
       worksheet.addRow({
         position: row.position,
         type: row.type,
         content: row.content,
         output: row.output,
-        start: row.start,
-        end: row.end,
+        start: Util.formatTime(startTime),
+        end: Util.formatTime(endTime),
+        duration: durationFormatted,
         exit_code: row.exit_code,
       });
     }
-
+  
+    // Format Rows and Cells
+    worksheet.eachRow((row, rowIndex) => {
+      row.eachCell((cell, colNumber) => {
+        this.formatCell(cell, colNumber, rowIndex);
+      });
+      this.adjustRowHeight(row, rowIndex);
+    });
+  
     // Write to Excel File
-    // const filePath = `./notebook_${notebookId}_report.xlsx`;
-    const filePath = path.join(workspaceRoot,  `notebook_${notebookId}_report.xlsx`);
-    workbook.xlsx.writeFile(filePath)
-        .then(() => {
-          vscode.window.showInformationMessage(`Excel report saved to ${filePath}`);
-        })
-        .catch((err) => {
-          vscode.window.showErrorMessage('Error writing Excel file:', err);
-        });
-    Util.openExcelFile(filePath);
+    const filePath = path.join(workspaceRoot, `notebook_${notebookId}_report.xlsx`);
+    try {
+      await workbook.xlsx.writeFile(filePath);
+      vscode.window.showInformationMessage(`Excel report saved to ${filePath}`);
+      Util.openExcelFile(filePath);
+    } catch (err) {
+      vscode.window.showErrorMessage(`Error writing Excel file: ${err}`);
+    }
   }
 
   static async saveNotebook(notebookData: RawNotebookData, notebookTitle: string) : Promise<Note> {
@@ -126,10 +217,13 @@ export class TerminalNotebookExporter {
     }
     for (let i = 0; i < notebookData.cells.length; i++) {
       const cell: RawNotebookCell = notebookData.cells[i];
+      // const commandId = cell.metadata?.id || null;
       const cell_id = cell?.id || null;
       const cellKind =
         cell.kind === vscode.NotebookCellKind.Code ? "code" : "markdown";
+      // console.log("EXPORT CELL:", commandId, cell_id, cell);
       await Cell.create(note.id, sessionId, cell_id, cell.value, cellKind);
+      // await Cell.create(note.id, sessionId, commandId, cell.value, cellKind);
     }
     return note;
   }

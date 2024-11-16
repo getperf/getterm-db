@@ -12,6 +12,27 @@ export class Util {
                `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}.${milliseconds}`;
     }
 
+    // 時間フォーマット関数
+    static formatTime(date: Date): string {
+        const padZero = (num: number) => num.toString().padStart(2, '0');
+        return `${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`;
+    }
+
+    static calculateDuration(start: Date, end: Date): string {
+        const diffInSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
+      
+        if (diffInSeconds < 0) {
+          return "00:00:00"; // 異常な場合はデフォルト値
+        }
+      
+        const hours = Math.floor(diffInSeconds / 3600);
+        const minutes = Math.floor((diffInSeconds % 3600) / 60);
+        const seconds = diffInSeconds % 60;
+      
+        const padZero = (num: number) => num.toString().padStart(2, '0');
+        return `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+    }
+
     /**
      * Extracts the command text following the last prompt in a multi-line input.
      * If a prompt pattern is found, it returns the text after the last occurrence.
