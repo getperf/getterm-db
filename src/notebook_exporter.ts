@@ -142,6 +142,23 @@ export class TerminalNotebookExporter {
     row.height = this.calculateRowHeight(validValues);
   }
 
+  applyExitCodeFormatting(row: ExcelJS.Row) {
+    const exitCodeCell = row.getCell('exit_code'); // Use the column key
+    if (exitCodeCell.value === null) { // Handle null or undefined
+      exitCodeCell.value = '-';
+      exitCodeCell.font = { color: { argb: 'FF808080' } }; // Gray color for "-" placeholder
+      return;
+    }
+    const exitCode = Number(exitCodeCell.value);
+    if (exitCode === 0) {
+      exitCodeCell.value = 'OK';
+      exitCodeCell.font = { color: { argb: 'FF00FF00' } }; // Green color
+    } else {
+      exitCodeCell.value = `NG(${exitCode})`;
+      exitCodeCell.font = { color: { argb: 'FFFF0000' } }; // Red color
+    }
+  }
+
   async reportTerminalNotebook() {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
     const document = vscode.window.activeNotebookEditor?.notebook;
@@ -193,6 +210,7 @@ export class TerminalNotebookExporter {
         this.formatCell(cell, colNumber, rowIndex);
       });
       this.adjustRowHeight(row, rowIndex);
+      this.applyExitCodeFormatting(row);
     });
   
     // Write to Excel File
