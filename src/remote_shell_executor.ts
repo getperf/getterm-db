@@ -40,7 +40,7 @@ export class RemoteShellExecutor {
             const rc = cp.execSync(scpCommand, { timeout: ScpCommandTimeout });
             Logger.info(`shell integration script copy result ：${rc}`);
         } catch (error) {
-            vscode.window.showErrorMessage('Failed to locate shell integration path.');
+            Logger.error('Failed to locate shell integration path.');
             return false;
         }
         return true;

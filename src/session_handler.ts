@@ -21,7 +21,7 @@ export class SessionHandler {
 
     handleSessionOpen(terminal: vscode.Terminal) {
         console.log(`Session started for terminal: ${terminal.name}`);
-        vscode.window.showInformationMessage(`Session started for terminal: ${terminal.name}`);
+        // vscode.window.showInformationMessage(`Session started for terminal: ${terminal.name}`);
         
         // Additional setup for the terminal session can be performed here
     }
