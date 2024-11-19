@@ -27,7 +27,7 @@ export class ConsoleEventProvider {
         this.context.subscriptions.push(
             vscode.window.onDidChangeTerminalState(() => {
                 Logger.info("terminal state change event invoked");
-                vscode.window.showInformationMessage('シェル統合変化イベント');
+                // vscode.window.showInformationMessage('シェル統合変化イベント');
             }),
             // vscode.window.onDidCloseTerminal((terminal) => {
             //     console.log(`Terminal closed: ${terminal.name}`);

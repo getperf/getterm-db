@@ -97,7 +97,13 @@ export class CommandHandler {
         if (startCommand.includes("|")) {
             return startCommand;
         }
-        return startCommand.length >= endCommand.length ? startCommand : endCommand;
+        // 長時間実行するコマンドだとキャプチャーがおかしい
+        // 例：
+        // sudo -E yum -y groupinstall "Development Tools"
+        // 開始イベントで実行結果のログもキャプチャーしている
+        // StartとEnd コマンド取得結果の比較処理の修正。パイプ以外はendCommandを優先する。
+        // return startCommand.length >= endCommand.length ? startCommand : endCommand;
+        return endCommand;
     }
     
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
