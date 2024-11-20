@@ -1,71 +1,57 @@
-# getterm-db README
+# Terminal Capture
 
-This is the README for your extension "getterm-db". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+This extension enables you to record terminal output, helping you manage and track your workflows and command history efficiently.
 
 ---
 
-## Following extension guidelines
+## Features
+- **Terminal Output Recording**: Automatically capture and save terminal outputs.
+- **Workflow Management**: Organize recorded terminal outputs by tasks or sessions.
+- **Historical Tracking**: Easily search and reference past terminal activities.
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+---
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+## Installation
 
-## Working with Markdown
+Follow these steps to install the extension using `code-insiders` and import the `.vsix` file:
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+1. Ensure you have `Visual Studio Code - Insiders` installed on your system.
+   - Download from the [official VS Code Insiders page](https://code.visualstudio.com/insiders/).
+2. Obtain the `.vsix` package for this extension.
+3. Open the `Visual Studio Code - Insiders` application.
+4. Navigate to the Extensions view:
+   - Use the shortcut `Ctrl+Shift+X` (or `Cmd+Shift+X` on macOS).
+5. In the Extensions view, click the three dots (`...`) in the top-right corner and select **Install from VSIX...**.
+6. Locate and select the `.vsix` file.
+7. Once installed, reload the editor if prompted.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+---
 
-## For more information
+## Usage
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+1. **Start Recording**:
+   - Open a terminal in Visual Studio Code.
+   - Begin your terminal tasks as usual. The extension will automatically start recording the output.
+   
+2. **View and Manage Logs**:
+   - Use the dedicated **Terminal Logs** view to browse and manage your recorded outputs.
+   - Logs are categorized by task or session for easier access.
 
-**Enjoy!**
+3. **Export Logs**:
+   - Export recorded terminal outputs as reports (e.g., in Excel or JSON formats).
+   
+4. **Customization**:
+   - Adjust settings for recording preferences under the extension's configuration options.
+
+For a visual demonstration, refer to the examples below:
+
+
+---
+
+## Contributing
+
+We welcome contributions to this project! Here’s how you can contribute:
+
+1. Clone the repository from GitHub:
+   ```bash
+   git clone https://github.com/your-repo-name.git

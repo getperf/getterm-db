@@ -45,7 +45,6 @@ export class SwitchUserCommandHandler {
         // Parse the terminal buffer for plain-text command detection
         const xtermParser = XtermParser.getInstance();
         const commandText = await xtermParser.parseTerminalBuffer(this.commandBuffer);
-        
         // Extract and trim the last line of the parsed command output
         const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
         Logger.debug(`Checking su command in last line: ${commandLastLine}`);

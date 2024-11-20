@@ -74,8 +74,8 @@ export class Util {
      * @returns - The formatted command string, with unnecessary leading whitespace lines removed.
      */
     static removeLeadingLineWithWhitespace(command: string): string {
-        // 正規表現で20文字以上の空白を含む2行目を検出し、2行目のコマンドのみを抽出
-        return command.replace(/^.*\n\s{20,}(.+)$/s, '$1');
+        // 正規表現で19文字以上の空白を含む2行目を検出し、2行目のコマンドのみを抽出
+        return command.replace(/^.*\n\s{19,}(.+)$/s, '$1');
     }
 
     /**
@@ -88,8 +88,9 @@ export class Util {
      */
     static extractCommandByStartEvent(commandText: string): string {
         const command1 = Util.extractCommandAfterLastPrompt(commandText);
-        const command2 = Util.removeBackslashNewline(command1);
-        return Util.removeLeadingLineWithWhitespace(command2);
+        // const command2 = Util.removeBackslashNewline(command1);
+        // return Util.removeLeadingLineWithWhitespace(command2);
+        return Util.removeBackslashNewline(command1);
     }
    
     static removeTrailingSemicolon(input: string): string {

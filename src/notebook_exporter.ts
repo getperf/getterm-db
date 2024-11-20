@@ -19,6 +19,7 @@ type ColumnDefinition = {
 const columns: ColumnDefinition[] = [
   { header: 'No', key: 'position', width: 5, alignment: { vertical: 'top', horizontal: 'left' } },
   { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
+  { header: 'Session', key: 'session', width: 10, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Content', key: 'content', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Output', key: 'output', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Start Time', key: 'start', width: 12, alignment: { vertical: 'top', horizontal: 'right' } },
@@ -155,20 +156,25 @@ export class TerminalNotebookExporter {
     row.height = this.calculateRowHeight(validValues);
   }
 
-  applyExitCodeFormatting(row: ExcelJS.Row) {
+  applyExitCodeFormatting(row: ExcelJS.Row, rowIndex: number) {
+    if (rowIndex === 1) {
+      return;
+    }
     const exitCodeCell = row.getCell('exit_code'); // Use the column key
-    if (exitCodeCell.value === null) { // Handle null or undefined
+    if (exitCodeCell.value === null) { // Handle null
       exitCodeCell.value = '-';
-      exitCodeCell.font = { color: { argb: 'FF808080' } }; // Gray color for "-" placeholder
       return;
     }
     const exitCode = Number(exitCodeCell.value);
+    if (Number.isNaN(exitCode)) {
+      return;
+    }
     if (exitCode === 0) {
       exitCodeCell.value = 'OK';
-      exitCodeCell.font = { color: { argb: 'FF00FF00' } }; // Green color
+      exitCodeCell.font = { color: { argb: '99009900' } }; // Green color
     } else {
       exitCodeCell.value = `NG(${exitCode})`;
-      exitCodeCell.font = { color: { argb: 'FFFF0000' } }; // Red color
+      exitCodeCell.font = { color: { argb: '99990000' } }; // Red color
     }
   }
 
@@ -207,13 +213,14 @@ export class TerminalNotebookExporter {
       const durationFormatted = Util.calculateDuration(startTime, endTime);
       worksheet.addRow({
         position: row.position,
+        session: row.profile_name,
         type: row.type,
         content: row.content,
         output: row.output,
         start: Util.formatTime(startTime),
         end: Util.formatTime(endTime),
         duration: durationFormatted,
-        exit_code: row.exit_code,
+        exit_code: row.exit_code ?? '-',
       });
     }
   
@@ -223,7 +230,7 @@ export class TerminalNotebookExporter {
         this.formatCell(cell, colNumber, rowIndex);
       });
       this.adjustRowHeight(row, rowIndex);
-      this.applyExitCodeFormatting(row);
+      this.applyExitCodeFormatting(row, rowIndex);
     });
   
     // Write to Excel File

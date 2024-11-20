@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Terminal } from 'xterm-headless';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { Util } from './util';
 
 export class XtermParser {
     private static instance: XtermParser;
@@ -40,6 +41,7 @@ export class XtermParser {
                     const line = activeBuffer.getLine(i)?.translateToString(true);
                     if (line) {cleanedOutput += line + '\n';}
                 }
+                cleanedOutput = Util.removeLeadingLineWithWhitespace(cleanedOutput);
                 resolve(cleanedOutput.trim());
             }, delay);
         });

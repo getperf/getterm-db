@@ -66,13 +66,7 @@ export class CommandHandler {
         const xtermParser = XtermParser.getInstance();
         const commandText = await xtermParser.parseTerminalBuffer(rawData);       
         console.log(`command in first line1: ${commandText}`);
-        // const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
-        // console.log(`command in first line2: ${commandLastLine}`);
-        // const commandLine2 = Util.extractCommandAfterLastPrompt(commandText);
-        // console.log(`command in first line3: ${commandLine2}`);
-        // const commandAfterLastPrompt = Util.extractCommandAfterLastPrompt(commandText);
-        // const commandAfterLastPrompt2 = Util.removeBackslashNewline(commandAfterLastPrompt);
-        // session.startEventCommand = Util.removeLeadingLineWithWhitespace(commandAfterLastPrompt2);
+
         session.startEventCommand = Util.extractCommandByStartEvent(commandText);
         // su コマンド検知ハンドラ
         const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, rawData);
