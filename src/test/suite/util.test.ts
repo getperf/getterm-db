@@ -56,6 +56,12 @@ suite('Util Test Suite', () => {
         assert.strictEqual(Util.removeLeadingLineWithWhitespace(input), 'actual command');
     });
 
+    test('removeLeadingLineWithWhitespace should remove the "su -" + ctrl-u line', () => {
+        const input = `su - 
+                   sudo su -`;
+        assert.strictEqual(Util.removeLeadingLineWithWhitespace(input), 'sudo su -');
+    });
+
     test('extractCommandByStartEvent should return cleaned command', () => {
         const input = `
             ignoreThisLine

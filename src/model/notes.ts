@@ -8,6 +8,7 @@ interface NoteRow {
 type ReportRow = {
     position: number;
     type: string;
+    profile_name: string,
     content: string,
     output: string,
     start: Date,
@@ -110,10 +111,16 @@ export class Note {
     static async reportQuery(id: number): Promise<ReportRow[]> {
         return new Promise((resolve, reject) => {
             Note.db.all(
-                `SELECT cel.position, cel.type, cel.content, 
+                // `SELECT cel.position, cel.type, cel.content, 
+                //     cmd.output, cmd.start, cmd.end, cmd.exit_code
+                // FROM cells AS cel
+                // LEFT JOIN commands AS cmd ON cmd.id = cel.command_id
+                // WHERE notebook_id = ?`,
+                `SELECT cel.position, cel.type, ses.profile_name, cel.content, 
                     cmd.output, cmd.start, cmd.end, cmd.exit_code
                 FROM cells AS cel
                 LEFT JOIN commands AS cmd ON cmd.id = cel.command_id
+                LEFT JOIN sessions AS ses ON ses.id = cmd.session_id
                 WHERE notebook_id = ?`,
                 [id],
                 (err, rows: ReportRow[]) => {

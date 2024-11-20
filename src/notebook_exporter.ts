@@ -19,6 +19,7 @@ type ColumnDefinition = {
 const columns: ColumnDefinition[] = [
   { header: 'No', key: 'position', width: 5, alignment: { vertical: 'top', horizontal: 'left' } },
   { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
+  { header: 'Session', key: 'session', width: 10, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Content', key: 'content', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Output', key: 'output', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Start Time', key: 'start', width: 12, alignment: { vertical: 'top', horizontal: 'right' } },
@@ -199,6 +200,7 @@ export class TerminalNotebookExporter {
       const durationFormatted = Util.calculateDuration(startTime, endTime);
       worksheet.addRow({
         position: row.position,
+        session: row.profile_name,
         type: row.type,
         content: row.content,
         output: row.output,
