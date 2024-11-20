@@ -44,12 +44,25 @@ export class TerminalNotebookExporter {
           this.isSaving = true;
 
           console.log('Manual save detected!');
-          await this.saveNotebookToDatabase();
-          await vscode.commands.executeCommand('workbench.action.files.save');
-
-          setTimeout(() => {
-            this.isSaving = false;
-          }, 500);
+          const activeEditor = vscode.window.activeTextEditor;
+          const activeNotebookEditor = vscode.window.activeNotebookEditor;
+          try {
+            if (activeNotebookEditor) {
+              await this.saveNotebookToDatabase();
+            } else if (activeEditor) {
+              // Handle normal file save
+              console.log('Saving regular file...');
+              await vscode.commands.executeCommand('workbench.action.files.save');
+            } else {
+              console.log('No active editor found.');
+            }
+          } catch (error) {
+            console.error('Error during save operation:', error);
+          } finally {     
+            setTimeout(() => {
+              this.isSaving = false;
+            }, 500);
+          }
         }
       }),
       vscode.commands.registerCommand('getterm-db.reportTerminalNotebook', async () => {
