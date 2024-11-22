@@ -1,4 +1,5 @@
 import { Logger } from './logger';
+import { Util } from './util';
 import { XtermParser } from './xterm_parser';
 
  /** 
@@ -73,7 +74,7 @@ export class CommandParser {
      */
     static cleanCommandOutput(output: string): string {
         // Check if the string ends with "$" and has a preceding newline
-        if (output.endsWith("$") || output.endsWith("#")) {
+        if (output.trim().endsWith("$") || output.trim().endsWith("#")) {
             const lastNewlineIndex = output.lastIndexOf("\n");
             if (lastNewlineIndex !== -1) {
                 // Return the string up to the last newline (excluding the prompt line)
@@ -83,6 +84,13 @@ export class CommandParser {
         return output.trim();  // Return the trimmed output if no $ prompt is present
     }
 
+    static extractCommandResult(message: string): string | null {
+        // const regex = /\]633;C([\s\S]+?)\]633;D;/;
+        const regex = /\x1B\]633;C\x07([\s\S]*?)\x1B\]633;D;/;
+        const match = message.match(regex);
+        return match ? match[1].trim() : null;
+    }
+    
     /**
      * Parses OSC 633 sequences and the command from the input buffer.
      * This method detects structured terminal sequences and extracts relevant data.
@@ -111,7 +119,13 @@ export class CommandParser {
 
         // Extract exclude the all OSC sequence as the output
         let output =  await xtermParser.parseTerminalBuffer(buffer);
-        command.output = this.cleanCommandOutput(output);
+        output = this.cleanCommandOutput(output);
+        // command.output = Util.removePromptLine(output);
+        command.output = this.extractCommandResult(buffer) || output;
+        // const output2 = this.extractCommandResult(buffer);
+        // if (output2) {
+        //     command.output = output2;
+        // }
 
         let lastIndex = 0;
         let match;

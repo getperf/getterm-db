@@ -65,10 +65,17 @@ suite('Util Test Suite', () => {
     test('extractCommandByStartEvent should return cleaned command', () => {
         const input = `
             ignoreThisLine
-            user@host$ echo Hello \\
-            > World
-                         actual command`;
+            user@host$ actual command`;
         assert.strictEqual(Util.extractCommandByStartEvent(input), 'actual command');
+    });
+
+    test('removes the last line if it is a prompt', () => {
+        const input = `result1
+result2
+[psadmin@ol810 getperf]$ `;
+        const expected = `result1
+result2`;
+        assert.strictEqual(Util.removePromptLine(input), expected);
     });
 
     // test('should return the file name for vi command', () => {

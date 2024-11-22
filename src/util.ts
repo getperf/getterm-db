@@ -92,7 +92,30 @@ export class Util {
         // return Util.removeLeadingLineWithWhitespace(command2);
         return Util.removeBackslashNewline(command1);
     }
-   
+
+    /**
+     * Removes the last line from a given buffer if it is a command prompt.
+     * 
+     * A command prompt is identified by the following criteria:
+     * - The last character of the line is either `$` or `#`.
+     * - Prompts typically appear in terminal outputs and indicate readiness for input.
+     * 
+     * This function is useful for cleaning up terminal outputs before further processing
+     * or display, ensuring that only meaningful data is retained.
+     * 
+     * @param buffer - The input string containing terminal output or other data.
+     * @returns A string with the last line removed if it matches the prompt criteria.
+     */
+    static removePromptLine(buffer: string): string {
+        const lines = buffer.split('\n');
+        const lastLine = lines[lines.length - 1];
+        if (lastLine.trim().endsWith('$') || lastLine.trim().endsWith('#')) {
+            lines.pop();
+        }
+        return lines.join('\n');
+    }
+    
+
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }
