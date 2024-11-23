@@ -34,7 +34,7 @@ export class TerminalNotebookExporter {
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
-    this.registerCommands();
+    // this.registerCommands();
     this.registerEventHandlers();
   }
 
