@@ -18,7 +18,18 @@ export class TerminalCaptureExecutor {
             vscode.commands.registerCommand('getterm-db.startTerminalCapture', 
                 this.startTerminalCapture
             ),
+            vscode.commands.registerCommand('getterm-db.captureTerminal', 
+                this.captureTerminal
+            ),
         );
+    }
+    private async captureTerminal() {
+        const terminal = vscode.window.activeTerminal;
+        if (!terminal) {
+            vscode.window.showErrorMessage("No active terminal found.");
+            return;
+        }
+        vscode.window.showInformationMessage(`端末キャプチャー: ${terminal.name}`);
     }
 
     private async startTerminalCapture() {
