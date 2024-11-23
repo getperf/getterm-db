@@ -1,6 +1,10 @@
 {
   "name": "getterm-db",
   "displayName": "getterm-db",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/getperf/getterm.git"
+  },
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -112,7 +116,10 @@
     "test": "vscode-test --folder-uri C:/Windows/Temp/",
     "test2": "mocha --require ts-node/register src/test/**/*.ts",
     "update-proposed-api": "vscode-dts dev",
-    "clean-test-workspace": "rm test/workspace/*.*"
+    "clean-test-workspace": "rm test/workspace/*.*",
+    "build-vsix": "vsce package",
+    "build-zip": "node ./scripts/build-zip.js",
+    "package": "npm run build-zip && npm run build-vsix"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.8",
