@@ -18,7 +18,7 @@ type ColumnDefinition = {
 // 列定義
 const columns: ColumnDefinition[] = [
   { header: 'No', key: 'position', width: 5, alignment: { vertical: 'top', horizontal: 'left' } },
-  { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
+  // { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
   { header: 'Session', key: 'session', width: 10, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Content', key: 'content', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
   { header: 'Output', key: 'output', width: 40, alignment: { vertical: 'top', horizontal: 'left', wrapText: true } },
@@ -34,39 +34,40 @@ export class TerminalNotebookExporter {
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
-    // this.registerCommands();
+    this.registerCommands();
     this.registerEventHandlers();
   }
 
   private registerCommands() {
 		this.context.subscriptions.push(
-      vscode.commands.registerCommand('workbench.action.files.save', async () => {
-        if (!this.isSaving) {
-          this.isSaving = true;
+      // vscode.commands.registerCommand('workbench.action.files.save', async () => {
+      //   if (!this.isSaving) {
+      //     this.isSaving = true;
 
-          console.log('Manual save detected!');
-          const activeEditor = vscode.window.activeTextEditor;
-          const activeNotebookEditor = vscode.window.activeNotebookEditor;
-          try {
-            if (activeNotebookEditor) {
-              await this.saveNotebookToDatabase();
-            } else if (activeEditor) {
-              // Handle normal file save
-              console.log('Saving regular file...');
-              await vscode.commands.executeCommand('workbench.action.files.save');
-            } else {
-              console.log('No active editor found.');
-            }
-          } catch (error) {
-            console.error('Error during save operation:', error);
-          } finally {     
-            setTimeout(() => {
-              this.isSaving = false;
-            }, 500);
-          }
-        }
-      }),
+      //     console.log('Manual save detected!');
+      //     const activeEditor = vscode.window.activeTextEditor;
+      //     const activeNotebookEditor = vscode.window.activeNotebookEditor;
+      //     try {
+      //       if (activeNotebookEditor) {
+      //         await this.saveNotebookToDatabase();
+      //       } else if (activeEditor) {
+      //         // Handle normal file save
+      //         console.log('Saving regular file...');
+      //         await vscode.commands.executeCommand('workbench.action.files.save');
+      //       } else {
+      //         console.log('No active editor found.');
+      //       }
+      //     } catch (error) {
+      //       console.error('Error during save operation:', error);
+      //     } finally {     
+      //       setTimeout(() => {
+      //         this.isSaving = false;
+      //       }, 500);
+      //     }
+      //   }
+      // }),
       vscode.commands.registerCommand('getterm-db.reportTerminalNotebook', async () => {
+        await this.saveNotebookToDatabase();
         this.reportTerminalNotebook();
       }),
     );
@@ -213,10 +214,10 @@ export class TerminalNotebookExporter {
       const durationFormatted = Util.calculateDuration(startTime, endTime);
       worksheet.addRow({
         position: row.position,
-        session: row.profile_name,
-        type: row.type,
-        content: row.content,
-        output: row.output,
+        session: row.profile_name ?? '-',
+        // type: row.type,
+        content: row.content ?? '',
+        output: row.output ?? '',
         start: Util.formatTime(startTime),
         end: Util.formatTime(endTime),
         duration: durationFormatted,

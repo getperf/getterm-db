@@ -11,10 +11,10 @@ import { TerminalNotebookSessionPicker } from './notebook_session_picker';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
 
 export enum TerminalNotebookStatus {
-	NoSession,
-	TerminalOpend,
-	CaptureReady,
-	TerminalClosed,	
+	NoSession = `NoSession`,
+	TerminalOpend = `TerminalOpend`,
+	CaptureReady = `CaptureReady`,
+	TerminalClosed = `TerminalClosed`,	
 }
 
 /**

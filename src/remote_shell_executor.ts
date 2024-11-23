@@ -4,6 +4,7 @@ import { TerminalSessionManager } from './terminal_session_manager';
 import { Session } from './model/sessions';
 import { Logger } from './logger';
 import { Config } from './config';
+import { TerminalNotebookController } from './notebook_controller';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -22,6 +23,9 @@ export class RemoteShellExecutor {
             }),
             vscode.commands.registerCommand('getterm-db.openTerminalWithProfile', 
                 this.openTerminalWithProfile, this
+            ),
+            vscode.commands.registerCommand('getterm-db.openTerminalWithProfileAndCreateNotebook', 
+                this.openTerminalWithProfileAndCreateNotebook, this
             ),
         );
     }
@@ -44,6 +48,20 @@ export class RemoteShellExecutor {
             return false;
         }
         return true;
+    }
+
+    private async openTerminalWithProfileAndCreateNotebook(node: any) {
+        if (!node || !node.label) {
+            vscode.window.showErrorMessage('プロファイルが選択されていません。');
+            return;
+        }
+        this.openTerminalWithProfile(node);
+        vscode.window.showInformationMessage("セッション開始まで待ちます");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        await vscode.commands.executeCommand('getterm-db.createNewTerminalNotebook');
+        // const notebookController = new TerminalNotebookController();
+        // notebookController.createNotebook();
     }
 
     private async openTerminalWithProfile(node: any) {

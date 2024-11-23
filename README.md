@@ -1,31 +1,52 @@
-# Terminal Capture
+# Getterm: Terminal Capture Tool
 
-This extension enables you to record terminal output, helping you manage and track your workflows and command history efficiently.
+Getterm integrates terminal software with a text editor to enhance operational efficiency, particularly for server management tasks. It offers the following key features:
 
----
+![Getterm usage](./getterm-usage.png)
 
 ## Features
-- **Terminal Output Recording**: Automatically capture and save terminal outputs.
-- **Workflow Management**: Organize recorded terminal outputs by tasks or sessions.
-- **Historical Tracking**: Easily search and reference past terminal activities.
 
----
+- **Automation of Terminal Operations and Logs:**  
+    Automate the recording of terminal activities, reducing manual intervention.
+- **Minimization of Errors in Task Records:**  
+    Prevent omissions and errors by streamlining work logs.
+- **Command Context and Comments:**  
+    Add comments to explain command intentions or document modifications effectively.
+
+## Use Cases
+
+Getterm is designed to optimize terminal usage in server operations by providing the following functionalities:
+
+1. **Deploy Rehearsal:**  
+    Capture commands into a task procedure document to simulate and review planned operations.
+    
+2. **Production Server Deployment:**  
+    Automatically log commands during deployment operations, including detailed information such as start and end times, to generate accurate execution reports.
+
 
 ## Installation
 
-Follow these steps to install the extension using `code-insiders` and import the `.vsix` file:
+Since **Getterm** uses proposed VSCode APIs, it cannot be installed directly from the VSCode Marketplace. Follow the steps below to set up the extension manually:
 
-1. Ensure you have `Visual Studio Code - Insiders` installed on your system.
-   - Download from the [official VS Code Insiders page](https://code.visualstudio.com/insiders/).
-2. Obtain the `.vsix` package for this extension.
-3. Open the `Visual Studio Code - Insiders` application.
-4. Navigate to the Extensions view:
-   - Use the shortcut `Ctrl+Shift+X` (or `Cmd+Shift+X` on macOS).
-5. In the Extensions view, click the three dots (`...`) in the top-right corner and select **Install from VSIX...**.
-6. Locate and select the `.vsix` file.
-7. Once installed, reload the editor if prompted.
+1. **Download the Getterm Archive**
+    
+    - Obtain the `getterm-x.x.x.zip` file from the official source or repository.
 
----
+2. **Extract the Archive**
+    
+    - Unzip the `getterm-x.x.x.zip` file to access the `getterm-x.x.x.vsix` file.
+
+3. **Install the Remote - SSH Extension**
+    
+    - Open VSCode Insiders and search for the **Remote - SSH** extension in the Extensions Marketplace.
+    - Install the extension to enable remote workspace functionality.
+
+4. **Install the Getterm Extension**
+    
+    - Open VSCode Insiders.
+    - Navigate to the Extensions view by clicking the Extensions icon in the Activity Bar or using `Ctrl+Shift+X`.
+    - Click the ellipsis (`...`) in the top-right corner of the Extensions view, then select **Install from VSIX...**.
+    - Browse to the location of the `getterm-x.x.x.vsix` file and select it.
 
 ## Usage
 
@@ -45,8 +66,6 @@ Follow these steps to install the extension using `code-insiders` and import the
 
 For a visual demonstration, refer to the examples below:
 
-
----
 
 ## Contributing
 

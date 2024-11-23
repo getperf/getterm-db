@@ -40,6 +40,10 @@
         "title": "Getterm : Open terminal"
       },
       {
+        "command": "getterm-db.openTerminalWithProfileAndCreateNotebook",
+        "title": "Getterm : Open terminal & Create notebook"
+      },
+      {
         "command": "getterm-db.startTerminalCapture",
         "title": "Getterm : Start Terminal Caputure"
       },
@@ -66,6 +70,10 @@
       "view/item/context": [
         {
           "command": "getterm-db.openTerminalWithProfile",
+          "group": "navigation"
+        },
+        {
+          "command": "getterm-db.openTerminalWithProfileAndCreateNotebook",
           "group": "navigation"
         }
       ],

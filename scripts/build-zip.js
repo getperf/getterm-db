@@ -36,6 +36,7 @@ const filesToInclude = [
   "code-getterm.bat",
   `getterm-db-${version}.vsix`,
   "README.md",
+  "getterm-usage.png",
   path.join("out", "shellIntegration-bash.sh"),
 ];
 
