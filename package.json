@@ -1,6 +1,7 @@
 {
   "name": "getterm-db",
   "displayName": "getterm-db",
+  "publisher": "getperf",
   "repository": {
     "type": "git",
     "url": "https://github.com/getperf/getterm.git"
@@ -16,6 +17,12 @@
   "activationEvents": [
     "onNotebook:*",
     "onView:terminal-notebook"
+  ],
+  "files": [
+    "out",
+    "assets",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "main": "./out/extension.js",
   "enabledApiProposals": [
