@@ -50,7 +50,7 @@ Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](
 
 - Open PowerShell and navigate to the directory where you extracted `getterm-x.x.x.zip`. Then, run the VSCode Insiders launch script:
     
-    ```
+    ```powershell
     cd {path to extracted folder} 
     .\code-getterm.bat .
     ```
@@ -90,5 +90,7 @@ Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](
 We welcome contributions to this project! Here’s how you can contribute:
 
 1. Clone the repository from GitHub:
-   ```bash
-   git clone https://github.com/your-repo-name.git
+
+    ```bash
+    git clone https://github.com/your-repo-name.git
+    ```
