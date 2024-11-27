@@ -1,15 +1,17 @@
 # Getterm: Terminal Capture Tool
 
-Getterm integrates terminal software with a text editor to enhance operational efficiency, particularly for server management tasks. It offers the following key features:
+Getterm integrates terminal software with a text editor to enhance operational efficiency, particularly for server management tasks. 
 
-![Getterm usage](./getterm-usage.png)
+![Getterm usage](assets/getterm-usage.png)
 
 ## Features
 
 - **Automation of Terminal Operations and Logs:**  
     Automate the recording of terminal activities, reducing manual intervention.
-- **Minimization of Errors in Task Records:**  
+
+- **Minimization of Errors in Terminal Operations:**  
     Prevent omissions and errors by streamlining work logs.
+
 - **Command Context and Comments:**  
     Add comments to explain command intentions or document modifications effectively.
 
@@ -21,56 +23,74 @@ Getterm is designed to optimize terminal usage in server operations by providing
     Capture commands into a task procedure document to simulate and review planned operations.
     
 2. **Production Server Deployment:**  
-    Automatically log commands during deployment operations, including detailed information such as start and end times, to generate accurate execution reports.
+    Automatically log commands during production server deployment operations, including detailed information such as start and end times, to generate accurate execution reports.
 
 
 ## Installation
 
-Since **Getterm** uses proposed VSCode APIs, it cannot be installed directly from the VSCode Marketplace. Follow the steps below to set up the extension manually:
+Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](https://code.visualstudio.com/insiders), it cannot be installed from the regular VSCode Marketplace. Instead, follow the steps below to set up the extension manually in VSCode Insiders:
 
-1. **Download the Getterm Archive**
-    
-    - Obtain the `getterm-x.x.x.zip` file from the official source or repository.
 
-2. **Extract the Archive**
+1. **Install the ["Remote - SSH"](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) Extension**
     
-    - Unzip the `getterm-x.x.x.zip` file to access the `getterm-x.x.x.vsix` file.
-
-3. **Install the Remote - SSH Extension**
-    
-    - Open VSCode Insiders and search for the **Remote - SSH** extension in the Extensions Marketplace.
+    - Open ["VSCode Insiders"](https://code.visualstudio.com/insiders) and search for the **Remote - SSH** extension in the Extensions Marketplace.
     - Install the extension to enable remote workspace functionality.
 
-4. **Install the Getterm Extension**
+2. **Install the Getterm Extension**
     
+    - [Download the `getterm.zip`](https://github.com/getperf/getterm/tags) and extract the contents.
     - Open VSCode Insiders.
     - Navigate to the Extensions view by clicking the Extensions icon in the Activity Bar or using `Ctrl+Shift+X`.
     - Click the ellipsis (`...`) in the top-right corner of the Extensions view, then select **Install from VSIX...**.
-    - Browse to the location of the `getterm-x.x.x.vsix` file and select it.
+    - Browse to the location where you extracted the archive downloaded from [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags). Locate the `getterm-x.x.x.vsix` file and select it.
 
 ## Usage
 
-1. **Start Recording**:
-   - Open a terminal in Visual Studio Code.
-   - Begin your terminal tasks as usual. The extension will automatically start recording the output.
-   
-2. **View and Manage Logs**:
-   - Use the dedicated **Terminal Logs** view to browse and manage your recorded outputs.
-   - Logs are categorized by task or session for easier access.
+### 1. **Run the VSCode Insiders Launch Script**
 
-3. **Export Logs**:
-   - Export recorded terminal outputs as reports (e.g., in Excel or JSON formats).
-   
-4. **Customization**:
-   - Adjust settings for recording preferences under the extension's configuration options.
+- Open PowerShell and navigate to the directory where you extracted `getterm-x.x.x.zip`. Then, run the VSCode Insiders launch script:
+    
+    ```powershell
+    cd {path to extracted folder} 
+    .\code-getterm.bat .
+    ```
+    
+- This script starts VSCode Insiders with the necessary options to enable the proposed API functionality.
+    
 
-For a visual demonstration, refer to the examples below:
+### 2. **Connect to a Server**
 
+- Once VSCode Insiders has launched, click on the **Remote - SSH** icon in the Activity Bar.
+    
+- Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to connect to the desired server.
+    
+
+#### Notes:
+
+- For new connections, click the **+** icon next to the SSH host list and register a new connection host.
+
+- After connecting via SSH, the script `shellIntegration-bash.sh` will automatically loaded to enable shell integration APIs.
+    
+- The `shellIntegration-bash.sh` script appends escape sequences to commands executed in the terminal, signaling events such as start and end times. These sequences are interpreted by VS Code Shell integration API.
+    
+- If the script fails to load, manually upload `shellIntegration-bash.sh` of current directory to the server and load it with the following command:
+    
+    ```bash
+    source shellIntegration-bash.sh
+    ```
+    
+
+### 3. **Start Capturing**
+
+- In the notebook toolbar, click **Select Session** and choose the terminal session you wish to record.
+- Begin terminal operations. All actions will be logged into the notebook for documentation and review.
 
 ## Contributing
 
 We welcome contributions to this project! Here’s how you can contribute:
 
 1. Clone the repository from GitHub:
-   ```bash
-   git clone https://github.com/your-repo-name.git
+
+    ```bash
+    git clone https://github.com/your-repo-name.git
+    ```
