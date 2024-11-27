@@ -115,7 +115,21 @@ export class Util {
         return lines.join('\n');
     }
     
-
+    static escapeXml(str: string): string {
+        if (typeof str !== 'string') {return str;}
+        // 4096文字以上の場合は切り詰めて通知を追加
+        const truncationNotice = '... [Truncated]';
+        const maxLength = 4096 - truncationNotice.length;
+        const truncatedStr = str.length > 4096 ? str.slice(0, maxLength) + truncationNotice : str;
+        return truncatedStr
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+        //   .replace(/\$/g, '&#36;'); // $ のエスケープ
+    };
+      
     static removeTrailingSemicolon(input: string): string {
         return input.endsWith(';') ? input.slice(0, -1) : input;
     }
