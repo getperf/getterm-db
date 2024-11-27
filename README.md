@@ -36,7 +36,7 @@ Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](
     - Open ["VSCode Insiders"](https://code.visualstudio.com/insiders) and search for the **Remote - SSH** extension in the Extensions Marketplace.
     - Install the extension to enable remote workspace functionality.
 
-2. **Install the Getterm Extension**
+2. **Install the Getterm Extension by .vsix**
     
     - [Download the `getterm.zip`](https://github.com/getperf/getterm/tags) and extract the contents.
     - Open VSCode Insiders.
@@ -62,8 +62,9 @@ Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](
 
 - Once VSCode Insiders has launched, click on the **Remote - SSH** icon in the Activity Bar.
     
-- Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to connect to the desired server.
+- Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to connect.
     
+- It is recommended to configure the connection host to use a public key for authentication, **enabling passwordless login**. In such cases, shell integration will be automatically activated. If automatic login is not possible, you will need to manually load the shell integration script as described in the following notes.
 
 #### Notes:
 
@@ -92,5 +93,5 @@ We welcome contributions to this project! Here’s how you can contribute:
 1. Clone the repository from GitHub:
 
     ```bash
-    git clone https://github.com/your-repo-name.git
+    git clone https://github.com/getperf/getterm.git
     ```
