@@ -68,10 +68,9 @@ export class ConsernedFileDownloader {
      * @returns The file name if an editor command is found, otherwise undefined.
      */
     checkFileNameFromEditorCommand(commandBuffer: string): string | undefined {
-        // console.log("commandBuffer: ", commandBuffer);
         const commandParts = commandBuffer.trim().split(/\s+/);
         const editorIndex = commandParts.findIndex(part => 
-            this.editorCommands.some(editor => part.includes(editor))
+            this.editorCommands.some(editor => part === editor)
         );
         if (editorIndex === -1) {
             this.sudoCommand = null;

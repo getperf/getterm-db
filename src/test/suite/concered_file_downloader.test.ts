@@ -66,6 +66,12 @@ suite('ConsernedFileDownloader Test Suite', () => {
         assert.strictEqual(result, undefined);
     });
 
+    test('should return undefined for service commands', () => {
+        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
+        const result = downloader.checkFileNameFromEditorCommand('sudo service httpd configtest');
+        assert.strictEqual(result, undefined);
+    });
+
     test('should return undefined if no file name is provided', () => {
         const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
         const result = downloader.checkFileNameFromEditorCommand('vi');
