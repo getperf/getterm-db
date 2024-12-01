@@ -32,7 +32,7 @@ export class RemoteShellExecutor {
 
     private async copyShellIntegrationScript(remoteProfile:string) : Promise<boolean> {
         try {
-            const getScriptCmd = 'code --locate-shell-integration-path bash';
+            const getScriptCmd = 'code-insiders --locate-shell-integration-path bash';
             const shellIntegrationPath = cp.execSync(getScriptCmd).toString().trim();
             Logger.info(`shell integration script path ：${shellIntegrationPath}`);
             if (!shellIntegrationPath) {
