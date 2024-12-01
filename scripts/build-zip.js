@@ -22,7 +22,7 @@ archive.pipe(output);
 
 // `code --locate-shell-integration-path bash` を実行してパスを取得
 try {
-  const bashIntegrationPath = execSync("code --locate-shell-integration-path bash", { encoding: "utf8" }).trim();
+  const bashIntegrationPath = execSync("code-insiders --locate-shell-integration-path bash", { encoding: "utf8" }).trim();
   const destinationPath = path.join("out", "shellIntegration-bash.sh");
   fs.copyFileSync(bashIntegrationPath, destinationPath);
   console.log(`Shell integration script copied to: ${destinationPath}`);
