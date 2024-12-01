@@ -2,6 +2,13 @@
   "name": "getterm-db",
   "displayName": "getterm-db",
   "publisher": "getperf",
+  "files": [
+    "dist/**",
+    "package.json",
+    "README.md",
+    "LICENSE.md",
+    "CHANGELOG.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/getperf/getterm.git"
@@ -17,12 +24,6 @@
   "activationEvents": [
     "onNotebook:*",
     "onView:terminal-notebook"
-  ],
-  "files": [
-    "out",
-    "assets",
-    "README.md",
-    "CHANGELOG.md"
   ],
   "main": "./out/extension.js",
   "enabledApiProposals": [
@@ -123,10 +124,11 @@
     "test": "vscode-test --folder-uri C:/Windows/Temp/",
     "test2": "mocha --require ts-node/register src/test/**/*.ts",
     "update-proposed-api": "vscode-dts dev",
+    "clean": "rimraf out dist test/workspace",
     "clean-test-workspace": "rm test/workspace/*.*",
-    "build-vsix": "vsce package",
+    "build-vsix": "npx vsce package",
     "build-zip": "node ./scripts/build-zip.js",
-    "package": "npm run build-zip && npm run build-vsix"
+    "package": "npm run build-vsix && npm run build-zip"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.8",
