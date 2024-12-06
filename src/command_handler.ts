@@ -135,6 +135,7 @@ export class CommandHandler {
         await Command.updateEnd(commandId, endTime);
         Logger.info(`end command handler, wait few seconds.`);
         let rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+        console.log("RAWDATA2:", rawData);
         if (!rawData) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
             console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);

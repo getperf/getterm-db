@@ -4,6 +4,12 @@ import { exec } from 'child_process';
 export class Util {
     private static editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
+    static unescapeString(str: string): string {
+        return str.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) => 
+            String.fromCharCode(parseInt(hex, 16))
+        );
+    }
+      
     static formatDateWithMilliseconds(date: Date): string {
         const padZero = (num: number) => num.toString().padStart(2, '0');
         const milliseconds = date.getMilliseconds().toString().padStart(3, '0'); // Milliseconds formatted to 3 digits

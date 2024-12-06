@@ -173,6 +173,22 @@ export class CommandParser {
         return this.cleanCommandOutput(output);
     }
 
+    static extractCommand(buffer: string): string {
+        // Eコマンド以前を取得
+        const eCommandIndex = buffer.indexOf("\u001b]633;E;");
+        if (eCommandIndex !== -1) {
+          buffer = buffer.substring(0, eCommandIndex);
+        }
+      
+        // Bコマンド以降を削除
+        const bCommandIndex = buffer.indexOf("\u001b]633;B");
+        if (bCommandIndex !== -1) {
+            buffer = buffer.substring(0, bCommandIndex);
+            // buffer = buffer.substring(bCommandIndex + "\u001b]633;B".length);
+        }
+        return buffer.trim();
+    }
+      
     /**
      * Extracts text following the OSC-633 sequence for command detection.
      * Uses regex to capture sequences beginning with `\x1b]633;E;` and ending in `;\x07`.
@@ -186,7 +202,10 @@ export class CommandParser {
 
         if (match && match.index !== undefined) {
             console.log("マッチしたインデックス：", match.index);
-            const commandText = match[1];
+            const newCommand = CommandParser.extractCommand(input);
+            console.log("新コマンド解析結果:", newCommand);
+            let commandText = match[1];
+            commandText = Util.unescapeString(commandText);
             const afterKeyword = input.slice(match.index);
 
             return {
