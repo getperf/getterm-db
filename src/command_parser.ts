@@ -90,29 +90,7 @@ export class CommandParser {
         const match = message.match(regex);
         return match ? match[1].trim() : null;
     }
-
-    static async extractCommandFromBuffer(buffer: string): Promise<string> {
-        // DコマンドとBコマンドのエスケープシーケンス
-        const dCommand = "\u001b]633;D";
-        const bCommand = "\u001b]633;B";
-      
-        // 後ろからDコマンドを検索してそのあとを取り除く
-        const dCommandIndex = buffer.lastIndexOf(dCommand);
-        if (dCommandIndex !== -1) {
-          buffer = buffer.substring(0, dCommandIndex);
-        }
-      
-        // 後ろからBコマンドを検索してその前を取り除く
-        const bCommandIndex = buffer.lastIndexOf(bCommand);
-        if (bCommandIndex !== -1) {
-          buffer = buffer.substring(bCommandIndex + bCommand.length);
-        }
-        const xtermParser = XtermParser.getInstance();
-        buffer =  await xtermParser.parseTerminalBuffer(buffer);
-        
-        return buffer.trim();
-    }
-
+    
     /**
      * Parses OSC 633 sequences and the command from the input buffer.
      * This method detects structured terminal sequences and extracts relevant data.
@@ -124,7 +102,7 @@ export class CommandParser {
         const command = new ParsedCommand();
 
         // Extract command from the start of the buffer until the first OSC-633 sequence starts
-        const commandResult = await this.extractAfterOSC633CommandSequence(input);
+        const commandResult = this.extractAfterOSC633CommandSequence(input);
         if (!commandResult) {
             Logger.error(`
                 Detected multiple OSC-633 start escape sequences in buffer. 
@@ -195,21 +173,39 @@ export class CommandParser {
         return this.cleanCommandOutput(output);
     }
 
+    static extractCommand(buffer: string): string {
+        // バッファの後ろからEコマンドを検索して、その前を切り捨てる
+        const eCommandIndex = buffer.lastIndexOf("\u001b]633;E;");
+        if (eCommandIndex !== -1) {
+            buffer = buffer.substring(eCommandIndex + "\u001b]633;E;".length);
+        }
+      
+        // Bコマンド以降を削除
+        const bCommandIndex = buffer.lastIndexOf("\u001b]633;B");
+        if (bCommandIndex !== -1) {
+            buffer = buffer.substring(0, bCommandIndex);
+            // buffer = buffer.substring(bCommandIndex + "\u001b]633;B".length);
+        }
+        return buffer.trim();
+    }
+      
     /**
      * Extracts text following the OSC-633 sequence for command detection.
      * Uses regex to capture sequences beginning with `\x1b]633;E;` and ending in `;\x07`.
      * @param input - Terminal buffer input as a string.
      * @returns An object containing the command text and remaining text after the sequence, or null if no match.
      */
-    static async extractAfterOSC633CommandSequence(input: string): Promise<{ commandText: string; remainingText: string; } | null> {
+    static extractAfterOSC633CommandSequence(input: string): { commandText: string, remainingText: string } | null {
         // Search for the last occurrence of the OSC-633 "E" command pattern using a reverse (trailing) match.
         const regex = /\x1b\]633;E;(.*?);\x07/;
         const match = input.match(regex);
-        const commandText2 = await this.extractCommandFromBuffer(input);
-        console.log("新しいコマンド抽出処理：", commandText2);
+
         if (match && match.index !== undefined) {
             console.log("マッチしたインデックス：", match.index);
-            const commandText = match[1];
+            const newCommand = CommandParser.extractCommand(input);
+            console.log("新コマンド解析結果:", newCommand);
+            let commandText = match[1];
+            commandText = Util.unescapeString(commandText);
             const afterKeyword = input.slice(match.index);
 
             return {
