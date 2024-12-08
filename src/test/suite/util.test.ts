@@ -50,8 +50,7 @@ suite('Util Test Suite', () => {
     });
 
     test('removeLeadingLineWithWhitespace should remove line before 20+ whitespace', () => {
-        const input = `
-            ignoreThisLine
+        const input = `ignoreThisLine
                          actual command`;
         assert.strictEqual(Util.removeLeadingLineWithWhitespace(input), 'actual command');
     });
