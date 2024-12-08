@@ -15,6 +15,7 @@ import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_
 import { ConsoleEventProvider } from './console_event_provider';
 import { TerminalSession, TerminalSessionMode } from './terminal_session';
 import { SwitchUserCommandHandler } from './switch_user_command_handler';
+import { ShellIntegrationCommandParser } from './shell_integration_command_parser';
 
 export class CommandHandler {
     private notebookController : TerminalNotebookController;
@@ -157,6 +158,8 @@ export class CommandHandler {
             return;
         }
 
+        const newParsedCommand = await ShellIntegrationCommandParser.parse(rawData);
+        console.log("新コマンド解析：", newParsedCommand);
         console.log( `Command start detected: ${session.startEventCommand}, end: ${parsedCommand.command}`);
         const completeCommand = this.selectCompleteCommand(session.startEventCommand, parsedCommand.command);
         parsedCommand.command = completeCommand;

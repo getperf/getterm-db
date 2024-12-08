@@ -80,8 +80,22 @@ export class Util {
      * @returns - The formatted command string, with unnecessary leading whitespace lines removed.
      */
     static removeLeadingLineWithWhitespace(command: string): string {
-        // 正規表現で19文字以上の空白を含む2行目を検出し、2行目のコマンドのみを抽出
-        return command.replace(/^.*\n\s{19,}(.+)$/s, '$1');
+        // 正規表現で16文字以上の空白を含む2行目を検出した場合、その前の行と空白を取り除く
+        // const result =  command.replace(/^.*\n\s{19,}(.+)$/s, '$1');
+        const lines = command.split('\n');
+        const result: string[] = [];
+    
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith(' '.repeat(16))) {
+                const trimmedLine = lines[i].trim();
+                if (result.length > 0) {
+                    result[result.length - 1] = trimmedLine;
+                }
+            } else {
+                result.push(lines[i]);
+            }
+        }
+        return result.join('\n');
     }
 
     /**

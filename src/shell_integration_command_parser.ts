@@ -1,3 +1,6 @@
+import { Util } from './util';
+import { XtermParser } from './xterm_parser';
+
 export class ParsedCommand {
     command = '';
     output = '';
@@ -6,42 +9,87 @@ export class ParsedCommand {
 }
 
 export class ShellIntegrationCommandParser {
-    static parse(buffer: string): ParsedCommand {
-        const parsedCommand = new ParsedCommand();
 
+    static async extractCommandText(buffer: string): Promise<string> {
+        const xtermParser = XtermParser.getInstance();
+        buffer = await xtermParser.parseTerminalBuffer(buffer);
+        buffer = Util.removeLeadingLineWithWhitespace(buffer); // Fix CTRL-U
+        return buffer;
+    }
+
+    static splitBufferByCommandSequence(buffer: string): { commandBuffer: string; outputBuffer: string } {
+        const osc633CommandB = "\u001b]633;B\u0007";
+        const osc633CommandC = "\u001b]633;C\u0007";
+    
+        const indexCommandC = buffer.lastIndexOf(osc633CommandC);
+        if (indexCommandC === -1) {
+            return {
+                commandBuffer: buffer,
+                outputBuffer: "",
+            };
+        }
+        let commandBuffer = buffer.slice(0, indexCommandC);
+        const outputBuffer = buffer.slice(indexCommandC + osc633CommandC.length);
+    
+        const indexCommandB = commandBuffer.lastIndexOf(osc633CommandB);
+        if  (indexCommandB !== -1) {
+            commandBuffer = commandBuffer.slice(indexCommandB + osc633CommandB.length);
+        }
+        return {
+            commandBuffer,
+            outputBuffer,
+        };
+    }
+
+    static selectCompleteCommand(startCommandText: string | undefined, eCommandText: string): string {
+        if (!startCommandText) {return eCommandText;}
+        if (!eCommandText) {return startCommandText;}
+        // startCommandText にパイプが含まれる場合はそれを選択
+        if (startCommandText.includes("|")) {
+            return startCommandText;
+        }
+        return eCommandText;
+    }
+    
+    static async parse(buffer: string): Promise<ParsedCommand> {
         // Split buffer into command and output parts using C-command delimiter
-        const cIndex = buffer.lastIndexOf('\u001b]633;C\u0007');
-        if (cIndex === -1) {
-            throw new Error('C-command not found in the buffer');
+        const parsedCommand = new ParsedCommand();
+        const parts = this.splitBufferByCommandSequence(buffer);
+        const commandText = await this.extractCommandText(parts.commandBuffer);
+        parsedCommand.command = commandText;
+
+        const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
+        let lastIndex = 0;
+        let match;
+        let eCommandText = '';
+        while ((match = oscRegex.exec(parts.commandBuffer + parts.outputBuffer)) !== null) {
+            const oscType = match[1];  // A, B, C, D, E, P
+            const oscData = match[2] || '';  // The oscData after the ; in the sequence
+            lastIndex = oscRegex.lastIndex;
+            switch (oscType) {
+                case 'C':  // Command result starts
+                case 'B':  // Command result starts
+                    break;
+                case 'D':  // Exit code
+                    const exitCodeString = oscData.split(';')[1];  // Extract exit code from the format `;0`
+                    if (exitCodeString){
+                        parsedCommand.exitCode = parseInt(exitCodeString, 10);  // Capture the exit code
+                    }
+                    break;
+                case 'E':  // Command text
+                    eCommandText = oscData.split(';')[1];
+                    if (eCommandText){
+                        console.log("E COMMAND:", eCommandText);
+                    }
+                    break;
+                case 'P':  // Current working directory
+                    parsedCommand.cwd = oscData.split('=')[1] || '';  // Extract cwd from the format `Cwd=...`
+                    break;
+                default:
+                    break;
+            }
         }
-
-        const commandBuffer = buffer.slice(0, cIndex);
-        const outputBuffer = buffer.slice(cIndex + 8);
-
-        // Extract command text from command buffer
-        const eIndex = commandBuffer.lastIndexOf('\u001b]633;E;');
-        if (eIndex !== -1) {
-            parsedCommand.command = commandBuffer.slice(eIndex + 8).replace(/;\u0007$/, '');
-        }
-
-        // Extract output text from output buffer
-        const dIndex = outputBuffer.lastIndexOf('\u001b]633;D;');
-        if (dIndex !== -1) {
-            const exitCodeStr = outputBuffer.slice(dIndex + 8).replace(/\u0007$/, '');
-            parsedCommand.exitCode = parseInt(exitCodeStr, 10);
-        }
-
-        const cwdIndex = outputBuffer.lastIndexOf('\u001b]633;P;Cwd=');
-        if (cwdIndex !== -1) {
-            parsedCommand.cwd = outputBuffer.slice(cwdIndex + 13).replace(/\u0007$/, '');
-        }
-
-        // Extract actual output between C-command and other delimiters
-        const aIndex = outputBuffer.lastIndexOf('\u001b]633;A\u0007');
-        if (aIndex !== -1) {
-            parsedCommand.output = outputBuffer.slice(0, aIndex).trim();
-        }
-
+        parsedCommand.command = this.selectCompleteCommand(commandText, eCommandText);
         return parsedCommand;
     }
 }
