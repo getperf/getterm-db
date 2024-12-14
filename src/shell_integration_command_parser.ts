@@ -12,35 +12,28 @@ export class ShellIntegrationCommandParser {
 
     static parseMultilineCommand(buffer: string): string {
         const lines = buffer.split(/\r?\n/);
-        console.log("LINES:", lines);
         let command = lines[0].trim(); // 初期コマンドを1行目として開始
 
         // 正規表現でOSC633のF,Gコマンドと余分な「>」を検出
         const regex = /\x1B\]633;F\x07>\s*\x1B\]633;G\x07/g;
         command = command.replace(regex, "\\\n");
-        // for (let i = 1; i < lines.length; i++) {
-        //     const line = lines[i].trim();
-        //     // OSC633 F,G コードを検知
-        //     if (/\u001b]633;F\u0007> \u001b]633;G\u0007/.test(line)) {
-        //         // OSCコードと '>' を削除
-        //         const cleanedLine = line.replace(/\u001b]633;[FG]\u0007/g, "").replace(/^> /, "");
-        //         console.log("LINE2:", cleanedLine);
-        //         // 抽出したコマンドに追記
-        //         command += `\n${cleanedLine}`;
-        //         console.log("command:", command);
-        //     } else {
-        //         // F,Gコードがない場合は終了
-        //         break;
-        //     }
-        // }
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            // OSC633 F,G コードを検知
+            if (/\u001b]633;F\u0007> \u001b]633;G\u0007/.test(line)) {
+                // OSCコードと '>' を削除
+                const cleanedLine = line.replace(/\u001b]633;[FG]\u0007/g, "").replace(/^> /, "");
+                // 抽出したコマンドに追記
+                command += `\n${cleanedLine}`;
+            } else {
+                // F,Gコードがない場合は終了
+                break;
+            }
+        }
         return command.trim();
     }
 
     static async extractCommandText(buffer: string): Promise<string> {
-        // const newlineIndex = buffer.indexOf('\n');
-        // if (newlineIndex !== -1) {
-        //     buffer = buffer.slice(0, newlineIndex);
-        // }
         const lines = this.parseMultilineCommand(buffer).split(/\n/);
         const xtermParser = XtermParser.getInstance();
         let command = '';
@@ -48,20 +41,10 @@ export class ShellIntegrationCommandParser {
             const line = lines[i].trim();
             let cleanedLine = await xtermParser.parseTerminalBuffer(line);
             cleanedLine = Util.removeLeadingLineWithWhitespace(cleanedLine); // Fix CTRL-U
-            command += `\n${cleanedLine}`;
-            console.log("COMMAND:", command);
+            command += cleanedLine;
+            if (i < lines.length-1) {command += `\n`;}
         }
         return command;
-        // console.log("TEST:", JSON.stringify(buffer));
-        // buffer = this.parseMultilineCommand(buffer);
-        // console.log("TEST2:", JSON.stringify(buffer));
-        // // const xtermParser = XtermParser.getInstance();
-        // buffer = await xtermParser.parseTerminalBuffer(buffer);
-        // buffer = Util.removeLeadingLineWithWhitespace(buffer); // Fix CTRL-U
-        // // const lines = buffer.split(/\r?\n/);
-        // console.log("EXTRACE COMMAND: ", buffer);
-        // console.log("LINES: ", lines);
-        // return buffer;
     }
 
     static splitBufferByCommandSequence(buffer: string): { commandBuffer: string; outputBuffer: string } {
@@ -91,6 +74,10 @@ export class ShellIntegrationCommandParser {
     static selectCompleteCommand(startCommandText: string | undefined, eCommandText: string): string {
         if (!startCommandText) {return eCommandText;}
         if (!eCommandText) {return startCommandText;}
+        // 前方一致の場合はそれを選択
+        if (startCommandText.startsWith(eCommandText)) {
+            return startCommandText;
+        }
         // startCommandText にパイプが含まれる場合はそれを選択
         if (startCommandText.includes("|")) {
             return startCommandText;
@@ -114,7 +101,7 @@ export class ShellIntegrationCommandParser {
         const parsedCommand = new ParsedCommand();
         const parts = this.splitBufferByCommandSequence(buffer);
         const commandText = await this.extractCommandText(parts.commandBuffer + parts.outputBuffer.slice(0, 1024));
-        console.log("COMMAND:", commandText);
+        console.log("COMMAND3:", commandText);
         parsedCommand.command = commandText;
 
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;

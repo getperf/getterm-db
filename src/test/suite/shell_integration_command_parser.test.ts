@@ -4,25 +4,7 @@ import { ParsedCommand, ShellIntegrationCommandParser } from '../../shell_integr
 
 suite('Util Test Suite', () => {
 
-    test('should correctly parse a buffer with a command and output', async () => {
-        // const input = `sleep 1 | echo hello\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007\nhello\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007\u001b]633;B\u0007[psadmin@ol88 ~]$`;
-        const input = `sleep 1 | echo hello\n\u001b]633;E;sleep 1;\u0007` +
-            `\u001b]633;C\u0007` +
-            `\nhello\n\u001b]633;D;0\u0007` +
-            `\u001b]633;P;Cwd=/home/psadmin\u0007` +
-            `\u001b]633;A\u0007` +
-            `\u001b]633;B\u0007` +
-            `[psadmin@ol88 ~]$`;
-
-        const result = await ShellIntegrationCommandParser.parse(input);
-        assert.strictEqual(result.command, 'sleep 1 | echo hello');
-        assert.strictEqual(result.output, 'hello');
-        assert.strictEqual(result.exitCode, 0);
-        assert.strictEqual(result.cwd, '/home/psadmin');
-    });
-    
-    test('multiline1', async () => {
-        // const input = `sleep 1 | echo hello\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007\nhello\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007\u001b]633;B\u0007[psadmin@ol88 ~]$`;
+    test('should correctly parse a buffer with a multiline command', async () => {
         const input = `sleep 1 \
 \u001b]633;F\u0007> \u001b]633;G\u0007| ls \
 \u001b]633;F\u0007> \u001b]633;G\u0007| wc 
@@ -30,9 +12,42 @@ suite('Util Test Suite', () => {
 \u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@alma8 ~]$ \u001b]633;B\u0007`;
 
         const result = await ShellIntegrationCommandParser.parse(input);
-        assert.strictEqual(result.command, 'sleep 1 \\n| ls \\n| wc');
+        assert.strictEqual(result.command.replace(/\\\n/g, ""), 'sleep 1 | ls | wc');
         assert.strictEqual(result.output, '    146     146    2061\n');
         assert.strictEqual(result.exitCode, 0);
         assert.strictEqual(result.cwd, '/home/psadmin');
     });
+
+    test('should correctly parse a command sleep 1; echo hello', async () => {
+        const input = `\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007sleep 1; echo hello\r\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007hello\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007`;
+
+        const result = await ShellIntegrationCommandParser.parse(input);
+        assert.strictEqual(result.command, 'sleep 1; echo hello');
+        assert.strictEqual(result.output, 'hello\r\n');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.cwd, '/home/psadmin');
+    });
+
+    test('should correctly parse a command sleep 1 | echo "hello \\\nworld"', async () => {
+        const input = `[psadmin@ol88 ~]$ source \"/tmp/vscode-shell-integration.sh\"\r\n\u001b]0;psadmin@ol88:~\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007sleep 1 | echo \"hello \\\r\n\u001b]633;F\u0007> \u001b]633;G\u0007world\"\r\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007hello world\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007`;
+
+        const result = await ShellIntegrationCommandParser.parse(input);
+        console.log(JSON.stringify(result));
+        assert.strictEqual(result.command, 'sleep 1 | echo "hello \\\nworld"');
+        assert.strictEqual(result.output, 'hello world\r\n');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.cwd, '/home/psadmin');
+    });
+
+    test('should correctly parse a command sleep1 | ls | wc with ctul-u', async () => {
+        const input = `ls -l\u001b[?25l\u001b[12;19H\u001b[K\u001b[?25hsleep 1 | ls \\\r\n\u001b]633;F\u0007> \u001b]633;G\u0007| wc\r\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007      7       7      85\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007`;
+
+        const result = await ShellIntegrationCommandParser.parse(input);
+        console.log(JSON.stringify(result));
+        assert.strictEqual(result.command, 'sleep 1 | ls \\\n| wc');
+        assert.strictEqual(result.output, '      7       7      85\r\n');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.cwd, '/home/psadmin');
+    });
+
 });

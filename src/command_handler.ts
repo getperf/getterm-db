@@ -136,7 +136,7 @@ export class CommandHandler {
         await Command.updateEnd(commandId, endTime);
         Logger.info(`end command handler, wait few seconds.`);
         let rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
-        console.log("RAWDATA2:", rawData);
+        console.log("RAWDATA2:", JSON.stringify(rawData));
         if (!rawData) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
             console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);
@@ -150,7 +150,8 @@ export class CommandHandler {
         // Logger.info(`end command handler, retrieve data : ${rawData}.`);
         // const osc633Messages = this.parseOSC633Simple(rawData);
         // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
-        const parsedCommand = await CommandParser.parseOSC633AndCommand(rawData);
+        // const parsedCommand = await CommandParser.parseOSC633AndCommand(rawData);
+        const parsedCommand = await ShellIntegrationCommandParser.parse(rawData);
         if (!parsedCommand) {
             vscode.window.showErrorMessage(
                 `Oops. Failed to parse the capture data. Command could not be recorded.`
@@ -158,11 +159,11 @@ export class CommandHandler {
             return;
         }
 
-        const newParsedCommand = await ShellIntegrationCommandParser.parse(rawData);
-        console.log("新コマンド解析：", newParsedCommand);
-        console.log( `Command start detected: ${session.startEventCommand}, end: ${parsedCommand.command}`);
-        const completeCommand = this.selectCompleteCommand(session.startEventCommand, parsedCommand.command);
-        parsedCommand.command = completeCommand;
+        // const newParsedCommand = await ShellIntegrationCommandParser.parse(rawData);
+        // console.log("新コマンド解析：", newParsedCommand);
+        // console.log( `Command start detected: ${session.startEventCommand}, end: ${parsedCommand.command}`);
+        // const completeCommand = this.selectCompleteCommand(session.startEventCommand, parsedCommand.command);
+        // parsedCommand.command = completeCommand;
         // ここにファイル編集キャプチャーのコードを追加する
         const downloader = new ConcernedFileDownloader(commandId, e.terminal, parsedCommand);
         if (downloader.detectFileAccessFromCommand()) {
