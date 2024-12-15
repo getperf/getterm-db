@@ -12,12 +12,12 @@ import { TerminalCaptureExecutor } from './terminal_capture_executor';
 import { TerminalNotebookExporter } from './notebook_exporter';
 import { TerminalSessionManager } from './terminal_session_manager';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
 	Logger.setup(outputChannel, context);
 	// Logger.setLogLevel(LogLevel.DEBUG);
-	initializeDatabase();
+	await initializeDatabase();
 	TerminalSessionManager.initializeInstance();
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);

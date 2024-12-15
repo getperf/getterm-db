@@ -5,6 +5,7 @@ import { Session } from './model/sessions';
 import { Logger } from './logger';
 import { Config } from './config';
 import { TerminalNotebookController } from './notebook_controller';
+import { Util } from './util';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -67,6 +68,10 @@ export class RemoteShellExecutor {
     private async openTerminalWithProfile(node: any) {
         if (!node || !node.label) {
             vscode.window.showErrorMessage('プロファイルが選択されていません。');
+            return;
+        }
+        if (!Util.checkWorkspaceOpened()) {
+            vscode.window.showErrorMessage('ワークスペースが開いていません');
             return;
         }
         const remoteProfile = node.label;

@@ -74,8 +74,9 @@ export class ShellIntegrationCommandParser {
     static selectCompleteCommand(startCommandText: string | undefined, eCommandText: string): string {
         if (!startCommandText) {return eCommandText;}
         if (!eCommandText) {return startCommandText;}
-        // 前方一致の場合はそれを選択
-        if (startCommandText.startsWith(eCommandText)) {
+        // 1ワード目が一致していればそれを選択
+        // if (startCommandText.startsWith(eCommandText)) {
+        if (startCommandText.split(/\s+/)[0] === eCommandText.split(/\s+/)[0]) {
             return startCommandText;
         }
         // startCommandText にパイプが含まれる場合はそれを選択

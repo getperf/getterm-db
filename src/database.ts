@@ -7,8 +7,14 @@ import path from 'path';
 import { Logger } from './logger';
 import { Note } from './model/notes';
 import { Cell } from './model/cells';
+import { Util } from './util';
+import { rejects } from 'assert';
 
 export async function  initializeDatabase() : Promise<Database> {
+    if (!Util.checkWorkspaceOpened()) {
+        vscode.window.showErrorMessage('ワークスペースが開いていません');
+        return Promise.reject(new Error('Workspace not opened.'));
+    }
     const config = Config.getInstance();
     const gettermHome = config.getGettermHome();
     console.log("GettermHome: ", gettermHome);
