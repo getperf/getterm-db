@@ -26,7 +26,6 @@ export class ShellIntegrationCommandParser {
                 // 抽出したコマンドに追記
                 command += `\n${cleanedLine}`;
             } else {
-                // F,Gコードがない場合は終了
                 break;
             }
         }
@@ -75,7 +74,6 @@ export class ShellIntegrationCommandParser {
         if (!startCommandText) {return eCommandText;}
         if (!eCommandText) {return startCommandText;}
         // 1ワード目が一致していればそれを選択
-        // if (startCommandText.startsWith(eCommandText)) {
         if (startCommandText.split(/\s+/)[0] === eCommandText.split(/\s+/)[0]) {
             return startCommandText;
         }
@@ -97,13 +95,22 @@ export class ShellIntegrationCommandParser {
         return buffer.replace(osc633Regex, "");
     }
 
+    static removeLeadingAndTrailingEscapeCodes(input: string): string {
+        // ANSIエスケープシーケンスにマッチする正規表現
+        const ansiEscapeCodeRegex = /^\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/;
+        const ansiEscapeCodeRegexEnd = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])$/;
+    
+        input = input.replace(ansiEscapeCodeRegex, '');
+        input = input.replace(ansiEscapeCodeRegexEnd, '');
+        return input;
+    }
+
     static async parse(buffer: string): Promise<ParsedCommand> {
         // Split buffer into command and output parts using C-command delimiter
         const parsedCommand = new ParsedCommand();
         const parts = this.splitBufferByCommandSequence(buffer);
         const commandText = await this.extractCommandText(parts.commandBuffer + parts.outputBuffer.slice(0, 1024));
-        console.log("COMMAND3:", commandText);
-        parsedCommand.command = commandText;
+        console.log("extracted command text :", commandText);
 
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
         let lastIndex = 0;
@@ -126,7 +133,7 @@ export class ShellIntegrationCommandParser {
                 case 'E':  // Command text
                     eCommandText = oscData.split(';')[1];
                     if (eCommandText){
-                        console.log("E COMMAND:", eCommandText);
+                        console.log("E command text :", eCommandText);
                     }
                     break;
                 case 'P':  // Current working directory
@@ -138,8 +145,8 @@ export class ShellIntegrationCommandParser {
         }
         parsedCommand.command = this.selectCompleteCommand(commandText, eCommandText);
         let output = this.trimLastACommandSequence(parts.outputBuffer);
-        parsedCommand.output = this.removeOSC633Sequences(output);
-        console.log("OUTPUT:", parsedCommand.output);
+        output = this.removeOSC633Sequences(output);
+        parsedCommand.output = this.removeLeadingAndTrailingEscapeCodes(output);
         return parsedCommand;
     }
 }

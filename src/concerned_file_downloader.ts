@@ -7,6 +7,7 @@ import { CommandParser, ParsedCommand } from './command_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Config } from './config';
+import { ShellIntegrationCommandParser } from './shell_integration_command_parser';
 
 // Downloader mode types to handle different states of downloading file
 export enum DownloaderMode {
@@ -226,9 +227,13 @@ export class ConsernedFileDownloader {
         if (!rawData) { 
             throw new Error('Could not get the buffer from session');
         }
-
-        const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
-        const output = await CommandParser.extractCommandOutput(rawData, commandText); 
+        const parsedCommand = await ShellIntegrationCommandParser.parse(rawData);
+        const output = parsedCommand.output;
+        // const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
+        // // const output = await CommandParser.extractCommandOutput(rawData, commandText); 
+        // const parts = ShellIntegrationCommandParser.splitBufferByCommandSequence(rawData);
+        // const output0 = ShellIntegrationCommandParser.trimLastACommandSequence(parts.outputBuffer);
+        // const output = ShellIntegrationCommandParser.removeOSC633Sequences(output0);
         try {
             await fs.promises.writeFile(filePath, output);
             console.log("Save file : ", filePath);
