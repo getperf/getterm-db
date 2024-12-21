@@ -40,9 +40,10 @@ export class XtermParser {
                 for (let i = 0; i < activeBuffer.length; i++) {
                     const line = activeBuffer.getLine(i)?.translateToString(true);
                     if (line) {cleanedOutput += line + '\n';}
+                    // if (line) {cleanedOutput += line;}
                 }
                 cleanedOutput = Util.removeLeadingLineWithWhitespace(cleanedOutput);
-                resolve(cleanedOutput.trim());
+                resolve(cleanedOutput);
             }, delay);
         });
     }

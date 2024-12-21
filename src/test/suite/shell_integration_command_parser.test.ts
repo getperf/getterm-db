@@ -12,6 +12,7 @@ suite('Util Test Suite', () => {
 \u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@alma8 ~]$ \u001b]633;B\u0007`;
 
         const result = await ShellIntegrationCommandParser.parse(input);
+        console.log("RESU:", result);
         assert.strictEqual(result.command.replace(/\\\n/g, ""), 'sleep 1 | ls | wc');
         assert.strictEqual(result.output, '    146     146    2061\n');
         assert.strictEqual(result.exitCode, 0);
@@ -23,7 +24,7 @@ suite('Util Test Suite', () => {
 
         const result = await ShellIntegrationCommandParser.parse(input);
         assert.strictEqual(result.command, 'sleep 1; echo hello');
-        assert.strictEqual(result.output, 'hello\r\n');
+        assert.strictEqual(result.output, 'hello\n');
         assert.strictEqual(result.exitCode, 0);
         assert.strictEqual(result.cwd, '/home/psadmin');
     });
@@ -34,7 +35,7 @@ suite('Util Test Suite', () => {
         const result = await ShellIntegrationCommandParser.parse(input);
         console.log(JSON.stringify(result));
         assert.strictEqual(result.command, 'sleep 1 | echo "hello \\\nworld"');
-        assert.strictEqual(result.output, 'hello world\r\n');
+        assert.strictEqual(result.output, 'hello world\n');
         assert.strictEqual(result.exitCode, 0);
         assert.strictEqual(result.cwd, '/home/psadmin');
     });
@@ -45,7 +46,7 @@ suite('Util Test Suite', () => {
         const result = await ShellIntegrationCommandParser.parse(input);
         console.log(JSON.stringify(result));
         assert.strictEqual(result.command, 'sleep 1 | ls \\\n| wc');
-        assert.strictEqual(result.output, '      7       7      85\r\n');
+        assert.strictEqual(result.output, '      7       7      85\n');
         assert.strictEqual(result.exitCode, 0);
         assert.strictEqual(result.cwd, '/home/psadmin');
     });

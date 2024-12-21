@@ -85,21 +85,21 @@ export class CommandHandler {
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
-    selectCompleteCommand(startCommand: string | undefined, endCommand: string): string {
-        if (!startCommand) {return endCommand;}
-        if (!endCommand) {return startCommand;}
-        // startCommand にパイプが含まれる場合はそれを選択
-        if (startCommand.includes("|")) {
-            return startCommand;
-        }
-        // 長時間実行するコマンドだとキャプチャーがおかしい
-        // 例：
-        // sudo -E yum -y groupinstall "Development Tools"
-        // 開始イベントで実行結果のログもキャプチャーしている
-        // StartとEnd コマンド取得結果の比較処理の修正。パイプ以外はendCommandを優先する。
-        // return startCommand.length >= endCommand.length ? startCommand : endCommand;
-        return endCommand;
-    }
+    // selectCompleteCommand(startCommand: string | undefined, endCommand: string): string {
+    //     if (!startCommand) {return endCommand;}
+    //     if (!endCommand) {return startCommand;}
+    //     // startCommand にパイプが含まれる場合はそれを選択
+    //     if (startCommand.includes("|")) {
+    //         return startCommand;
+    //     }
+    //     // 長時間実行するコマンドだとキャプチャーがおかしい
+    //     // 例：
+    //     // sudo -E yum -y groupinstall "Development Tools"
+    //     // 開始イベントで実行結果のログもキャプチャーしている
+    //     // StartとEnd コマンド取得結果の比較処理の修正。パイプ以外はendCommandを優先する。
+    //     // return startCommand.length >= endCommand.length ? startCommand : endCommand;
+    //     return endCommand;
+    // }
     
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`end command handler invoked`);

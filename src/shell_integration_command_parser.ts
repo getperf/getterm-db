@@ -12,11 +12,13 @@ export class ShellIntegrationCommandParser {
 
     static parseMultilineCommand(buffer: string): string {
         const lines = buffer.split(/\r?\n/);
+        console.log("LINES:", lines);
         let command = lines[0].trim(); // 初期コマンドを1行目として開始
 
         // 正規表現でOSC633のF,Gコマンドと余分な「>」を検出
         const regex = /\x1B\]633;F\x07>\s*\x1B\]633;G\x07/g;
         command = command.replace(regex, "\\\n");
+        // command = command.replace(regex, "\\");
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             // OSC633 F,G コードを検知
@@ -29,10 +31,12 @@ export class ShellIntegrationCommandParser {
                 break;
             }
         }
+        console.log("MULTI:", JSON.stringify(command));
         return command.trim();
     }
 
     static async extractCommandText(buffer: string): Promise<string> {
+        console.log("MULTI2 START:", JSON.stringify(buffer));
         const lines = this.parseMultilineCommand(buffer).split(/\n/);
         const xtermParser = XtermParser.getInstance();
         let command = '';
@@ -41,8 +45,10 @@ export class ShellIntegrationCommandParser {
             let cleanedLine = await xtermParser.parseTerminalBuffer(line);
             cleanedLine = Util.removeLeadingLineWithWhitespace(cleanedLine); // Fix CTRL-U
             command += cleanedLine;
-            if (i < lines.length-1) {command += `\n`;}
+            // if (i < lines.length-1) {command += `\n`;}
         }
+        command = command.replace(/\n$/, '');
+        console.log("MULTI2 END:", JSON.stringify(command));
         return command;
     }
 
@@ -90,10 +96,10 @@ export class ShellIntegrationCommandParser {
         return aIndex !== -1 ? input.slice(0, aIndex).trimEnd() : input.trimEnd();
     }
 
-    static removeOSC633Sequences(buffer: string): string {
-        const osc633Regex = /\u001b\]633;[A-Za-z];?.*?\u0007/g;
-        return buffer.replace(osc633Regex, "");
-    }
+    // static removeOSC633Sequences(buffer: string): string {
+    //     const osc633Regex = /\u001b\]633;[A-Za-z];?.*?\u0007/g;
+    //     return buffer.replace(osc633Regex, "");
+    // }
 
     static removeLeadingAndTrailingEscapeCodes(input: string): string {
         // ANSIエスケープシーケンスにマッチする正規表現
@@ -144,9 +150,11 @@ export class ShellIntegrationCommandParser {
             }
         }
         parsedCommand.command = this.selectCompleteCommand(commandText, eCommandText);
+
         let output = this.trimLastACommandSequence(parts.outputBuffer);
-        output = this.removeOSC633Sequences(output);
-        parsedCommand.output = this.removeLeadingAndTrailingEscapeCodes(output);
+        const xtermParser = XtermParser.getInstance();
+        parsedCommand.output = await xtermParser.parseTerminalBuffer(output);
+
         return parsedCommand;
     }
 }
