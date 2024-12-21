@@ -40,7 +40,7 @@ suite('Util Test Suite', () => {
         assert.strictEqual(result.cwd, '/home/psadmin');
     });
 
-    test('should correctly parse a command sleep1 | ls | wc with ctul-u', async () => {
+    test('should correctly parse a command sleep1 | ls | wc with ctrl-u', async () => {
         const input = `ls -l\u001b[?25l\u001b[12;19H\u001b[K\u001b[?25hsleep 1 | ls \\\r\n\u001b]633;F\u0007> \u001b]633;G\u0007| wc\r\n\u001b]633;E;sleep 1;\u0007\u001b]633;C\u0007      7       7      85\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007`;
 
         const result = await ShellIntegrationCommandParser.parse(input);
@@ -51,4 +51,15 @@ suite('Util Test Suite', () => {
         assert.strictEqual(result.cwd, '/home/psadmin');
     });
 
+    test('should correctly parse a command output including empty row', async () => {
+        // const input = "cat /tmp/01.txt\r\n\u001b]633;E;cat /tmp/01.txt;\u0007hello\r\n\nworld\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007";
+        const input = "cat /tmp/01.txt\r\n\u001b]633;E;cat /tmp/01.txt;\u0007\u001b]633;C\u0007hello\r\n\nworld\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@ol88 ~]$ \u001b]633;B\u0007";
+
+        const result = await ShellIntegrationCommandParser.parse(input);
+        console.log(JSON.stringify(result));
+        assert.strictEqual(result.command, 'cat /tmp/01.txt');
+        assert.strictEqual(result.output, 'hello\n\nworld\n');
+        assert.strictEqual(result.exitCode, 0);
+        assert.strictEqual(result.cwd, '/home/psadmin');
+    });
 });

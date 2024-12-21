@@ -27,7 +27,7 @@ export class XtermParser {
         return xtermParser;
     }
 
-    public async parseTerminalBuffer(buffer: string, delay: number = 10): Promise<string> {
+    public async parseTerminalBuffer(buffer: string, trimEmptyRow: boolean, delay: number = 10): Promise<string> {
         return new Promise((resolve) => {
             this.terminal.clear();
             this.terminal.reset(); // Resets the terminal
@@ -39,9 +39,13 @@ export class XtermParser {
                 // Iterate over each line of the terminal buffer
                 for (let i = 0; i < activeBuffer.length; i++) {
                     const line = activeBuffer.getLine(i)?.translateToString(true);
-                    if (line) {cleanedOutput += line + '\n';}
-                    // if (line) {cleanedOutput += line;}
+                    if (trimEmptyRow) {
+                        if (line) {cleanedOutput += line + '\n';}
+                    } else {
+                        cleanedOutput += line + '\n';
+                    }
                 }
+                cleanedOutput = cleanedOutput.replace(/(\n)+$/, '\n');
                 cleanedOutput = Util.removeLeadingLineWithWhitespace(cleanedOutput);
                 resolve(cleanedOutput);
             }, delay);

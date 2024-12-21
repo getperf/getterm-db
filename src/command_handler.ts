@@ -65,7 +65,7 @@ export class CommandHandler {
         console.log("RAWDATA:", rawData);
 
         const xtermParser = XtermParser.getInstance();
-        const commandText = await xtermParser.parseTerminalBuffer(rawData);       
+        const commandText = await xtermParser.parseTerminalBuffer(rawData, true);       
         console.log(`command in first line1: ${commandText}`);
 
         session.startEventCommand = Util.extractCommandByStartEvent(commandText);

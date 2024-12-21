@@ -42,11 +42,12 @@ export class ShellIntegrationCommandParser {
         let command = '';
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            let cleanedLine = await xtermParser.parseTerminalBuffer(line);
+            let cleanedLine = await xtermParser.parseTerminalBuffer(line, true);
             cleanedLine = Util.removeLeadingLineWithWhitespace(cleanedLine); // Fix CTRL-U
             command += cleanedLine;
             // if (i < lines.length-1) {command += `\n`;}
         }
+        command = command.replace(/\\x3b/g, ";");
         command = command.replace(/\n$/, '');
         console.log("MULTI2 END:", JSON.stringify(command));
         return command;
@@ -152,8 +153,10 @@ export class ShellIntegrationCommandParser {
         parsedCommand.command = this.selectCompleteCommand(commandText, eCommandText);
 
         let output = this.trimLastACommandSequence(parts.outputBuffer);
+        console.log("OUT1:", JSON.stringify(output));
         const xtermParser = XtermParser.getInstance();
-        parsedCommand.output = await xtermParser.parseTerminalBuffer(output);
+        parsedCommand.output = await xtermParser.parseTerminalBuffer(output, true);
+        console.log("OUT2:", JSON.stringify(parsedCommand.output));
 
         return parsedCommand;
     }

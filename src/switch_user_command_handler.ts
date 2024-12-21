@@ -44,7 +44,7 @@ export class SwitchUserCommandHandler {
         
         // Parse the terminal buffer for plain-text command detection
         const xtermParser = XtermParser.getInstance();
-        const commandText = await xtermParser.parseTerminalBuffer(this.commandBuffer);
+        const commandText = await xtermParser.parseTerminalBuffer(this.commandBuffer, true);
         // Extract and trim the last line of the parsed command output
         const commandLastLine = commandText.trim().split(/\r?\n/).pop() || '';
         Logger.debug(`Checking su command in last line: ${commandLastLine}`);
@@ -65,7 +65,7 @@ export class SwitchUserCommandHandler {
      */
     async updateCommand(): Promise<number> {
         const xtermParser = XtermParser.getInstance();
-        const command = await xtermParser.parseTerminalBuffer(this.commandBuffer);
+        const command = await xtermParser.parseTerminalBuffer(this.commandBuffer, true);
         console.log("su : ", command);
         const commandId = await Command.create(this.sessionId, command || '', '', '', 0);
         await Command.updateEnd(commandId, new Date());
