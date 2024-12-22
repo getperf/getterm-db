@@ -6,6 +6,7 @@ import { Logger } from './logger';
 import { Config } from './config';
 import { TerminalNotebookController } from './notebook_controller';
 import { Util } from './util';
+import { WorkspaceManager } from './workspace_manager';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -70,10 +71,16 @@ export class RemoteShellExecutor {
             vscode.window.showErrorMessage('プロファイルが選択されていません。');
             return;
         }
-        if (!Util.checkWorkspaceOpened()) {
-            vscode.window.showErrorMessage('ワークスペースが開いていません');
-            return;
-        }
+        console.log("openTerminalWithProfile:", node);
+        // const workspaceReady = WorkspaceManager.ensureWorkspaceIsOpen();
+        // if (!workspaceReady) {
+        //     vscode.window.showErrorMessage('ワークスペースが開いていません');
+        //     return;
+        // }
+        // if (!Util.checkWorkspaceOpened()) {
+        //     vscode.window.showErrorMessage('ワークスペースが開いていません');
+        //     return;
+        // }
         const remoteProfile = node.label;
         Logger.info(`open terminal profile : ${remoteProfile}`);
         const terminalOptions: vscode.TerminalOptions = {

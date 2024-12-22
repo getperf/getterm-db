@@ -3,11 +3,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Command } from './model/commands';
 import { Logger } from './logger';
-import { CommandParser, ParsedCommand } from './command_parser';
+// import { CommandParser, ParsedCommand } from './command_parser';
 import { Util } from './util';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Config } from './config';
-import { ShellIntegrationCommandParser } from './shell_integration_command_parser';
+import { ParsedCommand, CommandParser } from './command_parser';
 
 // Downloader mode types to handle different states of downloading file
 export enum DownloaderMode {
@@ -227,7 +227,7 @@ export class ConsernedFileDownloader {
         if (!rawData) { 
             throw new Error('Could not get the buffer from session');
         }
-        const parsedCommand = await ShellIntegrationCommandParser.parse(rawData);
+        const parsedCommand = await CommandParser.parse(rawData);
         const output = parsedCommand.output;
         // const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
         // // const output = await CommandParser.extractCommandOutput(rawData, commandText); 

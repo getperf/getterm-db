@@ -2,57 +2,6 @@ import { Logger } from './logger';
 import { Util } from './util';
 import { XtermParser } from './xterm_parser';
 
- /** 
-  シェル統合シーケンスのファイナライズ
-  https://github.com/microsoft/vscode/issues/155639
-
-  VS Code 固有のシェル統合シーケンス。これらのいくつかは、次のような一般的な代替手段に基づいています 
-  FinalTermで先駆的なもの。完全にカスタムシーケンスに移行するという決定は、次のことを試みることでした。 
-  信頼性を向上させ、アプリケーションが端末を混乱させる可能性を防ぎます。 
-
- * プロンプトの開始は、常に行の先頭に表示されることが期待されます。 
-　 FinalTermの「OSC 133;A ST'. 
-    PromptStart = 'A'、 
- 
-* コマンドの開始、すなわち。ここで、ユーザーがコマンドを入力します。 
-　 FinalTermの「OSC 133;B ST '。 
-    CommandStart = 'B'、 
- 
-* コマンド出力が始まる直前に送信されます。 
-　 FinalTermの「OSC 133;C ST '。 
-    コマンド実行 = 'C'、 
- 
-* コマンドが終了した直後に送信されます。終了コードは、指定されていない場合、オプションです 
- は、コマンドが実行されなかったことを意味します (つまり、空のプロンプトで入力するか、Ctrl+C)。 
- FinalTermの「OSC 133;D [; <ExitCode>] ST'. 
-    CommandFinished = 'D'、 
- 
-* コマンドラインを明示的に設定します。これは、conptyが 
- パススルーモードは、実行されたコマンドを送信するためのWindows上のオプションを提供します。で 
-このシーケンスは、信頼性の低いカーソル位置に基づいて推測する必要はありません。 
-それ以外の場合は * が必要になります。 
-    コマンドライン = 'E', 
- 
-*プロンプトスタートに似ていますが、行の継続用です。 
-    継続開始 = 'F', 
- 
-* コマンドの開始と似ていますが、行の継続が用です。 
-    ContinuationEnd = 'G', 
- 
-* 右プロンプトの開始。 
-    RightPromptStart = 'H', 
- 
-* 右プロンプトの終了。 
-    RightPromptEnd = 'I', 
- 
-* 任意のプロパティを設定します: 'OSC 633 ;P ;<Property>=<Value> ST'の場合、既知のプロパティのみが実行されます。 
-    Property = 'P' 
-*/
-
-/**
- * Represents the structure of a parsed command, including its command string,
- * output, exit code, and the current working directory (cwd).
- */
 export class ParsedCommand {
     command = '';
     output = '';
@@ -60,160 +9,157 @@ export class ParsedCommand {
     cwd = '';
 }
 
-/**
- * CommandParser provides methods to parse commands and outputs from terminal buffers,
- * specifically handling escape sequences such as OSC 633 for structured parsing.
- */
 export class CommandParser {
 
-    // /**
-    //  * Cleans the command output by removing any trailing prompt lines.
-    //  * If a "$" prompt exists at the end, the method trims text up to the last newline.
-    //  * @param output - The command output to clean.
-    //  * @returns Cleaned output without trailing prompts.
-    //  */
-    // static cleanCommandOutput(output: string): string {
-    //     // Check if the string ends with "$" and has a preceding newline
-    //     if (output.trim().endsWith("$") || output.trim().endsWith("#")) {
-    //         const lastNewlineIndex = output.lastIndexOf("\n");
-    //         if (lastNewlineIndex !== -1) {
-    //             // Return the string up to the last newline (excluding the prompt line)
-    //             return output.slice(0, lastNewlineIndex).trim();
-    //         }
-    //     }
-    //     return output.trim();  // Return the trimmed output if no $ prompt is present
-    // }
+    static parseMultilineCommand(buffer: string): string {
+        const lines = buffer.split(/\r?\n/);
+        Logger.info(`command line paser input :${JSON.stringify(lines)}`);
+        let command = lines[0].trim(); // 初期コマンドを1行目として開始
 
-    // static extractCommandResult(message: string): string | null {
-    //     // const regex = /\]633;C([\s\S]+?)\]633;D;/;
-    //     const regex = /\x1B\]633;C\x07([\s\S]*?)\x1B\]633;D;/;
-    //     const match = message.match(regex);
-    //     return match ? match[1].trim() : null;
-    // }
+        // 正規表現でOSC633のF,Gコマンドと余分な「>」を検出
+        const regex = /\x1B\]633;F\x07>\s*\x1B\]633;G\x07/g;
+        command = command.replace(regex, "\\\n");
+        // command = command.replace(regex, "\\");
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            // OSC633 F,G コードを検知
+            if (/\u001b]633;F\u0007> \u001b]633;G\u0007/.test(line)) {
+                // OSCコードと '>' を削除
+                const cleanedLine = line.replace(/\u001b]633;[FG]\u0007/g, "").replace(/^> /, "");
+                // 抽出したコマンドに追記
+                command += `\n${cleanedLine}`;
+            } else {
+                break;
+            }
+        }
+        Logger.info(`command line paser output :${JSON.stringify(command)}`);
+        return command.trim();
+    }
+
+    static async extractCommandText(buffer: string): Promise<string> {
+        Logger.debug(`extract command text input : ${JSON.stringify(buffer)}`);
+        const lines = this.parseMultilineCommand(buffer).split(/\n/);
+        const xtermParser = XtermParser.getInstance();
+        let command = '';
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            let cleanedLine = await xtermParser.parseTerminalBuffer(line, true);
+            cleanedLine = Util.removeLeadingLineWithWhitespace(cleanedLine); // Fix CTRL-U
+            command += cleanedLine;
+            // if (i < lines.length-1) {command += `\n`;}
+        }
+        command = command.replace(/\\x3b/g, ";");
+        command = command.replace(/\n$/, '');
+        Logger.debug(`extract command text output : ${JSON.stringify(command)}`);
+        return command;
+    }
+
+    static splitBufferByCommandSequence(buffer: string): { commandBuffer: string; outputBuffer: string } {
+        const osc633CommandB = "\u001b]633;B\u0007";
+        const osc633CommandC = "\u001b]633;C\u0007";
     
-    // /**
-    //  * Parses OSC 633 sequences and the command from the input buffer.
-    //  * This method detects structured terminal sequences and extracts relevant data.
-    //  * @param input - The terminal buffer input string.
-    //  * @returns A ParsedCommand object with command, output, exit code, and cwd data, or null if parsing fails.
-    //  */
-    // static async parseOSC633AndCommand(input: string) : Promise<ParsedCommand | null> {
-    //     const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
-    //     const command = new ParsedCommand();
-
-    //     // Extract command from the start of the buffer until the first OSC-633 sequence starts
-    //     const commandResult = this.extractAfterOSC633CommandSequence(input);
-    //     if (!commandResult) {
-    //         Logger.error(`
-    //             Detected multiple OSC-633 start escape sequences in buffer. 
-    //             Exits with an error because it is difficult to parse :
-    //             ${input}
-    //         `);
-    //         return null;
-    //     }
-    //     let buffer = commandResult.remainingText;
-    //     console.log("FILTER OUT:", buffer);
-
-    //     const xtermParser = XtermParser.getInstance();
-    //     command.command =  await xtermParser.parseTerminalBuffer(commandResult.commandText);
-
-    //     // Extract exclude the all OSC sequence as the output
-    //     let output =  await xtermParser.parseTerminalBuffer(buffer);
-    //     output = this.cleanCommandOutput(output);
-    //     // command.output = Util.removePromptLine(output);
-    //     command.output = this.extractCommandResult(buffer) || output;
-    //     // const output2 = this.extractCommandResult(buffer);
-    //     // if (output2) {
-    //     //     command.output = output2;
-    //     // }
-
-    //     let lastIndex = 0;
-    //     let match;
-    //     while ((match = oscRegex.exec(buffer)) !== null) {
-    //         const oscType = match[1];  // A, B, C, D, E, P
-    //         const oscData = match[2] || '';  // The oscData after the ; in the sequence
-    //         lastIndex = oscRegex.lastIndex;
-    //         switch (oscType) {
-    //             case 'C':  // Command result starts
-    //             case 'B':  // Command result starts
-    //                 break;
-    //             case 'D':  // Exit code
-    //                 const exitCodeString = oscData.split(';')[1];  // Extract exit code from the format `;0`
-    //                 if (exitCodeString){
-    //                     command.exitCode = parseInt(exitCodeString, 10);  // Capture the exit code
-    //                 }
-    //                 break;
-    //             case 'P':  // Current working directory
-    //                 command.cwd = oscData.split('=')[1] || '';  // Extract cwd from the format `Cwd=...`
-    //                 break;
-    //             default:
-    //                 break;
-    //         }
-    //     }
-    //     return command;
-    // }
-
-    // /**
-    //  * Extracts the output of a command within a terminal buffer.
-    //  * @param terminalBuffer - Full terminal buffer as a string.
-    //  * @param command - The command to locate within the buffer.
-    //  * @returns A Promise containing the command's output, excluding any trailing prompts.
-    //  * @throws An error if the command is not found in the buffer.
-    //  */
-    // static async extractCommandOutput(terminalBuffer: string, command: string): Promise<string> {
-    //     const commandPosition = terminalBuffer.lastIndexOf(command);  // Find the last occurrence of the command
-    //     const xtermParser = XtermParser.getInstance();
-    //     if (commandPosition === -1) {
-    //         throw new Error(`Command not found in terminal buffer: ${command}`);
-    //     }
+        Logger.debug(`split the console buffer input : ${JSON.stringify(buffer)}`);
+        const indexCommandC = buffer.lastIndexOf(osc633CommandC);
+        if (indexCommandC === -1) {
+            return {
+                commandBuffer: buffer,
+                outputBuffer: "",
+            };
+        }
+        let commandBuffer = buffer.slice(0, indexCommandC);
+        const outputBuffer = buffer.slice(indexCommandC + osc633CommandC.length);
     
-    //     // Remove everything before the command
-    //     const bufferOutputPart = terminalBuffer.substring(commandPosition + command.length + 1);
-    //     const output = await xtermParser.parseTerminalBuffer(bufferOutputPart);
-    //     return this.cleanCommandOutput(output);
-    // }
+        const indexCommandB = commandBuffer.lastIndexOf(osc633CommandB);
+        if  (indexCommandB !== -1) {
+            commandBuffer = commandBuffer.slice(indexCommandB + osc633CommandB.length);
+        }
+        Logger.debug(`split the console buffer into the command : ${JSON.stringify(commandBuffer)}  and output : ${JSON.stringify(outputBuffer)}`);
+        return {
+            commandBuffer,
+            outputBuffer,
+        };
+    }
 
-    // static extractCommand(buffer: string): string {
-    //     // バッファの後ろからEコマンドを検索して、その前を切り捨てる
-    //     const eCommandIndex = buffer.lastIndexOf("\u001b]633;E;");
-    //     if (eCommandIndex !== -1) {
-    //         buffer = buffer.substring(eCommandIndex + "\u001b]633;E;".length);
-    //     }
-      
-    //     // Bコマンド以降を削除
-    //     const bCommandIndex = buffer.lastIndexOf("\u001b]633;B");
-    //     if (bCommandIndex !== -1) {
-    //         buffer = buffer.substring(0, bCommandIndex);
-    //         // buffer = buffer.substring(bCommandIndex + "\u001b]633;B".length);
-    //     }
-    //     return buffer.trim();
-    // }
-      
-    // /**
-    //  * Extracts text following the OSC-633 sequence for command detection.
-    //  * Uses regex to capture sequences beginning with `\x1b]633;E;` and ending in `;\x07`.
-    //  * @param input - Terminal buffer input as a string.
-    //  * @returns An object containing the command text and remaining text after the sequence, or null if no match.
-    //  */
-    // static extractAfterOSC633CommandSequence(input: string): { commandText: string, remainingText: string } | null {
-    //     // Search for the last occurrence of the OSC-633 "E" command pattern using a reverse (trailing) match.
-    //     const regex = /\x1b\]633;E;(.*?);\x07/;
-    //     const match = input.match(regex);
+    static selectCompleteCommand(startCommandText: string | undefined, eCommandText: string): string {
+        Logger.info(`choose complete command : ${startCommandText} and ${eCommandText}`);
+        if (!startCommandText) {return eCommandText;}
+        if (!eCommandText) {return startCommandText;}
+        if (startCommandText.split(/\s+/)[0] === eCommandText.split(/\s+/)[0]) {
+            Logger.info(`first word matches pattern`);
+            return startCommandText;
+        }
+        if (startCommandText.includes("|")) {
+            Logger.info(`pattern that contains a pipe ('|').`);
+            return startCommandText;
+        }
+        Logger.info(`no patterns matched, so the E command is selected.`);
+        return eCommandText;
+    }
+    
+    static trimLastACommandSequence(input: string): string {
+        const aCommand = "\u001b]633;A\u0007";
+        const aIndex = input.lastIndexOf(aCommand);
+        return aIndex !== -1 ? input.slice(0, aIndex).trimEnd() : input.trimEnd();
+    }
 
-    //     if (match && match.index !== undefined) {
-    //         console.log("マッチしたインデックス：", match.index);
-    //         const newCommand = CommandParser.extractCommand(input);
-    //         console.log("新コマンド解析結果:", newCommand);
-    //         let commandText = match[1];
-    //         commandText = Util.unescapeString(commandText);
-    //         const afterKeyword = input.slice(match.index);
+    static removeLeadingAndTrailingEscapeCodes(input: string): string {
+        // ANSIエスケープシーケンスにマッチする正規表現
+        const ansiEscapeCodeRegex = /^\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/;
+        const ansiEscapeCodeRegexEnd = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])$/;
+    
+        input = input.replace(ansiEscapeCodeRegex, '');
+        input = input.replace(ansiEscapeCodeRegexEnd, '');
+        return input;
+    }
 
-    //         return {
-    //             commandText,
-    //             remainingText: afterKeyword
-    //         };
-    //     }
+    static async parse(buffer: string): Promise<ParsedCommand> {
+        // Split buffer into command and output parts using C-command delimiter
+        Logger.info(`start command parser`);
+        const parsedCommand = new ParsedCommand();
+        const parts = this.splitBufferByCommandSequence(buffer);
+        const commandText = await this.extractCommandText(parts.commandBuffer + parts.outputBuffer.slice(0, 1024));
+        Logger.info(`extracted command text : ${JSON.stringify(commandText)}`);
 
-    //     return null;
-    // }        
+        const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
+        let lastIndex = 0;
+        let match;
+        let eCommandText = '';
+        while ((match = oscRegex.exec(parts.commandBuffer + parts.outputBuffer)) !== null) {
+            const oscType = match[1];  // A, B, C, D, E, P
+            const oscData = match[2] || '';  // The oscData after the ; in the sequence
+            lastIndex = oscRegex.lastIndex;
+            switch (oscType) {
+                case 'C':  // Command result starts
+                case 'B':  // Command result starts
+                    break;
+                case 'D':  // Exit code
+                    const exitCodeString = oscData.split(';')[1];  // Extract exit code from the format `;0`
+                    if (exitCodeString){
+                        parsedCommand.exitCode = parseInt(exitCodeString, 10);  // Capture the exit code
+                    }
+                    break;
+                case 'E':  // Command text
+                    eCommandText = oscData.split(';')[1];
+                    if (eCommandText){
+                        console.log("E command text :", eCommandText);
+                    }
+                    break;
+                case 'P':  // Current working directory
+                    parsedCommand.cwd = oscData.split('=')[1] || '';  // Extract cwd from the format `Cwd=...`
+                    break;
+                default:
+                    break;
+            }
+        }
+        parsedCommand.command = this.selectCompleteCommand(commandText, eCommandText);
+
+        let output = this.trimLastACommandSequence(parts.outputBuffer);
+        Logger.debug(`extracted output with the command sequences removed : ${JSON.stringify(output)}`);
+        const xtermParser = XtermParser.getInstance();
+        output = await xtermParser.parseTerminalBuffer(output, true);
+        Logger.debug(`extracted output with the xterm.js parser : ${JSON.stringify(output)}`);
+        parsedCommand.output  = output;
+        Logger.info(`end command parser`);
+        return parsedCommand;
+    }
 }

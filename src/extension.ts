@@ -11,12 +11,19 @@ import { PowerShellExecutor } from './powershell_executor';
 import { TerminalCaptureExecutor } from './terminal_capture_executor';
 import { TerminalNotebookExporter } from './notebook_exporter';
 import { TerminalSessionManager } from './terminal_session_manager';
+import { WorkspaceManager } from './workspace_manager';
 
 export async function activate(context: vscode.ExtensionContext) {
 
-	const outputChannel = vscode.window.createOutputChannel('getterm-osc');
+	const outputChannel = vscode.window.createOutputChannel('getterm-log');
 	Logger.setup(outputChannel, context);
 	// Logger.setLogLevel(LogLevel.DEBUG);
+    const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
+    if (!workspaceReady) {
+        vscode.window.showErrorMessage('ワークスペースが開いていません');
+        return Promise.reject(new Error('Workspace not opened.'));
+    }
+
 	await initializeDatabase();
 	TerminalSessionManager.initializeInstance();
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);

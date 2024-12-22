@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 import { XtermParser } from './xterm_parser';
-import { ParsedCommand } from './command_parser';
 import { TerminalSession, TerminalSessionMode } from './terminal_session';
 
 export class TerminalSessionManager {
@@ -126,7 +125,7 @@ export class TerminalSessionManager {
         let session = this.terminalSessions.get(terminal) || new TerminalSession();
         session.terminalTraffic += data.length;
         const bufferLen = session.consoleBuffer.push(data);
-        Logger.info(`append terminal session manager data buffer : ${data}`);
+        Logger.info(`append terminal session manager data buffer : ${JSON.stringify(data)}`);
         this.terminalSessions.set(terminal, session);
         return bufferLen;
     }

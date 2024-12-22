@@ -121,7 +121,8 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 		// Map the Notebook data into the format we want to save the Notebook data as
 		// const contents: RawNotebookData = { cells: [] };
 		const sessionId = data.metadata?.custom?.sessionId;
-		Logger.info(`serialize notebook, session id : ${sessionId}`);
+		// Logger.info(`serialize notebook, session id : ${sessionId}`);
+		Logger.info(`serialize notebook handler`);
 		const contents: RawNotebookData = { 
 			cells: [], 
 			metadata: { sessionId: sessionId }
@@ -143,10 +144,10 @@ export class TerminalNotebookSerializer implements vscode.NotebookSerializer {
 	public async serializeNotebook(data: vscode.NotebookData, token: vscode.CancellationToken): Promise<Uint8Array> {
 		// Map the Notebook data into the format we want to save the Notebook data as
 		// const contents: RawNotebookData = { cells: [] };
-		const sessionId = data.metadata?.custom?.sessionId;
-    		Logger.info(`serialize notebook, session id : ${sessionId}`);
+		// const sessionId = data.metadata?.custom?.sessionId;
+		// Logger.info(`serialize notebook, session id : ${sessionId}`);
 		const contents = TerminalNotebookSerializer.serializeNotebookData(data);
-		console.log(`serialize notebook`);
+		Logger.info(`serialize notebook`);
 		// const title = Util.getActiveNotebookFileName();
 		// if (title) {
 		// 	TerminalNotebookExporter.saveNotebook(contents, title);

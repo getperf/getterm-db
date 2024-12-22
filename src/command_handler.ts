@@ -1,21 +1,15 @@
-import * as cp from 'child_process';
 import * as vscode from 'vscode';
-import { Config } from './config';
-import { initializeDatabase, Database } from './database';
-import { Session } from './model/sessions';
 import { Command } from './model/commands';
 import { TerminalNotebookController } from './notebook_controller';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
-import { CommandParser } from './command_parser';
 import { XtermParser } from './xterm_parser';
-// import { EditedFileDownloader, EditedFileDownloaderMode } from './edited_file_downloader';
 import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 import { ConsoleEventProvider } from './console_event_provider';
 import { TerminalSession, TerminalSessionMode } from './terminal_session';
 import { SwitchUserCommandHandler } from './switch_user_command_handler';
-import { ShellIntegrationCommandParser } from './shell_integration_command_parser';
+import { CommandParser } from './command_parser';
 
 export class CommandHandler {
     private notebookController : TerminalNotebookController;
@@ -30,18 +24,17 @@ export class CommandHandler {
             throw new Error("terminal session not found");
         }
         if (session.disableShellIntegrationHandlers) {
-            console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
+            Logger.warn("Skipping command detection because shell integration events are disabled");
             return false;
         }
         if (session.terminalSessionMode !== TerminalSessionMode.Capturing &&
             session.terminalSessionMode !== TerminalSessionMode.CaptureStart
         ) {
-            console.info("キャプチャーモードでないため、コマンド検知をスキップします");
+            Logger.warn("Skipping command detection because capture mode is not enabled");
             return false;
         }
         if (!session.sessionId) {
-            // const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.info("セッションidが取得できませんでした : ", session);
+            Logger.warn(`Unable to retrieve session ID: ${JSON.stringify(session)}`);
             return false;
         }
         return true;
@@ -54,23 +47,23 @@ export class CommandHandler {
             return;
         }
         const sessionId = session.sessionId;
-        if (!sessionId) {
-            console.info("セッションidを取得できませんでした : ", session);
-            return;
-        }
+        // if (!sessionId) {
+        //     console.info("セッションidを取得できませんでした : ", session);
+        //     return;
+        // }
         Logger.info(`start command handler, session id : ${sessionId}`);
         session.changeModeCapturing(true);
 
-        let rawData = session.consoleBuffer?.join('');
-        console.log("RAWDATA:", rawData);
+        let consoleBuffer = session.consoleBuffer?.join('');
+        Logger.info(`コマンド開始イベント取得バッファ : ${JSON.stringify(consoleBuffer)}`);
 
         const xtermParser = XtermParser.getInstance();
-        const commandText = await xtermParser.parseTerminalBuffer(rawData, true);       
-        console.log(`command in first line1: ${commandText}`);
+        const commandText = await xtermParser.parseTerminalBuffer(consoleBuffer, true);       
+        Logger.debug(`コマンド開始イベントバッファ整形 : ${commandText}`);
 
         session.startEventCommand = Util.extractCommandByStartEvent(commandText);
         // su コマンド検知ハンドラ
-        const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, rawData);
+        const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, consoleBuffer);
         if (await suCommandHandler.handleSuCommand()) {
             if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
                 await this.notebookController.updateNotebook(suCommandHandler.commandId);
@@ -81,77 +74,34 @@ export class CommandHandler {
 
         const commandId = await Command.createEmptyRow(sessionId);
         TerminalSessionManager.setCommandId(e.terminal, commandId);
-        console.log("command start id:", commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
-    // selectCompleteCommand(startCommand: string | undefined, endCommand: string): string {
-    //     if (!startCommand) {return endCommand;}
-    //     if (!endCommand) {return startCommand;}
-    //     // startCommand にパイプが含まれる場合はそれを選択
-    //     if (startCommand.includes("|")) {
-    //         return startCommand;
-    //     }
-    //     // 長時間実行するコマンドだとキャプチャーがおかしい
-    //     // 例：
-    //     // sudo -E yum -y groupinstall "Development Tools"
-    //     // 開始イベントで実行結果のログもキャプチャーしている
-    //     // StartとEnd コマンド取得結果の比較処理の修正。パイプ以外はendCommandを優先する。
-    //     // return startCommand.length >= endCommand.length ? startCommand : endCommand;
-    //     return endCommand;
-    // }
-    
     async commandEndHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`end command handler invoked`);
-        let output = "";
-        let commandText = "";
-        let cwd = "";
-        let exit_code = 0;
-
         const endTime = new Date();
+        Logger.info(`end command handler, wait few seconds.`);
         await new Promise(resolve => setTimeout(resolve, 500));
         const session = TerminalSessionManager.get(e.terminal);
         if (!session || !this.varidateTerminalSession(session)) {
             return;
         }
-        // if (!session) {
-        //     throw new Error("terminal session not found");
-        // }
-        // console.log("セッションモード：", session.terminalSessionMode);
-        // if (TerminalSessionManager.isShellIntegrationEventDisabled(e.terminal)) {
-        //     console.info("シェル統合イベントが無効化されているため、コマンド検知をスキップします");
-        //     return;
-        // }
-        // session.shellExecutionEventBusy = true;
-        // const commandId = TerminalSessionManager.getCommandId(e.terminal);
         const commandId = session.commandId;
-        // if (commandId === undefined) { 
         if (!commandId) { 
-            // const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.info("セッションからコマンドIDが取得できませんでした: ", session);
+            Logger.warn(`セッションからコマンドIDが取得できませんでした: ${JSON.stringify(session)}`);
             return; 
         }
         Logger.info(`end command handler, update timestamp command id : ${commandId}`);
-        // await Command.updateEndTimestamp(commandId);
         await Command.updateEnd(commandId, endTime);
-        Logger.info(`end command handler, wait few seconds.`);
-        let rawData = TerminalSessionManager.retrieveDataBuffer(e.terminal);
-        console.log("RAWDATA2:", JSON.stringify(rawData));
-        if (!rawData) { 
+        let consoleBuffer = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+        Logger.info(`コマンド終了イベント取得バッファ : ${JSON.stringify(consoleBuffer)}`);
+        if (!consoleBuffer) { 
             const terminalSession = TerminalSessionManager.get(e.terminal);
-            console.error("セッションからデータバッファが取得できませんでした: ", terminalSession);
+            Logger.error(`セッションからデータバッファが取得できませんでした: ${terminalSession}`);
             return; 
         }
-        console.log("command end id:", commandId);
 
-        // let result = OSC633Parser.extractAfterOSC633CommandSequence(rawData);
-        // console.log("command text:", result.commandText);
-        // console.log("remained text:", result.remainingText);
-        // Logger.info(`end command handler, retrieve data : ${rawData}.`);
-        // const osc633Messages = this.parseOSC633Simple(rawData);
-        // const osc633Messages = OSC633Parser.parseOSC633Simple(rawData);
-        // const parsedCommand = await CommandParser.parseOSC633AndCommand(rawData);
-        const parsedCommand = await ShellIntegrationCommandParser.parse(rawData);
+        const parsedCommand = await CommandParser.parse(consoleBuffer);
         if (!parsedCommand) {
             vscode.window.showErrorMessage(
                 `Oops. Failed to parse the capture data. Command could not be recorded.`
@@ -159,12 +109,7 @@ export class CommandHandler {
             return;
         }
 
-        // const newParsedCommand = await ShellIntegrationCommandParser.parse(rawData);
-        // console.log("新コマンド解析：", newParsedCommand);
-        // console.log( `Command start detected: ${session.startEventCommand}, end: ${parsedCommand.command}`);
-        // const completeCommand = this.selectCompleteCommand(session.startEventCommand, parsedCommand.command);
-        // parsedCommand.command = completeCommand;
-        // ここにファイル編集キャプチャーのコードを追加する
+        // ファイル編集キャプチャーモード処理
         const downloader = new ConcernedFileDownloader(commandId, e.terminal, parsedCommand);
         if (downloader.detectFileAccessFromCommand()) {
             await downloader
@@ -177,17 +122,18 @@ export class CommandHandler {
                     downloader.updateCommandSuccess())
                 .catch((err : Error) => downloader.errorHandler(err));
         } else {
-            output = parsedCommand.output;
-            commandText = parsedCommand.command;
-            cwd = parsedCommand.cwd;
-            if (parsedCommand.exitCode) {
-                exit_code = parsedCommand.exitCode;
-            }
+            const output = parsedCommand.output;
+            const commandText = parsedCommand.command;
+            const cwd = parsedCommand.cwd;
+            const exit_code = parsedCommand.exitCode || 0;
+            // if (parsedCommand.exitCode) {
+            //     exit_code = parsedCommand.exitCode;
+            // }
             await Command.updatedWithoutTimestamp(commandId, commandText, output, cwd, exit_code);
         }
 
         const command = await Command.getById(commandId);
-        Logger.info(`end command handler, update commands table : ${command}.`);
+        Logger.info(`update commands table ${JSON.stringify(command)}.`);
         if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
             await this.notebookController.updateNotebook(commandId);
         }

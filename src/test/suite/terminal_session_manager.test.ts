@@ -5,7 +5,6 @@ import { XtermParser } from '../../xterm_parser';
 import { MockOutputChannel } from './logger.test';
 import { Logger, LogLevel } from '../../logger';
 // import { EditedFileDownloader } from '../../edited_file_downloader';
-import { ParsedCommand } from '../../command_parser';
 
 suite('TerminalSessionManager Tests', () => {
 

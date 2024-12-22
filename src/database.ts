@@ -9,9 +9,10 @@ import { Note } from './model/notes';
 import { Cell } from './model/cells';
 import { Util } from './util';
 import { rejects } from 'assert';
+import { WorkspaceManager } from './workspace_manager';
 
 export async function  initializeDatabase() : Promise<Database> {
-    if (!Util.checkWorkspaceOpened()) {
+    if (!WorkspaceManager.checkWorkspaceOpened()) {
         vscode.window.showErrorMessage('ワークスペースが開いていません');
         return Promise.reject(new Error('Workspace not opened.'));
     }

@@ -1,15 +1,13 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
 import { Config } from './config';
-import { initializeDatabase, Database } from './database';
+import { Database } from './database';
 import { Session } from './model/sessions';
 import { Command } from './model/commands';
 import { TerminalNotebookController } from './notebook_controller';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { Util } from './util';
 import { Logger } from './logger';
-import { CommandParser } from './command_parser';
-import { ConsernedFileDownloader as ConcernedFileDownloader } from './concerned_file_downloader';
 import { CommandHandler } from './command_handler';
 import { SessionHandler } from './session_handler';
 

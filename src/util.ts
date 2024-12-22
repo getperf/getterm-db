@@ -4,13 +4,13 @@ import { exec } from 'child_process';
 export class Util {
     private static editorCommands = ['vi', 'vim', 'nano', 'emacs'];
 
-    static checkWorkspaceOpened(): boolean {
-        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }    
+    // static checkWorkspaceOpened(): boolean {
+    //     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
+    // }    
 
     static unescapeString(str: string): string {
         return str.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) => 
