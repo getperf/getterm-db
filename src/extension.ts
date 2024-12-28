@@ -12,17 +12,17 @@ import { TerminalCaptureExecutor } from './terminal_capture_executor';
 import { TerminalNotebookExporter } from './notebook_exporter';
 import { TerminalSessionManager } from './terminal_session_manager';
 import { WorkspaceManager } from './workspace_manager';
+import { ConfigManager } from './config_manager';
 
 export async function activate(context: vscode.ExtensionContext) {
-
-	const outputChannel = vscode.window.createOutputChannel('getterm-log');
-	Logger.setup(outputChannel, context);
+    ConfigManager.initialize(context);
+	Logger.setup(vscode.window.createOutputChannel('getterm-log'), context);
 	// Logger.setLogLevel(LogLevel.DEBUG);
-    const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
-    if (!workspaceReady) {
-        vscode.window.showErrorMessage('ワークスペースが開いていません');
-        return Promise.reject(new Error('Workspace not opened.'));
-    }
+    // const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
+    // if (!workspaceReady) {
+    //     vscode.window.showErrorMessage('ワークスペースが開いていません');
+    //     return Promise.reject(new Error('Workspace not opened.'));
+    // }
 
 	await initializeDatabase();
 	TerminalSessionManager.initializeInstance();

@@ -7,6 +7,7 @@ import { Config } from './config';
 import { TerminalNotebookController } from './notebook_controller';
 import { Util } from './util';
 import { WorkspaceManager } from './workspace_manager';
+import { initializeDatabase } from './database';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -71,18 +72,25 @@ export class RemoteShellExecutor {
             vscode.window.showErrorMessage('プロファイルが選択されていません。');
             return;
         }
-        console.log("openTerminalWithProfile:", node);
-        // const workspaceReady = WorkspaceManager.ensureWorkspaceIsOpen();
-        // if (!workspaceReady) {
-        //     vscode.window.showErrorMessage('ワークスペースが開いていません');
-        //     return;
-        // }
+        console.log("open workspace start");
+        const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
+        if (!workspaceReady) {
+            vscode.window.showErrorMessage('ワークスペースが開いていません');
+            return;
+        }
+        console.log("open workspace end");
+        // await initializeDatabase();
+        console.log("initialize database end");
+        TerminalSessionManager.initializeInstance();
+        console.log("initialize terminal session end");
+
         // if (!Util.checkWorkspaceOpened()) {
         //     vscode.window.showErrorMessage('ワークスペースが開いていません');
         //     return;
         // }
         const remoteProfile = node.label;
         Logger.info(`open terminal profile : ${remoteProfile}`);
+        console.log("open terminal profile");
         const terminalOptions: vscode.TerminalOptions = {
             name: `SSH Capture: ${remoteProfile}`,
             shellPath: 'ssh',
@@ -90,6 +98,7 @@ export class RemoteShellExecutor {
         };
         const terminal = await vscode.window.createTerminal(terminalOptions);
         terminal.show();
+        console.log("open terminal profile end:", terminal);
 
         const config = Config.getInstance();
         config.set('terminalProfiles', [remoteProfile]);

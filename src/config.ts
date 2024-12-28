@@ -25,14 +25,14 @@ export class Config {
     private gettermHome: string;
 
     private constructor() {
-        // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        // this.configFilePath = path.join(workspaceRoot, ConfigFile);
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        this.configFilePath = path.join(workspaceRoot, ConfigFile);
         this.gettermHome = this.getGettermHome();
-        this.configFilePath = path.join(this.gettermHome, ConfigFile);
+        // this.configFilePath = path.join(this.gettermHome, ConfigFile);
 
-        this.ensureDirectoryExists(); // Create .getterm directory if it doesn’t exist
-        this.loadSettings();
-        this.registerFileSystemWatcher();
+        // this.ensureDirectoryExists(); // Create .getterm directory if it doesn’t exist
+        // this.loadSettings();
+        // this.registerFileSystemWatcher();
     }
 
     // Retrieve the path for the .getterm directory
@@ -61,7 +61,14 @@ export class Config {
 
     public static getInstance(): Config {
         if (!Config.instance) {
-            Config.instance = new Config();
+            const config = new Config();
+            config.gettermHome = config.getGettermHome();
+            config.configFilePath = path.join(config.gettermHome, ConfigFile);
+    
+            config.ensureDirectoryExists(); // Create .getterm directory if it doesn’t exist
+            config.loadSettings();
+            config.registerFileSystemWatcher();
+            Config.instance = config;
         }
         return Config.instance;
     }

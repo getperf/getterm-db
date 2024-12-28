@@ -10,6 +10,7 @@ import { Cell } from './model/cells';
 import { Util } from './util';
 import { rejects } from 'assert';
 import { WorkspaceManager } from './workspace_manager';
+import { ConfigManager } from './config_manager';
 
 export async function  initializeDatabase() : Promise<Database> {
     if (!WorkspaceManager.checkWorkspaceOpened()) {
@@ -30,16 +31,25 @@ export async function  initializeDatabase() : Promise<Database> {
 
 export class Database {
     private db: sqlite3.Database | null = null;
-        
-    constructor(public sqliteDbPath: string) {}
+    sqliteDbPath: string | undefined;
+
+    constructor(sqliteDbPath: string | undefined) {
+        this.sqliteDbPath = sqliteDbPath;
+    }
 
     // データベースの初期化
     public async initialize(): Promise<void> {
+        if (!this.sqliteDbPath) {
+            this.sqliteDbPath = ConfigManager.sqliteDbPath;
+        }
         return new Promise((resolve, reject) => {
             try {
                 console.log(`initialize database: ${this.sqliteDbPath}`);
+                if (!this.sqliteDbPath) {
+                    return reject(new Error('sqliteDbPath not set'));
+                }
                 this.db = new sqlite3.Database(this.sqliteDbPath, (err) => {
-                    console.log("ERROR DEBUG : ", err);
+                    // console.log("ERROR DEBUG : ", err);
                     if (err) {
                         return reject(new Error(`database initialize error ${this.sqliteDbPath} : ${err.message}`));
                     } else {
