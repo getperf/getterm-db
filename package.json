@@ -30,6 +30,26 @@
     "terminalDataWriteEvent"
   ],
   "contributes": {
+    "configuration": {
+      "title": "GetTerm",
+      "properties": {
+        "getterm-db.sqliteDbPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the SQLite database file."
+        },
+        "getterm-db.notebookHome": {
+          "type": "string",
+          "default": "",
+          "description": "Directory to save notebooks."
+        },
+        "getterm-db.downloadHome": {
+          "type": "string",
+          "default": "",
+          "description": "Directory to save downloaded files."
+        }
+      }
+    },
     "commands": [
       {
         "command": "getterm-db.setLogLevel",
