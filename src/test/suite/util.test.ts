@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Util } from '../../util';
+import { Util } from '../../Util';
 
 suite('Util Test Suite', () => {
 

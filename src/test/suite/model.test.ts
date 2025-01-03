@@ -1,10 +1,10 @@
 import * as sqlite3 from 'sqlite3';
 import * as assert from 'assert';
-import { Session } from '../../model/sessions';
-import { Command } from '../../model/commands';
-import { Note } from '../../model/notes';
-import { Cell } from '../../model/cells';
-import { initializeTestDB } from './initialize_test_db';
+import { Session } from '../../model/Session';
+import { Command } from '../../model/Command';
+import { Note } from '../../model/Note';
+import { Cell } from '../../model/Cell';
+import { initializeTestDB } from './initializeTestDB';
 
 suite('Database Models', function () {
   let db: sqlite3.Database;

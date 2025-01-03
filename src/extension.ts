@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
-import { ConsoleEventProvider } from './console_event_provider';
-import { TerminalNotebookProvider } from './notebook_provider';
-import { NotebookCopyButtonProvider } from './notebook_copy_button_provider';
-import { CellExecutionTimeProvider } from './notebook_execution_time_provider';
-import { Logger, LogLevel } from './logger';
-import { TerminalNotebookSessionPicker } from './notebook_session_picker';
-import { initializeDatabase } from './database';
-import { RemoteShellExecutor } from './remote_shell_executor';
-import { PowerShellExecutor } from './powershell_executor';
-import { TerminalCaptureExecutor } from './terminal_capture_executor';
-import { TerminalNotebookExporter } from './notebook_exporter';
-import { TerminalSessionManager } from './terminal_session_manager';
-import { WorkspaceManager } from './workspace_manager';
-import { ConfigManager } from './config_manager';
+import { ConsoleEventProvider } from './ConsoleEventProvider';
+import { TerminalNotebookProvider } from './NotebookProvider';
+import { NotebookCopyButtonProvider } from './NotebookCopyButtonProvider';
+import { CellExecutionTimeProvider } from './NotebookExecutionTimeProvider';
+import { Logger, LogLevel } from './Logger';
+import { TerminalNotebookSessionPicker } from './NotebookSessionPicker';
+import { initializeDatabase } from './Database';
+import { RemoteShellExecutor } from './RemoteShellExecutor';
+import { PowerShellExecutor } from './PowershellExecutor';
+import { TerminalCaptureExecutor } from './TerminalCaptureExecutor';
+import { TerminalNotebookExporter } from './NotebookExporter';
+import { TerminalSessionManager } from './TerminalSessionManager';
+import { WorkspaceManager } from './WorkspaceManager';
+import { ConfigManager } from './ConfigManager';
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);

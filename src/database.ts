@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import * as sqlite3 from 'sqlite3';
-import { Session } from './model/sessions';
-import { Command } from './model/commands';
-import { Config } from './config';
+import { Session } from './model/Session';
+import { Command } from './model/Command';
+import { Config } from './Config';
 import path from 'path';
-import { Logger } from './logger';
-import { Note } from './model/notes';
-import { Cell } from './model/cells';
-import { Util } from './util';
+import { Logger } from './Logger';
+import { Note } from './model/Note';
+import { Cell } from './model/Cell';
+import { Util } from './Util';
 import { rejects } from 'assert';
-import { WorkspaceManager } from './workspace_manager';
-import { ConfigManager } from './config_manager';
+import { WorkspaceManager } from './WorkspaceManager';
+import { ConfigManager } from './ConfigManager';
 
 export async function  initializeDatabase() : Promise<Database> {
     if (!WorkspaceManager.checkWorkspaceOpened()) {

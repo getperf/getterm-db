@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Logger } from './logger';
-import { Note } from './model/notes';
+import { Logger } from './Logger';
+import { Note } from './model/Note';
 
 export const SessionDb = 'session.db';
 export const ConfigFile = 'config.json';

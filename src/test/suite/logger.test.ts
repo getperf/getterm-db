@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Logger, LogLevel } from '../../logger';
+import { Logger, LogLevel } from '../../Logger';
 
 export class MockOutputChannel {
     private lines: string[] = [];

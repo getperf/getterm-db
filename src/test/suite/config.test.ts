@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
+import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../Config';
 
 suite('Config Tests', function() {
     let workspaceRoot: string;

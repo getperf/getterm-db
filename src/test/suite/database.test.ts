@@ -1,8 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { strict as assert } from 'assert';
-import { Database } from '../../database';
-import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../config';
+import { Database } from '../../Database';
+import { Config, SessionDb, ConfigFile, ConfigVersion } from '../../Config';
 import * as vscode from 'vscode';
 
 suite('Database Class', () => {
