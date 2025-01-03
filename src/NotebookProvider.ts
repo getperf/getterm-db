@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { TerminalNotebookSerializer } from './NotebookSerializer';
 import { NOTEBOOK_TYPE, TerminalNotebookController } from './NotebookController';
-import { initializeDatabase, Database } from './Database';
+// import { initializeDatabase, Database } from './Database';
 import { Logger } from './Logger';
 
 export class TerminalNotebookProvider {
     private context: vscode.ExtensionContext;
-    private db!: Promise<Database>;
+    // private db!: Promise<Database>;
 
     serializer = new TerminalNotebookSerializer();
     controller = new TerminalNotebookController();
@@ -15,9 +15,9 @@ export class TerminalNotebookProvider {
         this.context = context;
         this.registerCommands();
         this.registerEventHandlers();
-        if (!this.db) {
-            this.db = initializeDatabase();
-        }
+        // if (!this.db) {
+        //     this.db = initializeDatabase();
+        // }
     }
 
     private registerCommands() {

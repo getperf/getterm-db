@@ -3,7 +3,7 @@ import { TextDecoder, TextEncoder } from 'util';
 import { Command } from './model/Command';
 import { rejects } from 'assert';
 import { Session } from './model/Session';
-import { initializeDatabase, Database } from './Database';
+// import { initializeDatabase, Database } from './Database';
 import { Logger } from './Logger';
 import { TerminalNotebookExporter } from './NotebookExporter';
 import { Util } from './Util';

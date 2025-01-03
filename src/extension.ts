@@ -13,6 +13,7 @@ import { TerminalNotebookExporter } from './NotebookExporter';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { WorkspaceManager } from './WorkspaceManager';
 import { ConfigManager } from './ConfigManager';
+import { DatabaseManager } from './DatabaseManager';
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);
@@ -24,7 +25,9 @@ export async function activate(context: vscode.ExtensionContext) {
     //     return Promise.reject(new Error('Workspace not opened.'));
     // }
 
-	await initializeDatabase();
+	await DatabaseManager.initialize();
+	// await initializeDatabase();
+
 	TerminalSessionManager.initializeInstance();
 	const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);

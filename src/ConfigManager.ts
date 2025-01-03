@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as os from 'os';
 
 export class ConfigManager {
     private static context: vscode.ExtensionContext;
@@ -35,7 +36,8 @@ export class ConfigManager {
      * @returns The SQLite database file path.
      */
     public static get sqliteDbPath(): string {
-        const defaultPath = path.join(this.context.globalStorageUri.fsPath, 'getterm.sqlite');
+        // const defaultPath = path.join(this.context.globalStorageUri.fsPath, 'getterm.sqlite');
+        const defaultPath = path.join(os.homedir(), '.getterm', 'getterm.db');
         return this.getParameter('sqliteDbPath', defaultPath);
     }
 

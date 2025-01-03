@@ -7,7 +7,8 @@ import { Config } from './Config';
 import { TerminalNotebookController } from './NotebookController';
 import { Util } from './Util';
 import { WorkspaceManager } from './WorkspaceManager';
-import { initializeDatabase } from './Database';
+import { DatabaseManager } from './DatabaseManager';
+// import { initializeDatabase } from './Database';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -72,17 +73,18 @@ export class RemoteShellExecutor {
             vscode.window.showErrorMessage('プロファイルが選択されていません。');
             return;
         }
-        console.log("open workspace start");
-        const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
-        if (!workspaceReady) {
-            vscode.window.showErrorMessage('ワークスペースが開いていません');
-            return;
-        }
-        console.log("open workspace end");
+        // console.log("open workspace start");
+        // const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
+        // if (!workspaceReady) {
+        //     vscode.window.showErrorMessage('ワークスペースが開いていません');
+        //     return;
+        // }
+        // console.log("open workspace end");
         // await initializeDatabase();
-        console.log("initialize database end");
+        // console.log("initialize database end");
+        await DatabaseManager.initialize();
         TerminalSessionManager.initializeInstance();
-        console.log("initialize terminal session end");
+        // console.log("initialize terminal session end");
 
         // if (!Util.checkWorkspaceOpened()) {
         //     vscode.window.showErrorMessage('ワークスペースが開いていません');
