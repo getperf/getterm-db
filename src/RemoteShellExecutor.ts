@@ -102,8 +102,8 @@ export class RemoteShellExecutor {
         terminal.show();
         console.log("open terminal profile end:", terminal);
 
-        const config = Config.getInstance();
-        config.set('terminalProfiles', [remoteProfile]);
+        // const config = Config.getInstance();
+        // config.set('terminalProfiles', [remoteProfile]);
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
         const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
         const session = await Session.getById(sessionId);

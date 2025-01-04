@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { initializeDatabase, Database } from './Database';
+// import { initializeDatabase, Database } from './Database';
 import { Session } from './model/Session';
 import { Command } from './model/Command';
 import { TerminalNotebookController } from './NotebookController';

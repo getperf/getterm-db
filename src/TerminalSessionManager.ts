@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Logger } from './Logger';
 import { XtermParser } from './XtermParser';
 import { TerminalSession, TerminalSessionMode } from './TerminalSession';
+import { Session } from './model/Session';
 
 export class TerminalSessionManager {
     private static instance: TerminalSessionManager | null = null;
@@ -56,6 +57,12 @@ export class TerminalSessionManager {
             session.terminalTraffic = 0;
             session.shellExecutionEventBusy = false;
         });
+    }
+
+    static async create(terminal: vscode.Terminal): Promise<TerminalSession> {
+        const sessionId = await Session.create(terminal.name, 'Capture from existing terminal', [], '', '');
+        // const session = await Session.getById(sessionId);
+        return TerminalSessionManager.setSessionId(terminal, sessionId);
     }
 
     static setSessionId(terminal: vscode.Terminal, sessionId:number): TerminalSession {

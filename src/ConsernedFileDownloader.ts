@@ -8,6 +8,7 @@ import { Util } from './Util';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { Config } from './Config';
 import { ParsedCommand, CommandParser } from './CommandParser';
+import { ConfigManager } from './ConfigManager';
 
 // Downloader mode types to handle different states of downloading file
 export enum DownloaderMode {
@@ -48,7 +49,8 @@ export class ConsernedFileDownloader {
     sudoCommand : string | null = null;
 
     // Download home directory
-	downloadHome = Config.getInstance().getDownloadHome();
+	// downloadHome = Config.getInstance().getDownloadHome();
+	downloadHome = ConfigManager.downloadHome;
 
     // Download file path
     downloadFile: string | undefined; 

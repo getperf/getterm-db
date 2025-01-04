@@ -1,6 +1,5 @@
 import * as sqlite3 from 'sqlite3';
 import * as path from 'path';
-import * as os from 'os';
 import * as fs from 'fs';
 import { DatabaseUpgrader } from './DatabaseUpgrader';
 import { Session } from './model/Session';
@@ -48,8 +47,6 @@ export class DatabaseManager {
     }
 
     private getDefaultDatabasePath(): string {
-        // const tempDir = os.tmpdir();
-        // return path.join(tempDir, 'vscode-extension-database.db');
         return ConfigManager.sqliteDbPath;
     }
 

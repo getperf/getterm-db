@@ -41,8 +41,8 @@ export class PowerShellExecutor {
         const terminal = vscode.window.createTerminal(terminalOptions);
         terminal.show();
 
-        const config = Config.getInstance();
-        config.set('terminalProfiles', [remoteProfile]);
+        // const config = Config.getInstance();
+        // config.set('terminalProfiles', [remoteProfile]);
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
         const sessionId = await Session.create(remoteProfile, 'powershell', [], '', '');
         const session = await Session.getById(sessionId);

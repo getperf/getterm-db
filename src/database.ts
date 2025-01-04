@@ -12,22 +12,22 @@ import { rejects } from 'assert';
 import { WorkspaceManager } from './WorkspaceManager';
 import { ConfigManager } from './ConfigManager';
 
-export async function  initializeDatabase() : Promise<Database> {
-    if (!WorkspaceManager.checkWorkspaceOpened()) {
-        vscode.window.showErrorMessage('ワークスペースが開いていません');
-        return Promise.reject(new Error('Workspace not opened.'));
-    }
-    const config = Config.getInstance();
-    const gettermHome = config.getGettermHome();
-    console.log("GettermHome: ", gettermHome);
-    // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-    const sqliteDbPath = config.get('sqliteDbPath') as string;
-    // const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
-    const sqliteDbAbsolutePath = path.join(gettermHome, sqliteDbPath);
-    const db = new Database(sqliteDbAbsolutePath);
-    await db.initialize();
-    return db;
-}
+// export async function  initializeDatabase() : Promise<Database> {
+//     if (!WorkspaceManager.checkWorkspaceOpened()) {
+//         vscode.window.showErrorMessage('ワークスペースが開いていません');
+//         return Promise.reject(new Error('Workspace not opened.'));
+//     }
+//     const config = Config.getInstance();
+//     const gettermHome = config.getGettermHome();
+//     console.log("GettermHome: ", gettermHome);
+//     // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+//     const sqliteDbPath = config.get('sqliteDbPath') as string;
+//     // const sqliteDbAbsolutePath = path.join(workspaceRoot, sqliteDbPath);
+//     const sqliteDbAbsolutePath = path.join(gettermHome, sqliteDbPath);
+//     const db = new Database(sqliteDbAbsolutePath);
+//     await db.initialize();
+//     return db;
+// }
 
 export class Database {
     private db: sqlite3.Database | null = null;

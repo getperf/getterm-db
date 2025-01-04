@@ -5,7 +5,7 @@ import { NotebookCopyButtonProvider } from './NotebookCopyButtonProvider';
 import { CellExecutionTimeProvider } from './NotebookExecutionTimeProvider';
 import { Logger, LogLevel } from './Logger';
 import { TerminalNotebookSessionPicker } from './NotebookSessionPicker';
-import { initializeDatabase } from './Database';
+// import { initializeDatabase } from './Database';
 import { RemoteShellExecutor } from './RemoteShellExecutor';
 import { PowerShellExecutor } from './PowershellExecutor';
 import { TerminalCaptureExecutor } from './TerminalCaptureExecutor';

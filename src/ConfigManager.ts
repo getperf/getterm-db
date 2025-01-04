@@ -47,7 +47,7 @@ export class ConfigManager {
      * @returns The notebook home directory path.
      */
     public static get notebookHome(): string {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || path.join(os.homedir(), 'Documents');
         return this.getParameter('notebookHome', workspaceFolder);
     }
 

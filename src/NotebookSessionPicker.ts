@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { NotebookSessionWriter } from './NotebookSessionWriter';
 import { TerminalSessionMode } from './TerminalSession';
+import { Session } from './model/Session';
+import { Logger } from './Logger';
 
 export class TerminalNotebookSessionPicker {
     private context: vscode.ExtensionContext;
@@ -34,11 +36,63 @@ export class TerminalNotebookSessionPicker {
         );
     }
     
-    private async selectSession() {
-        const sessions = await this.getAvailableSessions();
-        const selectedSession = await vscode.window.showQuickPick(sessions, {
-            placeHolder: 'Select a session',
+    private getAllOpenTerminals() : Map<string, vscode.Terminal> {
+        const terminals = vscode.window.terminals;
+        const terminalMap = new Map<string, vscode.Terminal>();
+        terminals.forEach((terminal) => {
+            terminalMap.set(terminal.name, terminal);
         });
+        return terminalMap;
+    }
+
+    private async selectOpenTerminals() : Promise<vscode.Terminal | undefined> {
+        const terminals = this.getAllOpenTerminals();
+        console.log("terminalNames: ", terminals);
+        const terminalNames = Array.from(terminals.keys());
+        const selectedTerminalName = await vscode.window.showQuickPick(terminalNames, {
+            placeHolder: 'Select a terminal'
+        });
+    
+        if (selectedTerminalName) {
+            const selectedTerminal = terminals.get(selectedTerminalName);
+            if (selectedTerminal) {
+                return selectedTerminal;
+            }
+        }
+    
+        // if (!terminals || terminals.length === 0) {
+        //     vscode.window.showInformationMessage('現在開いているターミナルはありません。');
+        //     return;
+        // }
+  
+        // // ターミナルリストを表示
+        // const terminalNames = Array.from(terminals.keys());
+        // console.log("terminalNames: ", JSON.stringify(terminalNames));
+        // const selected = await vscode.window.showQuickPick(terminalNames, {
+        //     placeHolder: '開いているターミナルを選択してください',
+        // });
+        // if (selected) {
+        //     vscode.window.showInformationMessage(`選択されたターミナル: ${selected}`);
+        //     return selected;
+        // }
+        return ;
+    }
+
+    private async selectSession() {
+        const terminal = await this.selectOpenTerminals();
+        console.log("terminal: ", terminal?.name);
+        if (!terminal) {
+            vscode.window.showInformationMessage('No terminal selected.');
+            return;
+        }
+        let selectedSession = TerminalSessionManager.get(terminal);
+        if (!selectedSession) {
+            selectedSession = await TerminalSessionManager.create(terminal);
+        }
+        // const sessions = await this.getAvailableSessions();
+        // const selectedSession = await vscode.window.showQuickPick(sessions, {
+        //     placeHolder: 'Select a session',
+        // });
 
         if (selectedSession) {   
             const notebookEditor = vscode.window.activeNotebookEditor;
@@ -48,12 +102,14 @@ export class TerminalNotebookSessionPicker {
                 TerminalSessionManager.setNotebookEditor(currentTerminal, undefined);
             }
             vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
-            const session = TerminalSessionManager.findByName(selectedSession);
-            const terminal = TerminalSessionManager.findTerminalByName(selectedSession);
-            if (session && terminal && notebookEditor) {
+            // const session = TerminalSessionManager.findByName(selectedSession);
+            // const terminal = TerminalSessionManager.findTerminalByName(selectedSession);
+            if (notebookEditor) {
+            // if (session && terminal && notebookEditor) {
                 vscode.window.showInformationMessage(`You selected: ${selectedSession}`);
                 TerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
-                NotebookSessionWriter.appendSessionStartCell(session);
+                // NotebookSessionWriter.appendSessionStartCell(session);
+                NotebookSessionWriter.appendSessionStartCell(selectedSession);
                 TerminalNotebookSessionPicker.showExplorerAndOutline();
             }
 
