@@ -6,7 +6,6 @@ import { Logger } from './Logger';
 // import { CommandParser, ParsedCommand } from './command_parser';
 import { Util } from './Util';
 import { TerminalSessionManager } from './TerminalSessionManager';
-import { Config } from './Config';
 import { ParsedCommand, CommandParser } from './CommandParser';
 import { ConfigManager } from './ConfigManager';
 
@@ -201,8 +200,9 @@ export class ConsernedFileDownloader {
      */
     private ensureDownloadDirectoryExists() {
         const downloadDirectory = path.join(this.downloadHome, this.termnalShortName);
+        console.log("Download directory : ", downloadDirectory);
         if (!fs.existsSync(downloadDirectory)) {
-            fs.mkdirSync(downloadDirectory);
+            fs.mkdirSync(downloadDirectory, { recursive: true });
             Logger.info(`Created config directory: ${downloadDirectory}`);
         }
     }

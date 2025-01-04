@@ -1,7 +1,6 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
-import { Config } from './Config';
-import { Database } from './Database';
+// import { Database } from './Database';
 import { Session } from './model/Session';
 import { Command } from './model/Command';
 import { TerminalNotebookController } from './NotebookController';

@@ -43,7 +43,8 @@ export class CommandHandler {
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`start command handler invoked`);
         const session = TerminalSessionManager.get(e.terminal);
-        if (!session || !this.varidateTerminalSession(session)) {
+        // if (!session || !this.varidateTerminalSession(session)) {
+        if (!session) {
             return;
         }
         const sessionId = session.sessionId;
@@ -101,11 +102,11 @@ export class CommandHandler {
             return; 
         }
         const parsedCommand = await CommandParser.parse(consoleBuffer);
-        const commandLine = e.execution.commandLine.value;
-        if (commandLine) {
-            console.log("APIから抽出したコマンド:", commandLine);
-            parsedCommand.command = commandLine;
-        }
+        // const commandLine = e.execution.commandLine.value;
+        // if (commandLine) {
+        //     console.log("APIから抽出したコマンド:", commandLine);
+        //     parsedCommand.command = commandLine;
+        // }
         if (!parsedCommand) {
             vscode.window.showErrorMessage(
                 `Oops. Failed to parse the capture data. Command could not be recorded.`

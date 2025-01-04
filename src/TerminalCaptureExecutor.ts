@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { Session } from './model/Session';
 import { Logger } from './Logger';
-import { Config } from './Config';
+// import { Config } from './Config';
 import { TerminalSessionMode } from './TerminalSession';
 
 export class TerminalCaptureExecutor {

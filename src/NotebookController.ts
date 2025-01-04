@@ -6,7 +6,7 @@ import { TerminalSessionManager } from './TerminalSessionManager';
 import { Logger } from './Logger';
 import { RawNotebookCell, RawNotebookData } from './NotebookSerializer';
 import { NotebookSessionWriter } from './NotebookSessionWriter';
-import { Config } from './Config';
+// import { Config } from './Config';
 import { TerminalNotebookSessionPicker } from './NotebookSessionPicker';
 import { ConfigManager } from './ConfigManager';
 export const NOTEBOOK_TYPE = 'terminal-notebook';

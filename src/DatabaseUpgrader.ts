@@ -1,7 +1,6 @@
 import * as sqlite3 from 'sqlite3';
 import { createTableSQL } from './sql/tables';
 import { Logger } from './Logger';
-// import { cellsTableSQL } from './sql/tables';
 
 export class DatabaseUpgrader {
     private db: sqlite3.Database;

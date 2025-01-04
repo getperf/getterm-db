@@ -35,10 +35,11 @@ export class DatabaseManager {
             if (err) {throw new Error(`Failed to open database: ${err.message}`);}
         });
 
-        if (this.db) {
-            const upgrader = new DatabaseUpgrader(this.db);
-            await upgrader.upgradeDatabase();
+        if (!this.db) {
+            throw new Error('Failed to open database');
         }
+        const upgrader = new DatabaseUpgrader(this.db);
+        await upgrader.upgradeDatabase();
         Session.setup(this.db);
         Command.setup(this.db);
         Note.setup(this.db);

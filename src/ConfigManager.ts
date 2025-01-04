@@ -22,7 +22,7 @@ export class ConfigManager {
      * @returns The value of the parameter or the default value if not set.
      */
     static getParameter<T>(parameterName: string, defaultValue: T): T {
-        const config = vscode.workspace.getConfiguration('getterm-sqlite');
+        const config = vscode.workspace.getConfiguration('getterm-db');
         const value = config.get<T>(parameterName, defaultValue);
         if (value === undefined || value === null || value === "") {
             return defaultValue;
@@ -77,7 +77,7 @@ export class ConfigManager {
      * @param target - The configuration target (Global or Workspace).
      */
     private static async setParameter<T>(name: string, value: T, target: vscode.ConfigurationTarget): Promise<void> {
-        const config = vscode.workspace.getConfiguration('getterm');
+        const config = vscode.workspace.getConfiguration('getterm-db');
         await config.update(name, value, target);
     }
 

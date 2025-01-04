@@ -3,10 +3,10 @@ import * as vscode from 'vscode';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { Session } from './model/Session';
 import { Logger } from './Logger';
-import { Config } from './Config';
-import { TerminalNotebookController } from './NotebookController';
-import { Util } from './Util';
-import { WorkspaceManager } from './WorkspaceManager';
+// import { Config } from './Config';
+// import { TerminalNotebookController } from './NotebookController';
+// import { Util } from './Util';
+// import { WorkspaceManager } from './WorkspaceManager';
 import { DatabaseManager } from './DatabaseManager';
 // import { initializeDatabase } from './Database';
 
