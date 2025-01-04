@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package",
   "name": "getterm-db",
   "displayName": "getterm-db",
   "publisher": "getperf",
@@ -74,6 +75,10 @@
       {
         "command": "getterm-db.createNewTerminalNotebook",
         "title": "Getterm : Create new terminal notebook"
+      },
+      {
+        "command": "getterm-db.createNewTerminalNotebook2",
+        "title": "Getterm : Create new terminal notebook 2"
       },
       {
         "command": "getterm-db.reportTerminalNotebook",
