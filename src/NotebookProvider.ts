@@ -27,11 +27,12 @@ export class TerminalNotebookProvider {
     		),
 	    	this.controller,
             vscode.commands.registerCommand('getterm-db.createNewTerminalNotebook', async () => {
-                this.controller.createNotebook();
-            }),
-            vscode.commands.registerCommand('getterm-db.createNewTerminalNotebook2', async () => {
                 this.controller.createTemporaryNotebook();
+                // this.controller.createNotebook();
             }),
+            // vscode.commands.registerCommand('getterm-db.createNewTerminalNotebook2', async () => {
+            //     this.controller.createTemporaryNotebook();
+            // }),
             vscode.commands.registerCommand('getterm-db.copyCode', (cell: vscode.NotebookCell) => {
                 vscode.env.clipboard.writeText(cell.document.getText()).then(() => {
                     vscode.window.showInformationMessage('Code copied to clipboard!');

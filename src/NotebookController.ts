@@ -1,22 +1,11 @@
 import * as vscode from 'vscode';
-import path from 'path';
 import { Command } from './model/Command';
 import { NotebookCleaner } from './NotebookCleaner';
 import { TerminalSessionManager } from './TerminalSessionManager';
 import { Logger } from './Logger';
-import { RawNotebookCell, RawNotebookData } from './NotebookSerializer';
-import { NotebookSessionWriter } from './NotebookSessionWriter';
-// import { Config } from './Config';
 import { TerminalNotebookSessionPicker } from './NotebookSessionPicker';
-import { ConfigManager } from './ConfigManager';
+import { TerminalNotebookHandler } from './NotebookHandler';
 export const NOTEBOOK_TYPE = 'terminal-notebook';
-
-export enum TerminalNotebookStatus {
-	NoSession = `NoSession`,
-	TerminalOpend = `TerminalOpend`,
-	CaptureReady = `CaptureReady`,
-	TerminalClosed = `TerminalClosed`,	
-}
 
 /**
  * TerminalNotebookController class is responsible for managing notebook execution and updates
@@ -29,9 +18,6 @@ export class TerminalNotebookController  {
 	readonly notebookType = NOTEBOOK_TYPE;
 	readonly label = 'Terminal Notebook';
 	readonly supportedLanguages = ['shellscript'];
-	// readonly notebookHome = Config.getInstance().getNotebookHome();
-	// readonly notebookHome = ConfigManager.notebookHome;
-	//  ConfigMaConfig.getInstance().getNotebookHome();
     private readonly _controller: vscode.NotebookController;
 	private _executionOrder = 0;
 
@@ -94,161 +80,27 @@ export class TerminalNotebookController  {
 		}
 	}
 
-	/**
-     * Generates a unique filename for a terminal notebook using the current date and time.
-     * @returns A string filename formatted as `note_yyyymmdd_hhmiss.getterm`.
-     */
-    private createTerminalNotebookFilename(): string {
-        const now = new Date();
-        const yyyymmdd = now.toISOString().split('T')[0].replace(/-/g, '');
-        const hhmiss = now.toTimeString().split(' ')[0].replace(/:/g, '');
-        
-        return `note_${yyyymmdd}_${hhmiss}.getterm`;
-    }
-
-	/**
-	 * Creates a URI for a new terminal notebook file by generating a unique filename
-	 * and appending it to the notebook home directory path.
-	 * 
-	 * @returns A VSCode URI pointing to the newly created notebook file path.
-	 */
-	private createTerminalNotebookUri() : vscode.Uri {
-        const filename = this.createTerminalNotebookFilename();
-        Logger.info(`create notebook filename : ${filename}`);
-		Logger.info(`notebook home : ${ConfigManager.notebookHome}`);
-        const terminalNotebookFilePath = path.join(ConfigManager.notebookHome, filename);
-        return vscode.Uri.file(terminalNotebookFilePath);
-	}
-
-    /**
-     * Checks the status of the terminal notebook by verifying if a terminal session is active.
-     * Returns a status indicating whether a session is ready for capturing or if the terminal is closed.
-     */
-	private checkTerminalNotebookStatus() : TerminalNotebookStatus {
-        const activeTerminal = vscode.window.activeTerminal;
-        if (!activeTerminal) {
-			return TerminalNotebookStatus.NoSession;
-		}
-		const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
-		if (sessionId) {
-			return TerminalNotebookStatus.CaptureReady;
-		} else {
-			return TerminalNotebookStatus.TerminalOpend;
-		}
-	}
-
-    /**
-     * Creates a new empty notebook with a unique filename.
-     * If the notebook creation fails, it logs an error.
-     */
-	private async createEmptyNotebook() {
-		const newNotebookUri = this.createTerminalNotebookUri();
-		try {
-			const cells : Array<vscode.NotebookCellData> = [];
-			const newNotebookData = { 
-                cells: [],
-            };
-			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(newNotebookData)));
-			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
-			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
-			const notebookEditor = vscode.window.activeNotebookEditor;
-			if (!notebookEditor) {
-				throw new Error("active notebook editor not found.");
-			}
-			TerminalNotebookSessionPicker.showExplorerAndOutline();
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);
-		}
-	}
-
-    /**
-     * Creates or updates a notebook based on the current terminal session status.
-     * If a session is active, it loads command history into the notebook.
-     */
-	public async createNotebook() {
-		const notebookStatus = this.checkTerminalNotebookStatus();
-		console.log("notebook status : ", notebookStatus);
-		if (notebookStatus !== TerminalNotebookStatus.CaptureReady) {
-			await this.createEmptyNotebook();
-			return;
-		}
-		const activeTerminal = vscode.window.activeTerminal;
-        if (!activeTerminal) {
-            vscode.window.showInformationMessage('No active terminal is currently selected.');
-            return;
-        }
-		const session = TerminalSessionManager.get(activeTerminal);
-		// const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
-		// const sessionName = TerminalSessionManager.getSessionName(activeTerminal) || 'unkown session';
-		const sessionId = session?.sessionId;
-		// const sessionName = session?.sessionName;
-		if (!sessionId) {
-            vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
-            return;
-        }
-        Logger.info(`create notebook, session id : ${sessionId}`);
-
-        const terminalNotebookFilename = this.createTerminalNotebookFilename();
-        Logger.info(`create notebook filename : ${terminalNotebookFilename}`);
-        // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        // const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
-		const terminalNotebookFilePath = path.join(ConfigManager.notebookHome, terminalNotebookFilename);
-
-        const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
-		try {
-			// コマンド履歴をセルに登録。不整合なJSONファイルが保存され、開けない問題発生
-			// notebook serializer で定義した、note, cell データ型で JSON 保存する必要がある
-			const contents: RawNotebookData = { 
-				cells: [], 
-				metadata: { sessionId: sessionId }
-			};
-			const commands = await Command.getAllBySessionId(sessionId);
-			for (let command of commands) {
-				const newCell : RawNotebookCell = {
-					kind: vscode.NotebookCellKind.Code,
-					language: 'shellscript',
-					id: command.id,
-					value: command.command
-				};
-				contents.cells.push(newCell);
-			}
-			await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(contents)));
-	
-			await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
-			await vscode.commands.executeCommand('notebook.execute');
-			TerminalNotebookSessionPicker.showExplorerAndOutline();
-
-			NotebookSessionWriter.appendSessionStartCell(session);			
-			vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
-			const notebookEditor = vscode.window.activeNotebookEditor;
-			if (!notebookEditor) {
-				throw new Error("active notebook editor not found.");
-			}
-			TerminalSessionManager.setNotebookEditor(activeTerminal, notebookEditor);
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);
-		}
-	}
-
     /**
      * Creates or updates a notebook based on the current terminal session status.
      * If a session is active, it loads command history into the notebook.
      */
 	public async createTemporaryNotebook() {
-		// const notebookStatus = this.checkTerminalNotebookStatus();
-		// console.log("notebook status : ", notebookStatus);
-		// if (notebookStatus !== TerminalNotebookStatus.CaptureReady) {
-		// 	await this.createEmptyNotebook();
-		// 	return;
-		// }
-		// 仮のURIを生成（スキームとして untitled を使用）
-		const notebookUri = this.createTerminalNotebookUri();
-		const cells : Array<vscode.NotebookCellData> = [];
-		const newNotebookData = { 
-			cells: [],
+		const notebookHandler = TerminalNotebookHandler.create();
+
+		const options: vscode.SaveDialogOptions = {
+			saveLabel: 'Create Notebook',
+			defaultUri: notebookHandler.defaultUri(),
+			filters: { 'GetTerm terminal capture Notebooks': ['getterm'] }
 		};
+		const notebookUri = await vscode.window.showSaveDialog(options);
+		if (!notebookUri) {
+			vscode.window.showInformationMessage('Notebook creation was canceled.');
+			return;
+		}
+
+		const emptyNotebookContent = JSON.stringify(notebookHandler.createEmptyNotebook());
 		try {
-			await vscode.workspace.fs.writeFile(notebookUri, Buffer.from(JSON.stringify(newNotebookData)));
+			await vscode.workspace.fs.writeFile(notebookUri, Buffer.from(emptyNotebookContent));
 			await vscode.commands.executeCommand('vscode.openWith', notebookUri, NOTEBOOK_TYPE);
 			vscode.window.showInformationMessage(`Terminal notebook opend : ${notebookUri.fsPath}`);
 			TerminalNotebookSessionPicker.showExplorerAndOutline();
@@ -256,63 +108,6 @@ export class TerminalNotebookController  {
 			vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);	
 		}
 		await vscode.commands.executeCommand('getterm-db.selectSession');
-
-		// const activeTerminal = vscode.window.activeTerminal;
-        // if (!activeTerminal) {
-        //     vscode.window.showInformationMessage('No active terminal is currently selected.');
-        //     return;
-        // }
-		// const session = TerminalSessionManager.get(activeTerminal);
-		// // const sessionId = TerminalSessionManager.getSessionId(activeTerminal);
-		// // const sessionName = TerminalSessionManager.getSessionName(activeTerminal) || 'unkown session';
-		// const sessionId = session?.sessionId;
-		// // const sessionName = session?.sessionName;
-		// if (!sessionId) {
-        //     vscode.window.showInformationMessage('The terminal is not opened by Getterm.');
-        //     return;
-        // }
-        // Logger.info(`create notebook, session id : ${sessionId}`);
-
-        // const terminalNotebookFilename = this.createTerminalNotebookFilename();
-        // Logger.info(`create notebook filename : ${terminalNotebookFilename}`);
-        // // const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
-        // // const terminalNotebookFilePath = path.join(workspaceRoot, terminalNotebookFilename);
-		// const terminalNotebookFilePath = path.join(this.notebookHome, terminalNotebookFilename);
-
-        // const newNotebookUri = vscode.Uri.file(terminalNotebookFilePath);
-		// try {
-		// 	// コマンド履歴をセルに登録。不整合なJSONファイルが保存され、開けない問題発生
-		// 	// notebook serializer で定義した、note, cell データ型で JSON 保存する必要がある
-		// 	const contents: RawNotebookData = { 
-		// 		cells: [], 
-		// 		metadata: { sessionId: sessionId }
-		// 	};
-		// 	const commands = await Command.getAllBySessionId(sessionId);
-		// 	for (let command of commands) {
-		// 		const newCell : RawNotebookCell = {
-		// 			kind: vscode.NotebookCellKind.Code,
-		// 			language: 'shellscript',
-		// 			id: command.id,
-		// 			value: command.command
-		// 		};
-		// 		contents.cells.push(newCell);
-		// 	}
-		// 	await vscode.workspace.fs.writeFile(newNotebookUri, Buffer.from(JSON.stringify(contents)));
-	
-		// 	await vscode.commands.executeCommand('vscode.openWith', newNotebookUri, NOTEBOOK_TYPE);
-		// 	await vscode.commands.executeCommand('notebook.execute');
-		// 	TerminalNotebookSessionPicker.showExplorerAndOutline();
-
-		// 	NotebookSessionWriter.appendSessionStartCell(session);			
-		// 	vscode.window.showInformationMessage(`Terminal notebook opend : ${newNotebookUri.fsPath}`);
-		// 	const notebookEditor = vscode.window.activeNotebookEditor;
-		// 	if (!notebookEditor) {
-		// 		throw new Error("active notebook editor not found.");
-		// 	}
-		// 	TerminalSessionManager.setNotebookEditor(activeTerminal, notebookEditor);
-		// } catch (error) {
-		// 	vscode.window.showErrorMessage(`Failed to create or open new notebook: ${error}`);
-		// }
 	}
 
     /**
@@ -324,7 +119,6 @@ export class TerminalNotebookController  {
             vscode.window.showInformationMessage('No active terminal is currently selected.');
             return;
         }
-		// const notebookEditor = vscode.window.activeNotebookEditor;
 		const notebookEditor = TerminalSessionManager.getNotebookEditor(activeTerminal);
 		if (!notebookEditor) {
 			vscode.window.showErrorMessage("no active notebook editor found!");
@@ -338,41 +132,11 @@ export class TerminalNotebookController  {
         Logger.info(`update notebook session id : ${sessionId} , command id : ${rowid}`);
 
 		NotebookCleaner.cleanupUnusedCells();
-		const notebookDocument = notebookEditor.notebook;
-		const currentRow = notebookDocument.cellCount;
  	
+		const notebookHandler = TerminalNotebookHandler.create(notebookEditor);
 		const row = await Command.getById(rowid);
+		await notebookHandler.insertCommandCell(row);
         Logger.info(`update notebook add cell command : ${row.command}`);
-		const newCell = new vscode.NotebookCellData(
-			vscode.NotebookCellKind.Code,
-			row.command,
-			'shellscript'
-		);
-		// Set metadata with a unique ID
-		// const newCellId = this.generateUniqueId();
-		newCell.metadata = { id: rowid };
-
-        Logger.info(`update notebook add cell at ${currentRow}`);
-		const range = new vscode.NotebookRange(currentRow, currentRow + 1);
-		const edit = new vscode.NotebookEdit(range, [newCell]);
-
-		const workspaceEdit = new vscode.WorkspaceEdit();
-		workspaceEdit.set(notebookDocument.uri, [edit]);
-		const applied = await vscode.workspace.applyEdit(workspaceEdit);
-	
-		notebookEditor.selection = range;
-		notebookEditor.revealRange(range, vscode.NotebookEditorRevealType.Default);
-
-		// Get the index of the newly added cell
-		// const addedCell = notebookDocument.cellAt(currentRow);
-		// this.execute([addedCell]);
-        Logger.info(`update notebook execute cell at ${currentRow}`);
-		await vscode.commands.executeCommand('notebook.cell.execute', 
-			{ ranges: [{ start: currentRow, end: currentRow + 1 }] }
-		);
-
-		notebookEditor.selection = range;
-		notebookEditor.revealRange(range, vscode.NotebookEditorRevealType.Default);
 	}
 
 	dispose() {

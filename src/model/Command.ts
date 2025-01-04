@@ -1,6 +1,20 @@
 import * as sqlite3 from 'sqlite3';
 import { Util } from '../Util';
 
+export interface CommandRow {
+    id: number;
+    session_id: number;
+    command: string;
+    output: string;
+    cwd: string;
+    exit_code: number;
+    start: string;
+    end: string | null;
+    file_operation_mode: string | null;
+    command_access_file: string | null;
+    download_file: string | null;
+}
+
 export class Command {
     private static db: sqlite3.Database;
 
