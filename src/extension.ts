@@ -3,17 +3,15 @@ import { ConsoleEventProvider } from './ConsoleEventProvider';
 import { TerminalNotebookProvider } from './NotebookProvider';
 import { NotebookCopyButtonProvider } from './NotebookCopyButtonProvider';
 import { CellExecutionTimeProvider } from './NotebookExecutionTimeProvider';
-import { Logger, LogLevel } from './Logger';
+import { Logger } from './Logger';
 import { TerminalNotebookSessionPicker } from './NotebookSessionPicker';
-// import { initializeDatabase } from './Database';
 import { RemoteShellExecutor } from './RemoteShellExecutor';
 import { PowerShellExecutor } from './PowershellExecutor';
 import { TerminalCaptureExecutor } from './TerminalCaptureExecutor';
 import { TerminalNotebookExporter } from './NotebookExporter';
-import { TerminalSessionManager } from './TerminalSessionManager';
-import { WorkspaceManager } from './WorkspaceManager';
 import { ConfigManager } from './ConfigManager';
 import { DatabaseManager } from './DatabaseManager';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);

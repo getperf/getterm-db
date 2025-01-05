@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { Command } from "./model/Command";
 import { XtermParser } from './XtermParser';
-import { TerminalSessionManager } from './TerminalSessionManager';
 import { Logger } from './Logger';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 /**
  * SwitchUserCommandHandler manages detection and handling of `su` commands within a terminal session.

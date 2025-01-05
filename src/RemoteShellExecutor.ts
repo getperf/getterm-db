@@ -1,14 +1,9 @@
 import * as cp from 'child_process';
 import * as vscode from 'vscode';
-import { TerminalSessionManager } from './TerminalSessionManager';
 import { Session } from './model/Session';
 import { Logger } from './Logger';
-// import { Config } from './Config';
-// import { TerminalNotebookController } from './NotebookController';
-// import { Util } from './Util';
-// import { WorkspaceManager } from './WorkspaceManager';
 import { DatabaseManager } from './DatabaseManager';
-// import { initializeDatabase } from './Database';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -108,7 +103,7 @@ export class RemoteShellExecutor {
         const sessionId = await Session.create(remoteProfile, 'ssh', [remoteProfile], '', '');
         const session = await Session.getById(sessionId);
         console.log("セッション履歴登録：", session);
-        TerminalSessionManager.setSessionId(terminal, sessionId);
+        TerminalSessionManager.updateSession(terminal, 'sessionId', sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
 
         const isok = await this.copyShellIntegrationScript(remoteProfile);

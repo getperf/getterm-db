@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Terminal } from 'xterm-headless';
-import { TerminalSessionManager } from './TerminalSessionManager';
 import { Util } from './Util';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class XtermParser {
     private static instance: XtermParser;
@@ -19,11 +19,11 @@ export class XtermParser {
         if (!activeTerminal) {
             return new XtermParser();
         }
-        let xtermParser = TerminalSessionManager.getXtermParser(activeTerminal);
+        let xtermParser = TerminalSessionManager.getSession(activeTerminal).xtermParser;
         if (xtermParser) { return xtermParser; }
 
         xtermParser = new XtermParser();
-        TerminalSessionManager.setXtermParser(activeTerminal, xtermParser);
+        TerminalSessionManager.updateSession(activeTerminal, 'xtermParser', xtermParser);
         return xtermParser;
     }
 

@@ -119,7 +119,7 @@ export class TerminalNotebookController  {
             vscode.window.showInformationMessage('No active terminal is currently selected.');
             return;
         }
-		const notebookEditor = TerminalSessionManager.getNotebookEditor(activeTerminal);
+		const notebookEditor = TerminalSessionManager.getSession(activeTerminal).notebookEditor;
 		if (!notebookEditor) {
 			vscode.window.showErrorMessage("no active notebook editor found!");
 			return;

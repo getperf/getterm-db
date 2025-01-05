@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-import { TerminalSessionManager } from './TerminalSessionManager';
 import { Session } from './model/Session';
 import { Logger } from './Logger';
-// import { Config } from './Config';
 import { TerminalSessionMode } from './TerminalSession';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class TerminalCaptureExecutor {
     private context: vscode.ExtensionContext;
@@ -54,7 +53,7 @@ export class TerminalCaptureExecutor {
         const session = await Session.getById(sessionId);
         session.terminalSessionMode = TerminalSessionMode.Capturing;
         console.log("セッション履歴登録：", session);
-        TerminalSessionManager.setSessionId(terminal, sessionId);
+        TerminalSessionManager.updateSession(terminal, 'sessionId', sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
         Logger.info(`open terminal, end`);
     }

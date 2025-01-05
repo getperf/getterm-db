@@ -1,14 +1,10 @@
 import * as vscode from 'vscode';
-// import { initializeDatabase, Database } from './Database';
 import { Session } from './model/Session';
-import { Command } from './model/Command';
 import { TerminalNotebookController } from './NotebookController';
-import { TerminalSessionManager } from './TerminalSessionManager';
-import { Util } from './Util';
-import { Logger } from './Logger';
 import { ConsoleEventProvider } from './ConsoleEventProvider';
-import { TerminalSession, TerminalSessionMode } from './TerminalSession';
+import { TerminalSessionMode } from './TerminalSession';
 import { NotebookSessionWriter } from './NotebookSessionWriter';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class SessionHandler {
     private notebookController : TerminalNotebookController;
@@ -27,7 +23,7 @@ export class SessionHandler {
 
     handleSessionClose(terminal: vscode.Terminal) {
         console.log(`Session ended for terminal: ${terminal.name}`);
-        const session = TerminalSessionManager.get(terminal);
+        const session = TerminalSessionManager.getSession(terminal);
         if (!session) {
             console.info("セッションを取得できませんでした : ", session);
             return;

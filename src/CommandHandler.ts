@@ -10,6 +10,7 @@ import { ConsoleEventProvider } from './ConsoleEventProvider';
 import { TerminalSession, TerminalSessionMode } from './TerminalSession';
 import { SwitchUserCommandHandler } from './SwitchUserCommandHandler';
 import { CommandParser } from './CommandParser';
+// import { NewNewTerminalSessionManager } from './NewTerminalSessionManager';
 
 export class CommandHandler {
     private notebookController : TerminalNotebookController;
@@ -30,7 +31,9 @@ export class CommandHandler {
         if (session.terminalSessionMode !== TerminalSessionMode.Capturing &&
             session.terminalSessionMode !== TerminalSessionMode.CaptureStart
         ) {
-            Logger.warn("Skipping command detection because capture mode is not enabled");
+            console.log(`Skipping command detection because capture mode is not enabled : ${session.terminalSessionMode}`);
+
+            Logger.warn(`Skipping command detection because capture mode is not enabled : ${session.terminalSessionMode}`);
             return false;
         }
         if (!session.sessionId) {
@@ -42,7 +45,7 @@ export class CommandHandler {
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`start command handler invoked`);
-        const session = TerminalSessionManager.get(e.terminal);
+        const session = TerminalSessionManager.getSession(e.terminal);
         // if (!session || !this.varidateTerminalSession(session)) {
         if (!session) {
             return;
@@ -66,7 +69,7 @@ export class CommandHandler {
         // su コマンド検知ハンドラ
         const suCommandHandler = new SwitchUserCommandHandler(e.terminal, sessionId, consoleBuffer);
         if (await suCommandHandler.handleSuCommand()) {
-            if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
+            if (TerminalSessionManager.getSession(e.terminal).notebookEditor) {
                 await this.notebookController.updateNotebook(suCommandHandler.commandId);
             }
             session.terminalSessionMode = TerminalSessionMode.CaptureStart;
@@ -74,7 +77,7 @@ export class CommandHandler {
         }
 
         const commandId = await Command.createEmptyRow(sessionId);
-        TerminalSessionManager.setCommandId(e.terminal, commandId);
+        TerminalSessionManager.updateSession(e.terminal, 'commandId', commandId);
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
@@ -83,7 +86,7 @@ export class CommandHandler {
         const endTime = new Date();
         Logger.info(`end command handler, wait few seconds.`);
         await new Promise(resolve => setTimeout(resolve, 500));
-        const session = TerminalSessionManager.get(e.terminal);
+        const session = TerminalSessionManager.getSession(e.terminal);
         if (!session || !this.varidateTerminalSession(session)) {
             return;
         }
@@ -97,7 +100,7 @@ export class CommandHandler {
         let consoleBuffer = TerminalSessionManager.retrieveDataBuffer(e.terminal);
         Logger.info(`コマンド終了イベント取得バッファ : ${JSON.stringify(consoleBuffer)}`);
         if (!consoleBuffer) { 
-            const terminalSession = TerminalSessionManager.get(e.terminal);
+            const terminalSession = TerminalSessionManager.getSession(e.terminal);
             Logger.error(`セッションからデータバッファが取得できませんでした: ${terminalSession}`);
             return; 
         }
@@ -139,7 +142,7 @@ export class CommandHandler {
 
         const command = await Command.getById(commandId);
         Logger.info(`update commands table ${JSON.stringify(command)}.`);
-        if (TerminalSessionManager.getNotebookEditor(e.terminal)) {
+        if (TerminalSessionManager.getSession(e.terminal).notebookEditor) {
             await this.notebookController.updateNotebook(commandId);
         }
         session.changeModeCapturing(false);

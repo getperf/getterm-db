@@ -107,6 +107,7 @@ suite('ConsernedFileDownloader Test Suite', () => {
 
     test('should save captured file correctly', async () => {
         const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
+        await TerminalSessionManager.create(mockTerminal);
 
         // Stub methods for file saving
         sandbox.stub(fs.promises, 'writeFile').resolves();
@@ -122,6 +123,7 @@ suite('ConsernedFileDownloader Test Suite', () => {
 
     test('updateCommandSuccess should mark command as downloaded', async () => {
         const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
+        await TerminalSessionManager.create(mockTerminal);
         downloader.commandAccessFile = 'file.txt';
         downloader.downloadFile = 'downloaded_file.txt';
 

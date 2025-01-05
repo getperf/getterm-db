@@ -1,14 +1,9 @@
-import * as cp from 'child_process';
 import * as vscode from 'vscode';
-// import { Database } from './Database';
-import { Session } from './model/Session';
-import { Command } from './model/Command';
 import { TerminalNotebookController } from './NotebookController';
-import { TerminalSessionManager } from './TerminalSessionManager';
-import { Util } from './Util';
 import { Logger } from './Logger';
 import { CommandHandler } from './CommandHandler';
 import { SessionHandler } from './SessionHandler';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class ConsoleEventProvider {
     private context: vscode.ExtensionContext;
@@ -60,7 +55,10 @@ export class ConsoleEventProvider {
     }
 
     async terminalDataWriteEvent(e:  vscode.TerminalDataWriteEvent) {
-        TerminalSessionManager.pushDataBufferExcludingOpening(e.terminal, e.data);
+        // TerminalSessionManager.pushDataBufferExcludingOpening(e.terminal, e.data);
+        if (TerminalSessionManager.getSessionNew(e.terminal)) {
+            TerminalSessionManager.pushDataBuffer(e.terminal, e.data);
+        }
     }
 
     async commandStartEvent(e: vscode.TerminalShellExecutionStartEvent) {

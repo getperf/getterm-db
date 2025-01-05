@@ -1,8 +1,7 @@
-import * as cp from 'child_process';
 import * as vscode from 'vscode';
-import { TerminalSessionManager } from './TerminalSessionManager';
 import { Session } from './model/Session';
 import { Logger } from './Logger';
+import { TerminalSessionManager } from './TerminalSessionManager';
 // import { Config } from './Config';
 
 export class PowerShellExecutor {
@@ -47,7 +46,7 @@ export class PowerShellExecutor {
         const sessionId = await Session.create(remoteProfile, 'powershell', [], '', '');
         const session = await Session.getById(sessionId);
         console.log("セッション履歴登録：", session);
-        TerminalSessionManager.setSessionId(terminal, sessionId);
+        TerminalSessionManager.updateSession(terminal, 'sessionId', sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
         Logger.info(`open terminal, end`);
     }
