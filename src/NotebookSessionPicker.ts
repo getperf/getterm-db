@@ -104,14 +104,6 @@ export class TerminalNotebookSessionPicker {
         }
         const selectedSession =
             await TerminalSessionManager.getSessionOrCreate(terminal);
-        // let selectedSession = TerminalSessionManager.getSession(terminal);
-        // if (!selectedSession) {
-        //     selectedSession = await TerminalSessionManager.create(terminal);
-        // }
-        // const sessions = await this.getAvailableSessions();
-        // const selectedSession = await vscode.window.showQuickPick(sessions, {
-        //     placeHolder: 'Select a session',
-        // });
 
         if (selectedSession) {
             const notebookEditor = vscode.window.activeNotebookEditor;

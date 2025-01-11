@@ -1,6 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as os from "os";
+import { Util } from "./Util";
+
+const LAST_SAVE_PATH_KEY = "lastSavePath";
 
 export class ConfigManager {
     private static context: vscode.ExtensionContext;
@@ -73,6 +76,15 @@ export class ConfigManager {
     }
 
     /**
+     * 前回保存したパスを取得する
+     * @returns 前回保存したパスのURIまたはundefined
+     */
+    public static get lastSavePath(): vscode.Uri | undefined {
+        const lastSavePath = this.context.globalState.get<string>(LAST_SAVE_PATH_KEY);
+        return lastSavePath ? vscode.Uri.parse(lastSavePath) : undefined;
+    }
+
+    /**
      * Updates a configuration parameter with a new value.
      * @param name - The name of the parameter to update.
      * @param value - The new value to set.
@@ -134,4 +146,13 @@ export class ConfigManager {
             vscode.ConfigurationTarget.Workspace,
         );
     }
+
+    /**
+     * 新しいパスをストレージに記録する
+     * @param uri 保存したパスのURI
+     */
+    public static setLastSavePath(uri: vscode.Uri) {
+        this.context.globalState.update(LAST_SAVE_PATH_KEY, uri.toString());
+    }
+
 }

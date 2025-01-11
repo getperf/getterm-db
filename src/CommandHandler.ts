@@ -54,17 +54,15 @@ export class CommandHandler {
 
     async commandStartHandler(e: vscode.TerminalShellExecutionStartEvent) {
         Logger.info(`start command handler invoked`);
+        const start = new Date();
         const session = TerminalSessionManager.findSession(e.terminal);
         if (!session) {
             Logger.info(`skip command start handler, session not found : ${e.terminal.name}`);
             console.info("セッションが見つかりません : ", e.terminal.name);
             return;
         }
+        session.commandStart = start;
         const sessionId = session.sessionId;
-        // if (!sessionId) {
-        //     console.info("セッションidを取得できませんでした : ", session);
-        //     return;
-        // }
         Logger.info(`start command handler, session id : ${sessionId}`);
         session.changeModeCapturing(true);
 
@@ -99,11 +97,12 @@ export class CommandHandler {
         }
 
         const commandId = await Command.createEmptyRow(sessionId);
-        TerminalSessionManager.updateSession(
-            e.terminal,
-            "commandId",
-            commandId,
-        );
+        session.commandId = commandId;
+        // TerminalSessionManager.updateSession(
+        //     e.terminal,
+        //     "commandId",
+        //     commandId,
+        // );
         Logger.info(`start command handler, command id created : ${commandId}`);
     }
 
@@ -119,36 +118,29 @@ export class CommandHandler {
         }
         const commandId = session.commandId;
         if (!commandId) {
-            Logger.warn(
-                `セッションからコマンドIDが取得できませんでした: ${JSON.stringify(session)}`,
-            );
+            Logger.warn(`command id not found from session: ${session.sessionName}`);
             return;
         }
-        Logger.info(
-            `end command handler, update timestamp command id : ${commandId}`,
-        );
-        await Command.updateEnd(commandId, endTime);
-        let consoleBuffer = TerminalSessionManager.retrieveDataBuffer(
-            e.terminal,
-        );
-        Logger.info(
-            `コマンド終了イベント取得バッファ : ${JSON.stringify(consoleBuffer)}`,
-        );
+        Logger.info(`end command handler started, command id : ${commandId}`);
+        // await Command.updateEnd(commandId, endTime);
+        if (session.commandStart) {
+            await Command.updateTimestamp(commandId, session.commandStart, endTime);
+        } else {
+            Logger.warn(`command start time not found for session: ${session.sessionName}`);
+        }
+
+        let consoleBuffer = TerminalSessionManager.retrieveDataBuffer(e.terminal);
+        Logger.info(`command buffer : ${JSON.stringify(consoleBuffer)}`);
+
         if (!consoleBuffer) {
-            const terminalSession = TerminalSessionManager.getSession(
-                e.terminal,
-            );
-            Logger.error(
-                `セッションからデータバッファが取得できませんでした: ${terminalSession}`,
-            );
+            Logger.error(`couldn't retrieve command buffer from session: ${session.sessionName}`);
             return;
         }
         const parsedCommand = await CommandParser.parse(consoleBuffer);
-        // const commandLine = e.execution.commandLine.value;
-        // if (commandLine) {
-        //     console.log("APIから抽出したコマンド:", commandLine);
-        //     parsedCommand.command = commandLine;
-        // }
+        const commandLine = e.execution.commandLine.value;
+        if (commandLine) {
+            Logger.info(`command text from API: ${commandLine}`);
+        }
         if (!parsedCommand) {
             vscode.window.showErrorMessage(
                 `Oops. Failed to parse the capture data. Command could not be recorded.`,

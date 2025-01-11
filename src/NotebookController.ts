@@ -5,6 +5,7 @@ import { TerminalSessionManager } from "./TerminalSessionManager";
 import { Logger } from "./Logger";
 import { TerminalNotebookSessionPicker } from "./NotebookSessionPicker";
 import { TerminalNotebookHandler } from "./NotebookHandler";
+import { ConfigManager } from "./ConfigManager";
 export const NOTEBOOK_TYPE = "terminal-notebook";
 
 /**
@@ -85,6 +86,7 @@ export class TerminalNotebookController {
         }
     }
 
+    
     /**
      * Creates or updates a notebook based on the current terminal session status.
      * If a session is active, it loads command history into the notebook.
@@ -94,7 +96,7 @@ export class TerminalNotebookController {
 
         const options: vscode.SaveDialogOptions = {
             saveLabel: "Create Notebook",
-            defaultUri: notebookHandler.defaultUri(),
+            defaultUri: ConfigManager.lastSavePath || notebookHandler.defaultUri(),
             filters: { "GetTerm terminal capture Notebooks": ["getterm"] },
         };
         const notebookUri = await vscode.window.showSaveDialog(options);
@@ -104,6 +106,8 @@ export class TerminalNotebookController {
             );
             return;
         }
+        // 選択したパスをストレージに保存
+        ConfigManager.setLastSavePath(notebookUri);
 
         const emptyNotebookContent = JSON.stringify(
             notebookHandler.createEmptyNotebook(),

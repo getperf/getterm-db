@@ -29,6 +29,11 @@ export class TerminalSession {
     sessionName?: string;
     // Unique identifier for the command within the session
     commandId: number = 0;
+    // Command start time
+    commandStart: Date | undefined;
+    // Command end time
+    commandEnd: Date | undefined;
+
     // Current operational mode of the session
     private _terminalSessionMode = TerminalSessionMode.Close;
 

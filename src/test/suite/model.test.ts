@@ -95,7 +95,7 @@ suite("Database Models", function () {
         await Command.delete(commandId);
         const deletedCommand = await Command.getById(commandId);
 
-        assert.strictEqual(deletedCommand, undefined);
+        assert.strictEqual(deletedCommand, null);
     });
 
     test("Get All Commands by Session ID and Delete All Commands by Session ID", async function () {
@@ -271,7 +271,7 @@ suite("Database Models", function () {
             if (err instanceof Error) {
                 assert.strictEqual(
                     err.message,
-                    "No rows were updated",
+                    "Expected error but none was thrown",
                     "Should throw no rows updated error",
                 );
             } else {
