@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/package",
   "name": "getterm-db",
   "displayName": "getterm-db",
   "publisher": "getperf",
