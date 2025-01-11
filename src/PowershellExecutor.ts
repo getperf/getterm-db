@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
-import { Session } from './model/Session';
-import { Logger } from './Logger';
-import { TerminalSessionManager } from './TerminalSessionManager';
+import * as vscode from "vscode";
+import { Session } from "./model/Session";
+import { Logger } from "./Logger";
+import { TerminalSessionManager } from "./TerminalSessionManager";
 // import { Config } from './Config';
 
 export class PowerShellExecutor {
@@ -14,26 +14,29 @@ export class PowerShellExecutor {
 
     private registerCommands() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('getterm-db.openPowerShellWithProfile', 
-                this.openPowerShellWithProfile
+            vscode.commands.registerCommand(
+                "getterm-db.openPowerShellWithProfile",
+                this.openPowerShellWithProfile,
             ),
         );
     }
 
     private async openPowerShellWithProfile() {
-        const remoteProfile = 'powershell';
+        const remoteProfile = "powershell";
         Logger.info(`open terminal profile : ${remoteProfile}`);
         // await vscode.commands.executeCommand(
-        //     'workbench.action.terminal.newWithProfile', 
+        //     'workbench.action.terminal.newWithProfile',
         //     "PowerShell (Default)"
         // );
 
         // Create a profile object for PowerShell (Default)
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
+        const workspaceRoot =
+            vscode.workspace.workspaceFolders?.[0].uri.fsPath || "";
         const terminalOptions: vscode.TerminalOptions = {
             name: "PowerShell (Default)",
-            shellPath: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", // Path to PowerShell
-            cwd: workspaceRoot
+            shellPath:
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", // Path to PowerShell
+            cwd: workspaceRoot,
         };
 
         // Open a new terminal with the specified profile options
@@ -43,10 +46,16 @@ export class PowerShellExecutor {
         // const config = Config.getInstance();
         // config.set('terminalProfiles', [remoteProfile]);
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
-        const sessionId = await Session.create(remoteProfile, 'powershell', [], '', '');
+        const sessionId = await Session.create(
+            remoteProfile,
+            "powershell",
+            [],
+            "",
+            "",
+        );
         const session = await Session.getById(sessionId);
         console.log("セッション履歴登録：", session);
-        TerminalSessionManager.updateSession(terminal, 'sessionId', sessionId);
+        TerminalSessionManager.updateSession(terminal, "sessionId", sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
         Logger.info(`open terminal, end`);
     }

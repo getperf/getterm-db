@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import { Session } from './model/Session';
-import { Logger } from './Logger';
-import { TerminalSessionMode } from './TerminalSession';
-import { TerminalSessionManager } from './TerminalSessionManager';
+import * as vscode from "vscode";
+import { Session } from "./model/Session";
+import { Logger } from "./Logger";
+import { TerminalSessionMode } from "./TerminalSession";
+import { TerminalSessionManager } from "./TerminalSessionManager";
 
 export class TerminalCaptureExecutor {
     private context: vscode.ExtensionContext;
@@ -14,11 +14,13 @@ export class TerminalCaptureExecutor {
 
     private registerCommands() {
         this.context.subscriptions.push(
-            vscode.commands.registerCommand('getterm-db.startTerminalCapture', 
-                this.startTerminalCapture
+            vscode.commands.registerCommand(
+                "getterm-db.startTerminalCapture",
+                this.startTerminalCapture,
             ),
-            vscode.commands.registerCommand('getterm-db.captureTerminal', 
-                this.captureTerminal
+            vscode.commands.registerCommand(
+                "getterm-db.captureTerminal",
+                this.captureTerminal,
             ),
         );
     }
@@ -28,7 +30,9 @@ export class TerminalCaptureExecutor {
             vscode.window.showErrorMessage("No active terminal found.");
             return;
         }
-        vscode.window.showInformationMessage(`端末キャプチャー: ${terminal.name}`);
+        vscode.window.showInformationMessage(
+            `端末キャプチャー: ${terminal.name}`,
+        );
     }
 
     private async startTerminalCapture() {
@@ -49,11 +53,22 @@ export class TerminalCaptureExecutor {
         // const config = Config.getInstance();
         // config.set('terminalProfiles', [remoteProfile]);
         Logger.info(`open terminal, save profile : ${remoteProfile}`);
-        const sessionId = await Session.create(remoteProfile, 'Capture from existing terminal', [], '', '');
+        const sessionId = await Session.create(
+            remoteProfile,
+            "Capture from existing terminal",
+            [],
+            "",
+            "",
+        );
         const session = await Session.getById(sessionId);
-        session.terminalSessionMode = TerminalSessionMode.Capturing;
+        // session.terminalSessionMode = TerminalSessionMode.Capturing;
         console.log("セッション履歴登録：", session);
-        TerminalSessionManager.updateSession(terminal, 'sessionId', sessionId);
+        TerminalSessionManager.updateSession(terminal, "sessionId", sessionId);
+        TerminalSessionManager.updateSession(
+            terminal,
+            "terminalSessionMode",
+            TerminalSessionMode.Capturing,
+        );
         Logger.info(`open terminal, regist session id : ${sessionId}`);
         Logger.info(`open terminal, end`);
     }

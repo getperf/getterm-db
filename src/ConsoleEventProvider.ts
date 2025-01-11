@@ -1,15 +1,18 @@
-import * as vscode from 'vscode';
-import { TerminalNotebookController } from './NotebookController';
-import { Logger } from './Logger';
-import { CommandHandler } from './CommandHandler';
-import { SessionHandler } from './SessionHandler';
-import { TerminalSessionManager } from './TerminalSessionManager';
+import * as vscode from "vscode";
+import { TerminalNotebookController } from "./NotebookController";
+import { Logger } from "./Logger";
+import { CommandHandler } from "./CommandHandler";
+import { SessionHandler } from "./SessionHandler";
+import { TerminalSessionManager } from "./TerminalSessionManager";
 
 export class ConsoleEventProvider {
     private context: vscode.ExtensionContext;
-    notebookController : TerminalNotebookController;
+    notebookController: TerminalNotebookController;
 
-    constructor(context: vscode.ExtensionContext, notebookController: TerminalNotebookController) {
+    constructor(
+        context: vscode.ExtensionContext,
+        notebookController: TerminalNotebookController,
+    ) {
         this.context = context;
         this.notebookController = notebookController;
         this.registerEventHandlers();
@@ -26,37 +29,37 @@ export class ConsoleEventProvider {
             //     vscode.window.showInformationMessage(`Closed terminal: ${terminal.name}`);
             //     async terminal => this.sessionCloseEvent(terminal)
             // }),
-            vscode.window.onDidOpenTerminal(
-                async terminal => this.sessionOpenEvent(terminal)
+            vscode.window.onDidOpenTerminal(async (terminal) =>
+                this.sessionOpenEvent(terminal),
             ),
-            vscode.window.onDidCloseTerminal(
-                async terminal => this.sessionCloseEvent(terminal)
+            vscode.window.onDidCloseTerminal(async (terminal) =>
+                this.sessionCloseEvent(terminal),
             ),
-            vscode.window.onDidStartTerminalShellExecution(
-                async e => this.commandStartEvent(e)
+            vscode.window.onDidStartTerminalShellExecution(async (e) =>
+                this.commandStartEvent(e),
             ),
-            vscode.window.onDidEndTerminalShellExecution(
-                async e => this.commandEndEvent(e)
+            vscode.window.onDidEndTerminalShellExecution(async (e) =>
+                this.commandEndEvent(e),
             ),
-            vscode.window.onDidWriteTerminalData(
-                async e => this.terminalDataWriteEvent(e)
-            )
+            vscode.window.onDidWriteTerminalData(async (e) =>
+                this.terminalDataWriteEvent(e),
+            ),
         );
     }
 
-    async sessionOpenEvent(terminal:  vscode.Terminal) {
+    async sessionOpenEvent(terminal: vscode.Terminal) {
         const sessionHandler = new SessionHandler(this);
         sessionHandler.handleSessionOpen(terminal);
     }
 
-    async sessionCloseEvent(terminal:  vscode.Terminal) {
+    async sessionCloseEvent(terminal: vscode.Terminal) {
         const sessionHandler = new SessionHandler(this);
         sessionHandler.handleSessionClose(terminal);
     }
 
-    async terminalDataWriteEvent(e:  vscode.TerminalDataWriteEvent) {
+    async terminalDataWriteEvent(e: vscode.TerminalDataWriteEvent) {
         // TerminalSessionManager.pushDataBufferExcludingOpening(e.terminal, e.data);
-        if (TerminalSessionManager.getSessionNew(e.terminal)) {
+        if (TerminalSessionManager.findSession(e.terminal)) {
             TerminalSessionManager.pushDataBuffer(e.terminal, e.data);
         }
     }
@@ -71,4 +74,3 @@ export class ConsoleEventProvider {
         commandHandler.commandEndHandler(e);
     }
 }
-                                                        

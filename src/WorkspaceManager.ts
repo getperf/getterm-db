@@ -1,13 +1,16 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export class WorkspaceManager {
     static checkWorkspaceOpened(): boolean {
-        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        if (
+            vscode.workspace.workspaceFolders &&
+            vscode.workspace.workspaceFolders.length > 0
+        ) {
             return true;
         } else {
             return false;
         }
-    }    
+    }
 
     /**
      * ワークスペースが開いているか確認し、開いていない場合はユーザーにフォルダを選択させます。
@@ -15,7 +18,10 @@ export class WorkspaceManager {
      */
     static async ensureWorkspaceIsOpen(): Promise<boolean> {
         console.log("ensureWorkspaceIsOpen");
-        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+        if (
+            vscode.workspace.workspaceFolders &&
+            vscode.workspace.workspaceFolders.length > 0
+        ) {
             // 既にワークスペースが開いている
             return true;
         }
@@ -23,7 +29,7 @@ export class WorkspaceManager {
         const userChoice = await vscode.window.showWarningMessage(
             "事前にワークスペースを開いてください。新しいディレクトリを選択しますか？",
             { modal: true },
-            "ディレクトリを選択"
+            "ディレクトリを選択",
         );
 
         if (userChoice === "ディレクトリを選択") {
@@ -31,17 +37,22 @@ export class WorkspaceManager {
                 canSelectFolders: true,
                 canSelectFiles: false,
                 canSelectMany: false,
-                openLabel: "ワークスペースにするフォルダを選択"
+                openLabel: "ワークスペースにするフォルダを選択",
             });
 
             if (folderUri && folderUri[0]) {
                 // 選択されたフォルダでワークスペースを開く
-                await vscode.commands.executeCommand('vscode.openFolder', folderUri[0]);
+                await vscode.commands.executeCommand(
+                    "vscode.openFolder",
+                    folderUri[0],
+                );
                 return true;
             }
         }
 
-        vscode.window.showInformationMessage("ワークスペースが開かれていないため、処理を中断します。");
+        vscode.window.showInformationMessage(
+            "ワークスペースが開かれていないため、処理を中断します。",
+        );
         return false;
     }
 }

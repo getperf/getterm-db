@@ -1,5 +1,5 @@
-export const createTableSQL : string[] = [
-`CREATE TABLE IF NOT EXISTS sessions (
+export const createTableSQL: string[] = [
+    `CREATE TABLE IF NOT EXISTS sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     profile_name TEXT,
     description TEXT,
@@ -11,7 +11,7 @@ export const createTableSQL : string[] = [
     start DATETIME,
     end DATETIME
 )`,
-`CREATE TABLE IF NOT EXISTS commands (
+    `CREATE TABLE IF NOT EXISTS commands (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER,
     command TEXT,
@@ -27,13 +27,13 @@ export const createTableSQL : string[] = [
     end DATETIME,
     FOREIGN KEY(session_id) REFERENCES sessions(id)
 )`,
-`CREATE TABLE IF NOT EXISTS notes (
+    `CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`,
-`CREATE TABLE IF NOT EXISTS cells (
+    `CREATE TABLE IF NOT EXISTS cells (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     notebook_id INTEGER NOT NULL,
     session_id INTEGER,

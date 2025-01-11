@@ -64,7 +64,7 @@
 //             const config = new Config();
 //             config.gettermHome = config.getGettermHome();
 //             config.configFilePath = path.join(config.gettermHome, ConfigFile);
-    
+
 //             config.ensureDirectoryExists(); // Create .getterm directory if it doesn’t exist
 //             config.loadSettings();
 //             config.registerFileSystemWatcher();

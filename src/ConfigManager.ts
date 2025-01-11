@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as os from 'os';
+import * as vscode from "vscode";
+import * as path from "path";
+import * as os from "os";
 
 export class ConfigManager {
     private static context: vscode.ExtensionContext;
@@ -22,7 +22,7 @@ export class ConfigManager {
      * @returns The value of the parameter or the default value if not set.
      */
     static getParameter<T>(parameterName: string, defaultValue: T): T {
-        const config = vscode.workspace.getConfiguration('getterm-db');
+        const config = vscode.workspace.getConfiguration("getterm-db");
         const value = config.get<T>(parameterName, defaultValue);
         if (value === undefined || value === null || value === "") {
             return defaultValue;
@@ -37,8 +37,8 @@ export class ConfigManager {
      */
     public static get sqliteDbPath(): string {
         // const defaultPath = path.join(this.context.globalStorageUri.fsPath, 'getterm.sqlite');
-        const defaultPath = path.join(os.homedir(), '.getterm', 'getterm.db');
-        return this.getParameter('sqliteDbPath', defaultPath);
+        const defaultPath = path.join(os.homedir(), ".getterm", "getterm.db");
+        return this.getParameter("sqliteDbPath", defaultPath);
     }
 
     /**
@@ -47,8 +47,10 @@ export class ConfigManager {
      * @returns The notebook home directory path.
      */
     public static get notebookHome(): string {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || path.join(os.homedir(), 'Documents');
-        return this.getParameter('notebookHome', workspaceFolder);
+        const workspaceFolder =
+            vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ||
+            path.join(os.homedir(), "Documents");
+        return this.getParameter("notebookHome", workspaceFolder);
     }
 
     /**
@@ -57,8 +59,8 @@ export class ConfigManager {
      * @returns The download directory path.
      */
     public static get downloadHome(): string {
-        const defaultDownloadHome = path.join(this.notebookHome, '.getterm');
-        return this.getParameter('downloadHome', defaultDownloadHome);
+        const defaultDownloadHome = path.join(this.notebookHome, ".getterm");
+        return this.getParameter("downloadHome", defaultDownloadHome);
     }
 
     /**
@@ -67,7 +69,7 @@ export class ConfigManager {
      * @returns The log level as a string.
      */
     public static get logLevel(): string {
-        return this.getParameter('logLevel', 'info');
+        return this.getParameter("logLevel", "info");
     }
 
     /**
@@ -76,8 +78,12 @@ export class ConfigManager {
      * @param value - The new value to set.
      * @param target - The configuration target (Global or Workspace).
      */
-    private static async setParameter<T>(name: string, value: T, target: vscode.ConfigurationTarget): Promise<void> {
-        const config = vscode.workspace.getConfiguration('getterm-db');
+    private static async setParameter<T>(
+        name: string,
+        value: T,
+        target: vscode.ConfigurationTarget,
+    ): Promise<void> {
+        const config = vscode.workspace.getConfiguration("getterm-db");
         await config.update(name, value, target);
     }
 
@@ -86,7 +92,11 @@ export class ConfigManager {
      * @param newLevel - The new log level to set.
      */
     public static async setLogLevel(newLevel: string): Promise<void> {
-        await this.setParameter('logLevel', newLevel, vscode.ConfigurationTarget.Global);
+        await this.setParameter(
+            "logLevel",
+            newLevel,
+            vscode.ConfigurationTarget.Global,
+        );
     }
 
     /**
@@ -94,7 +104,11 @@ export class ConfigManager {
      * @param newPath - The new path to the SQLite database file.
      */
     public static async setSqliteDbPath(newPath: string): Promise<void> {
-        await this.setParameter('sqliteDbPath', newPath, vscode.ConfigurationTarget.Global);
+        await this.setParameter(
+            "sqliteDbPath",
+            newPath,
+            vscode.ConfigurationTarget.Global,
+        );
     }
 
     /**
@@ -102,7 +116,11 @@ export class ConfigManager {
      * @param newPath - The new notebook home directory path.
      */
     public static async setNotebookHome(newPath: string): Promise<void> {
-        await this.setParameter('notebookHome', newPath, vscode.ConfigurationTarget.Workspace);
+        await this.setParameter(
+            "notebookHome",
+            newPath,
+            vscode.ConfigurationTarget.Workspace,
+        );
     }
 
     /**
@@ -110,6 +128,10 @@ export class ConfigManager {
      * @param newPath - The new download directory path.
      */
     public static async setDownloadHome(newPath: string): Promise<void> {
-        await this.setParameter('downloadHome', newPath, vscode.ConfigurationTarget.Workspace);
+        await this.setParameter(
+            "downloadHome",
+            newPath,
+            vscode.ConfigurationTarget.Workspace,
+        );
     }
 }

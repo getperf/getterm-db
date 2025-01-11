@@ -1,12 +1,13 @@
-import * as vscode from 'vscode';
-import { Logger } from './Logger';
-import { XtermParser } from './XtermParser';
-import { TerminalSession, TerminalSessionMode } from './TerminalSession';
-import { Session } from './model/Session';
+import * as vscode from "vscode";
+import { Logger } from "./Logger";
+import { XtermParser } from "./XtermParser";
+import { TerminalSession, TerminalSessionMode } from "./TerminalSession";
+import { Session } from "./model/Session";
 
 export class TerminalSessionManager {
     private static instance: TerminalSessionManager | null = null;
-    private static terminalSessions: Map<vscode.Terminal, TerminalSession> = new Map();
+    private static terminalSessions: Map<vscode.Terminal, TerminalSession> =
+        new Map();
     private readonly monitorInterval = 2000;
 
     public static initializeInstance(): TerminalSessionManager {
@@ -25,27 +26,36 @@ export class TerminalSessionManager {
 
     private checkAllSessionStatus() {
         TerminalSessionManager.terminalSessions.forEach((session, terminal) => {
-            console.log(`Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Traffic: ${session.terminalTraffic}, Run: ${session.commandRunning}, Active: ${session.shellIntegrationNotActive()}`);
+            console.log(
+                `Terminal: ${terminal.name}, Mode: ${session.terminalSessionMode}, Traffic: ${session.terminalTraffic}, Run: ${session.commandRunning}, Active: ${session.shellIntegrationNotActive()}`,
+            );
 
             const now = new Date();
             if (session.shellIntegrationNotActive()) {
-                console.log("シェル統合無効化検知：", session.notificationSuppressionDeadline(now));
+                console.log(
+                    "シェル統合無効化検知：",
+                    session.notificationSuppressionDeadline(now),
+                );
                 if (session.notificationSuppressionDeadline(now)) {
                     // vscode.window.showInformationMessage(
                     //     `シェル統合を有効化してください`
                     // );
-                    vscode.window.showInformationMessage(
-                        "シェル統合スクリプトを有効化してください",
-                        "有効化手順"
-                        // "https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation"
-                    ).then((selection) => {
-                        if (selection) {
-                            vscode.env.openExternal(vscode.Uri.parse("https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation"));
-                        }
-                    });
-                    console.log(
-                        `シェル統合を有効化してください`
-                    );
+                    vscode.window
+                        .showInformationMessage(
+                            "シェル統合スクリプトを有効化してください",
+                            "有効化手順",
+                            // "https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation"
+                        )
+                        .then((selection) => {
+                            if (selection) {
+                                vscode.env.openExternal(
+                                    vscode.Uri.parse(
+                                        "https://code.visualstudio.com/docs/terminal/shell-integration#_manual-installation",
+                                    ),
+                                );
+                            }
+                        });
+                    console.log(`シェル統合を有効化してください`);
                     // session.nextNotification = new Date(now.getTime() + 30000); // 30秒後
                     session.setNextNotification(now);
                 }
@@ -58,7 +68,7 @@ export class TerminalSessionManager {
         });
     }
 
-    static getSessionNew(terminal: vscode.Terminal): TerminalSession | undefined {
+    static findSession(terminal: vscode.Terminal): TerminalSession | undefined {
         return this.terminalSessions.get(terminal);
     }
 
@@ -69,18 +79,38 @@ export class TerminalSessionManager {
         }
         return session;
     }
-
-    static async getSessionOrCreate(terminal: vscode.Terminal): Promise<TerminalSession> {
+    
+    static async getSessionOrCreate(
+        terminal: vscode.Terminal,
+    ): Promise<TerminalSession> {
         let session = this.terminalSessions.get(terminal);
         if (!session) {
-            session = await this.create(terminal);
+            session = await this.registerSession(terminal);
         }
         return session;
     }
 
-    static async create(terminal: vscode.Terminal): Promise<TerminalSession> {
-        const sessionId = await Session.create(terminal.name, 'Capture from existing terminal', [], '', '');
+    static async registerSession(terminal: vscode.Terminal): Promise<TerminalSession> {
+        // const terminalOptions = terminal.creationOptions;
+        // const sessionId = await Session.createByTerminalOptions(terminalOptions);
+        const sessionId = await Session.create(
+            terminal.name,
+            "Capture from existing terminal",
+            [],
+            "",
+            "",
+        );
         // const session = await Session.getById(sessionId);
+        const session = new TerminalSession();
+        session.sessionId = sessionId;
+        session.sessionName = terminal.name;
+        session.terminalSessionMode = TerminalSessionMode.Start;
+        Logger.info(`Created terminal session: ${sessionId}`);
+        this.terminalSessions.set(terminal, session);
+        return session;
+    }
+
+    static create(terminal: vscode.Terminal, sessionId : number): TerminalSession {
         const session = new TerminalSession();
         session.sessionId = sessionId;
         session.sessionName = terminal.name;
@@ -93,7 +123,7 @@ export class TerminalSessionManager {
     public static updateSession<T extends keyof TerminalSession>(
         terminal: vscode.Terminal,
         key: T,
-        value: TerminalSession[T]
+        value: TerminalSession[T],
     ): void {
         const session = this.getSession(terminal);
         session[key] = value;
@@ -104,12 +134,15 @@ export class TerminalSessionManager {
 
     public static retrieveDataBuffer(terminal: vscode.Terminal): string {
         const session = this.getSession(terminal);
-        const dataBuffer = session.consoleBuffer?.join('');
+        const dataBuffer = session.consoleBuffer?.join("");
         session.consoleBuffer = [];
-        return dataBuffer || '';
+        return dataBuffer || "";
     }
 
-    public static pushDataBuffer(terminal: vscode.Terminal, data: string): number {
+    public static pushDataBuffer(
+        terminal: vscode.Terminal,
+        data: string,
+    ): number {
         const session = this.getSession(terminal);
         session.terminalTraffic += data.length;
         const bufferLen = session.consoleBuffer.push(data);
@@ -117,16 +150,18 @@ export class TerminalSessionManager {
         return bufferLen;
     }
 
-    public static disableShellIntegrationEvent(terminal: vscode.Terminal): void {
-        this.updateSession(terminal, 'disableShellIntegrationHandlers', true);
+    public static disableShellIntegrationEvent(
+        terminal: vscode.Terminal,
+    ): void {
+        this.updateSession(terminal, "disableShellIntegrationHandlers", true);
     }
 
     public static enableShellIntegrationEvent(terminal: vscode.Terminal): void {
-        this.updateSession(terminal, 'disableShellIntegrationHandlers', false);
+        this.updateSession(terminal, "disableShellIntegrationHandlers", false);
     }
 
     public static getSessionName(terminal: vscode.Terminal): string {
-        return this.getSession(terminal).sessionName || '';
+        return this.getSession(terminal).sessionName || "";
     }
 
     public static getSessionId(terminal: vscode.Terminal): number {
@@ -134,10 +169,14 @@ export class TerminalSessionManager {
     }
 
     public static getAllSessionLabels(): string[] {
-        return Array.from(this.terminalSessions.keys()).map((terminal) => terminal.name);
+        return Array.from(this.terminalSessions.keys()).map(
+            (terminal) => terminal.name,
+        );
     }
 
-    public static findTerminalByName(name: string): vscode.Terminal | undefined {
+    public static findTerminalByName(
+        name: string,
+    ): vscode.Terminal | undefined {
         for (const [terminal] of this.terminalSessions.entries()) {
             if (terminal.name === name) {
                 return terminal;
@@ -146,13 +185,15 @@ export class TerminalSessionManager {
         return undefined;
     }
 
-    public static findTerminalByNotebookEditor(notebookEditor: vscode.NotebookEditor | undefined): vscode.Terminal | undefined {
+    public static findTerminalByNotebookEditor(
+        notebookEditor: vscode.NotebookEditor | undefined,
+    ): vscode.Terminal | undefined {
         if (!notebookEditor) {
             return undefined;
         }
         const terminals = vscode.window.terminals;
         for (const terminal of terminals) {
-            const session = this.getSession(terminal);
+            const session = this.findSession(terminal);
             if (session && session.notebookEditor === notebookEditor) {
                 return terminal;
             }
@@ -160,4 +201,13 @@ export class TerminalSessionManager {
         return undefined;
     }
 
+    public static delete(terminal: vscode.Terminal): void {
+        const session = this.terminalSessions.get(terminal);
+        if (session) {
+            this.terminalSessions.delete(terminal);
+            Logger.info(`Deleted terminal session: ${session.sessionId}`);
+        } else {
+            Logger.warn(`No session found for terminal: ${terminal.name}`);
+        }
+    }
 }
