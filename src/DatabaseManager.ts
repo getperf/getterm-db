@@ -1,13 +1,13 @@
-import * as sqlite3 from 'sqlite3';
-import * as path from 'path';
-import * as fs from 'fs';
-import { DatabaseUpgrader } from './DatabaseUpgrader';
-import { Session } from './model/Session';
-import { Command } from './model/Command';
-import { Note } from './model/Note';
-import { Cell } from './model/Cell';
-import { Logger } from './Logger';
-import { ConfigManager } from './ConfigManager';
+import * as sqlite3 from "sqlite3";
+import * as path from "path";
+import * as fs from "fs";
+import { DatabaseUpgrader } from "./DatabaseUpgrader";
+import { Session } from "./model/Session";
+import { Command } from "./model/Command";
+import { Note } from "./model/Note";
+import { Cell } from "./model/Cell";
+import { Logger } from "./Logger";
+import { ConfigManager } from "./ConfigManager";
 
 export class DatabaseManager {
     private static instance: DatabaseManager | null = null;
@@ -15,7 +15,7 @@ export class DatabaseManager {
 
     private constructor() {}
 
-    static async initialize(): Promise<DatabaseManager>  {
+    static async initialize(): Promise<DatabaseManager> {
         if (!DatabaseManager.instance) {
             DatabaseManager.instance = new DatabaseManager();
             await DatabaseManager.instance.setupDatabase();
@@ -32,11 +32,13 @@ export class DatabaseManager {
         }
 
         this.db = new sqlite3.Database(databasePath, (err) => {
-            if (err) {throw new Error(`Failed to open database: ${err.message}`);}
+            if (err) {
+                throw new Error(`Failed to open database: ${err.message}`);
+            }
         });
 
         if (!this.db) {
-            throw new Error('Failed to open database');
+            throw new Error("Failed to open database");
         }
         const upgrader = new DatabaseUpgrader(this.db);
         await upgrader.upgradeDatabase();

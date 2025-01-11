@@ -78,13 +78,13 @@
 //   test('Create a new session id if no existing session is found', () => {
 //       const terminal = vscode.window.createTerminal('New Terminal');
 //       const sessionId = 3;
-  
+
 //       // Set session data for a new terminal
 //       TerminalSessionManager.setSessionId(terminal, sessionId);
-  
+
 //       // Retrieve the session data
 //       const session = TerminalSessionManager.get(terminal);
-  
+
 //       // Validate the session data
 //       assert.ok(session, 'Session should exist for the new terminal');
 //       assert.strictEqual(session?.sessionId, sessionId, 'Session ID should match');
@@ -109,7 +109,7 @@
 //     const line2 = TerminalSessionManager.retrieveDataBuffer(terminal);
 //     assert.strictEqual(line2, dataBuffer2, 'data buffer should match');
 //   });
-      
+
 //   test('should set and get xtermParser correctly', () => {
 //     const terminal = <vscode.Terminal>{};
 //     const xtermParser = XtermParser.getInstance();
@@ -158,4 +158,3 @@
 //   //   assert.strictEqual(editedFileDownloader, undefined, 'EditedFileDownloader should be undefined');
 //   // });
 // });
-  

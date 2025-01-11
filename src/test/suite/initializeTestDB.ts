@@ -5,11 +5,13 @@ import { Note } from "../../model/Note";
 import { Cell } from "../../model/Cell";
 
 export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
-    const db = new sqlite3.Database(':memory:', (err) => {
-      if (err) {return done(err);}
+    const db = new sqlite3.Database(":memory:", (err) => {
+        if (err) {
+            return done(err);
+        }
 
-      db.serialize(() => {
-        db.run(`
+        db.serialize(() => {
+            db.run(`
           CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             profile_name TEXT,
@@ -20,7 +22,7 @@ export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
             start DATE,
             end DATE
           )`);
-        db.run(`
+            db.run(`
           CREATE TABLE IF NOT EXISTS commands (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               session_id INTEGER,
@@ -37,14 +39,15 @@ export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
               end DATETIME,
               FOREIGN KEY(session_id) REFERENCES sessions(id)
           )`);
-        db.run(`
+            db.run(`
           CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
           )`);
-        db.run(`
+            db.run(
+                `
           CREATE TABLE IF NOT EXISTS cells (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             notebook_id INTEGER NOT NULL,
@@ -58,21 +61,22 @@ export function initializeTestDB(done: Mocha.Done): sqlite3.Database {
             FOREIGN KEY (notebook_id) REFERENCES notes(id) ON DELETE CASCADE,
             FOREIGN KEY (session_id) REFERENCES sessions(id),
             FOREIGN KEY (command_id) REFERENCES commands(id)
-          )`, (err) => {
-            if (err) {
-              done(err); // Fail the test if there's an error creating tables
-            } else {
-              done(); // Signal that the test setup is complete
-            }
-          });
+          )`,
+                (err) => {
+                    if (err) {
+                        done(err); // Fail the test if there's an error creating tables
+                    } else {
+                        done(); // Signal that the test setup is complete
+                    }
+                },
+            );
         });
     });
 
-  // Set up the models with the database instance
-  Session.setup(db);
-  Command.setup(db);
-  Note.setup(db);
-  Cell.setup(db);
-  return db;
+    // Set up the models with the database instance
+    Session.setup(db);
+    Command.setup(db);
+    Note.setup(db);
+    Cell.setup(db);
+    return db;
 }
-

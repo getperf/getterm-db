@@ -1,41 +1,41 @@
-import * as vscode from 'vscode';
-import { Logger } from './Logger';
-import { XtermParser } from './XtermParser';
-import { ParsedCommand } from './CommandParser';
+import * as vscode from "vscode";
+import { Logger } from "./Logger";
+import { XtermParser } from "./XtermParser";
+import { ParsedCommand } from "./CommandParser";
 
 /**
  * Enum representing the various operational states of the terminal session.
  * Used to track and handle the lifecycle of a session.
  */
 export enum TerminalSessionMode {
-	Start = "Start",
-	CaptureStart = "CaptureStart",
-	Capturing = "Capturing",
-	CaptureStop = "CaptureStop",
-	Close = "Close",
-};
+    Start = "Start",
+    CaptureStart = "CaptureStart",
+    Capturing = "Capturing",
+    CaptureStop = "CaptureStop",
+    Close = "Close",
+}
 
 /**
- * TerminalSession manages the state, command tracking, and shell integration 
- * of a terminal session within VSCode. This includes managing session modes, 
+ * TerminalSession manages the state, command tracking, and shell integration
+ * of a terminal session within VSCode. This includes managing session modes,
  * buffering console output, and determining if shell integration is active.
  */
 export class TerminalSession {
     // Records session start time
-    start: Date = new Date();           
+    start: Date = new Date();
     // Unique identifier for the session
     sessionId: number = 0;
     // Session name
     sessionName?: string;
     // Unique identifier for the command within the session
-    commandId: number = 0;              
+    commandId: number = 0;
     // Current operational mode of the session
-    private _terminalSessionMode = TerminalSessionMode.Close;  
+    private _terminalSessionMode = TerminalSessionMode.Close;
 
     startEventCommand?: string;
 
     // Buffer holding output data for the session
-    consoleBuffer: string[]  = [];
+    consoleBuffer: string[] = [];
 
     notebookEditor: vscode.NotebookEditor | undefined;
     xtermParser: XtermParser | undefined;
@@ -44,8 +44,8 @@ export class TerminalSession {
     // Disables shell integration handler processing
     disableShellIntegrationHandlers: boolean = false;
 
-    // Indicates whether a shell command is currently running. 
-    // True if a command start event has been trrigerd but the end event has not yet. 
+    // Indicates whether a shell command is currently running.
+    // True if a command start event has been trrigerd but the end event has not yet.
     // False when a command is being entered or not running.
     commandRunning: boolean = false;
 
@@ -58,26 +58,31 @@ export class TerminalSession {
     // Amount of terminal traffic measured as the byte count within the interval period
     terminalTraffic: number = 0;
 
-    // Traffic threshold to consider as key input: if the traffic during the interval 
+    // Traffic threshold to consider as key input: if the traffic during the interval
     // is below this value, it is treated as key input activity
     private readonly keyInputTrafficLimit = 50;
 
-    // Suppression interval for shell integration disabled check: after a notification, 
+    // Suppression interval for shell integration disabled check: after a notification,
     // checks within this interval (in milliseconds) will not trigger a new notification
     private readonly nextNotificationTime = 60000;
 
     /**
      * Determines if shell integration is inactive, based on the current session mode,
-     * command execution status, and traffic threshold. Returns true if integration 
+     * command execution status, and traffic threshold. Returns true if integration
      * appears inactive.
      */
-    public shellIntegrationNotActive() : boolean {
+    public shellIntegrationNotActive(): boolean {
         if (this.terminalSessionMode !== TerminalSessionMode.CaptureStart) {
             return false;
         }
-        Logger.debug(`Determines if shell integration is inactive: ${this.terminalTraffic}, ${this.shellExecutionEventBusy}`);
-        if (this.terminalTraffic > this.keyInputTrafficLimit && !this.shellExecutionEventBusy) { 
-            return true; 
+        Logger.debug(
+            `Determines if shell integration is inactive: ${this.terminalTraffic}, ${this.shellExecutionEventBusy}`,
+        );
+        if (
+            this.terminalTraffic > this.keyInputTrafficLimit &&
+            !this.shellExecutionEventBusy
+        ) {
+            return true;
         }
         return false;
     }
@@ -85,10 +90,10 @@ export class TerminalSession {
     /**
      * Checks if the session is in an active capturing state.
      */
-    public captureActive() : boolean {
-        // return (this.terminalSessionMode === TerminalSessionMode.Capturing || 
+    public captureActive(): boolean {
+        // return (this.terminalSessionMode === TerminalSessionMode.Capturing ||
         //     this.terminalSessionMode === TerminalSessionMode.CaptureStart);
-        return (this.terminalSessionMode === TerminalSessionMode.CaptureStart);
+        return this.terminalSessionMode === TerminalSessionMode.CaptureStart;
     }
 
     /**
@@ -96,9 +101,11 @@ export class TerminalSession {
      * @param now - The current time
      * @returns true if the current time is beyond the suppression interval.
      */
-    public notificationSuppressionDeadline(now : Date) : boolean {
-        Logger.debug(`notification suppression deadline check :${now} >= ${this.nextNotification}`);
-        return (this.nextNotification === null || now >= this.nextNotification);
+    public notificationSuppressionDeadline(now: Date): boolean {
+        Logger.debug(
+            `notification suppression deadline check :${now} >= ${this.nextNotification}`,
+        );
+        return this.nextNotification === null || now >= this.nextNotification;
     }
 
     /**
@@ -107,7 +114,9 @@ export class TerminalSession {
      * @param now - The current time
      */
     public setNextNotification(now: Date) {
-        this.nextNotification = new Date(now.getTime() + this.nextNotificationTime);
+        this.nextNotification = new Date(
+            now.getTime() + this.nextNotificationTime,
+        );
     }
 
     /**

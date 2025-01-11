@@ -1,17 +1,17 @@
-import * as assert from 'assert';
-import * as vscode from 'vscode';
-import * as sqlite3 from 'sqlite3';
-import * as sinon from 'sinon';
-import proxyquire from 'proxyquire';
-import { initializeTestDB } from './initializeTestDB';
-import { ConsernedFileDownloader } from '../../ConsernedFileDownloader';
-import { ParsedCommand } from '../../CommandParser';
-import * as fs from 'fs';
-import { Command } from '../../model/Command';
-import { Session } from '../../model/Session';
-import { TerminalSessionManager } from '../../TerminalSessionManager';
+import * as assert from "assert";
+import * as vscode from "vscode";
+import * as sqlite3 from "sqlite3";
+import * as sinon from "sinon";
+import proxyquire from "proxyquire";
+import { initializeTestDB } from "./initializeTestDB";
+import { ConsernedFileDownloader } from "../../ConsernedFileDownloader";
+import { ParsedCommand } from "../../CommandParser";
+import * as fs from "fs";
+import { Command } from "../../model/Command";
+import { Session } from "../../model/Session";
+import { TerminalSessionManager } from "../../TerminalSessionManager";
 
-suite('ConsernedFileDownloader Test Suite', () => {
+suite("ConsernedFileDownloader Test Suite", () => {
     let sandbox: sinon.SinonSandbox;
     let db: sqlite3.Database;
     let ConcernedFileDownloader: typeof ConsernedFileDownloader;
@@ -21,14 +21,22 @@ suite('ConsernedFileDownloader Test Suite', () => {
     suiteSetup(function (done) {
         db = initializeTestDB(done);
         sandbox = sinon.createSandbox();
-        
+
         // Stub fs module
         const fsStub = { writeFileSync: sandbox.stub().returns(true) };
-        ConcernedFileDownloader = proxyquire('../../ConsernedFileDownloader', { 'fs': fsStub }).ConsernedFileDownloader;
+        ConcernedFileDownloader = proxyquire("../../ConsernedFileDownloader", {
+            fs: fsStub,
+        }).ConsernedFileDownloader;
 
         // Mock terminal and parsed command
-        mockTerminal = { name: 'Test Terminal', sendText: sandbox.stub() } as unknown as vscode.Terminal;
-        parsedCommand = { command: 'vi /path/to/file', output: 'File content after download' } as ParsedCommand;
+        mockTerminal = {
+            name: "Test Terminal",
+            sendText: sandbox.stub(),
+        } as unknown as vscode.Terminal;
+        parsedCommand = {
+            command: "vi /path/to/file",
+            output: "File content after download",
+        } as ParsedCommand;
     });
 
     suiteTeardown(function (done) {
@@ -36,15 +44,24 @@ suite('ConsernedFileDownloader Test Suite', () => {
         db.close(done);
     });
 
-    test('detectFileAccessFromCommand should return true for valid file access', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
+    test("detectFileAccessFromCommand should return true for valid file access", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
         assert.strictEqual(downloader.detectFileAccessFromCommand(), true);
     });
 
-    test('should return the file name for vi command', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('vi myfile.txt');
-        assert.strictEqual(result, 'myfile.txt');
+    test("should return the file name for vi command", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result =
+            downloader.checkFileNameFromEditorCommand("vi myfile.txt");
+        assert.strictEqual(result, "myfile.txt");
     });
 
     // test('should return command and arguments when sudo and editor command are present', () => {
@@ -54,41 +71,72 @@ suite('ConsernedFileDownloader Test Suite', () => {
     //     assert.strictEqual(downloader.sudoCommand, 'sudo -u user1');
     // });
 
-    test('should return the file name for emacs command', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('emacs script.sh');
-        assert.strictEqual(result, 'script.sh');
+    test("should return the file name for emacs command", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result =
+            downloader.checkFileNameFromEditorCommand("emacs script.sh");
+        assert.strictEqual(result, "script.sh");
     });
 
-    test('should return undefined for non-editor commands', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('ls -al');
+    test("should return undefined for non-editor commands", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result = downloader.checkFileNameFromEditorCommand("ls -al");
         assert.strictEqual(result, undefined);
     });
 
-    test('should return undefined for service commands', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('sudo service httpd configtest');
+    test("should return undefined for service commands", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result = downloader.checkFileNameFromEditorCommand(
+            "sudo service httpd configtest",
+        );
         assert.strictEqual(result, undefined);
     });
 
-    test('should return undefined if no file name is provided', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('vi');
+    test("should return undefined if no file name is provided", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result = downloader.checkFileNameFromEditorCommand("vi");
         assert.strictEqual(result, undefined);
     });
 
-    test('should handle extra spaces', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        const result = downloader.checkFileNameFromEditorCommand('  nano   notes.txt  ');
-        assert.strictEqual(result, 'notes.txt');
+    test("should handle extra spaces", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        const result = downloader.checkFileNameFromEditorCommand(
+            "  nano   notes.txt  ",
+        );
+        assert.strictEqual(result, "notes.txt");
     });
 
-    test('should confirm file download via information message', async () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
+    test("should confirm file download via information message", async () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
 
         // Stub showInformationMessage
-        const showInfoStub = sandbox.stub(vscode.window, 'showInformationMessage').resolves('Yes' as any);
+        const showInfoStub = sandbox
+            .stub(vscode.window, "showInformationMessage")
+            .resolves("Yes" as any);
 
         assert.strictEqual(downloader.detectFileAccessFromCommand(), true);
         await downloader.showConfirmationMessage();
@@ -96,24 +144,37 @@ suite('ConsernedFileDownloader Test Suite', () => {
         assert.strictEqual(showInfoStub.calledOnce, true);
     });
 
-    test('getUniqueDownloadFile should return unique filename with original file included', () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        downloader.commandAccessFile = 'file.txt';
+    test("getUniqueDownloadFile should return unique filename with original file included", () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        downloader.commandAccessFile = "file.txt";
 
         const uniqueFile = downloader.getUniqueDownloadFile();
         assert.ok(uniqueFile);
-        assert.strictEqual(uniqueFile.includes('file.txt'), true);
+        assert.strictEqual(uniqueFile.includes("file.txt"), true);
     });
 
-    test('should save captured file correctly', async () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        await TerminalSessionManager.create(mockTerminal);
+    test("should save captured file correctly", async () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        await TerminalSessionManager.registerSession(mockTerminal);
 
         // Stub methods for file saving
-        sandbox.stub(fs.promises, 'writeFile').resolves();
-        const uniqueFileStub = sandbox.stub(downloader, 'getUniqueDownloadFile').returns('testFile.txt');
+        sandbox.stub(fs.promises, "writeFile").resolves();
+        const uniqueFileStub = sandbox
+            .stub(downloader, "getUniqueDownloadFile")
+            .returns("testFile.txt");
 
-        TerminalSessionManager.pushDataBuffer(mockTerminal, 'cat /path/to/file; this is a test');
+        TerminalSessionManager.pushDataBuffer(
+            mockTerminal,
+            "cat /path/to/file; this is a test",
+        );
 
         assert.strictEqual(downloader.detectFileAccessFromCommand(), true);
         await downloader.saveCommandAccessFile();
@@ -121,18 +182,34 @@ suite('ConsernedFileDownloader Test Suite', () => {
         assert.strictEqual(uniqueFileStub.calledOnce, true);
     });
 
-    test('updateCommandSuccess should mark command as downloaded', async () => {
-        const downloader = new ConcernedFileDownloader(1, mockTerminal, parsedCommand);
-        await TerminalSessionManager.create(mockTerminal);
-        downloader.commandAccessFile = 'file.txt';
-        downloader.downloadFile = 'downloaded_file.txt';
+    test("updateCommandSuccess should mark command as downloaded", async () => {
+        const downloader = new ConcernedFileDownloader(
+            1,
+            mockTerminal,
+            parsedCommand,
+        );
+        await TerminalSessionManager.registerSession(mockTerminal);
+        downloader.commandAccessFile = "file.txt";
+        downloader.downloadFile = "downloaded_file.txt";
 
-        const sessionId = await Session.create('test_profile', '/path/to/exe', ['arg1'], 'remote_host', 'user');
-        await Command.create(sessionId, 'vi /test/file.txt', 'output1', '/cwd', 0);
+        const sessionId = await Session.create(
+            "test_profile",
+            "/path/to/exe",
+            ["arg1"],
+            "remote_host",
+            "user",
+        );
+        await Command.create(
+            sessionId,
+            "vi /test/file.txt",
+            "output1",
+            "/cwd",
+            0,
+        );
 
         await downloader.updateCommandSuccess();
         const command = await Command.getById(1);
 
-        assert.strictEqual(command?.file_operation_mode, 'downloaded');
+        assert.strictEqual(command?.file_operation_mode, "downloaded");
     });
 });

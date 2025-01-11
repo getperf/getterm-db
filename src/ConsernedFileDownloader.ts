@@ -1,13 +1,13 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Command } from './model/Command';
-import { Logger } from './Logger';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { Command } from "./model/Command";
+import { Logger } from "./Logger";
 // import { CommandParser, ParsedCommand } from './command_parser';
-import { Util } from './Util';
-import { TerminalSessionManager } from './TerminalSessionManager';
-import { ParsedCommand, CommandParser } from './CommandParser';
-import { ConfigManager } from './ConfigManager';
+import { Util } from "./Util";
+import { TerminalSessionManager } from "./TerminalSessionManager";
+import { ParsedCommand, CommandParser } from "./CommandParser";
+import { ConfigManager } from "./ConfigManager";
 
 // Downloader mode types to handle different states of downloading file
 export enum DownloaderMode {
@@ -16,54 +16,58 @@ export enum DownloaderMode {
     Skip,
     Error,
     Unkown,
-};
+}
 
 /*
  * A class that detects a file editing command and download.
- * executes "cat file name" in that case, saves the execution result in a file, 
+ * executes "cat file name" in that case, saves the execution result in a file,
  * and updates the command management table.
  */
 export class ConsernedFileDownloader {
-    private editorCommands = ['vi', 'vim', 'nano', 'emacs'];
+    private editorCommands = ["vi", "vim", "nano", "emacs"];
 
     // ID of the file editing command. eg vi test.txt
-    commandId: number; 
+    commandId: number;
 
     // Terminal from which the command is executed
-    terminal: vscode.Terminal; 
+    terminal: vscode.Terminal;
 
     // Short name that can be used as a file name
     termnalShortName: string;
 
     // Parsed command object
-    parsedCommand: ParsedCommand; 
+    parsedCommand: ParsedCommand;
 
     // Current mode of the downloader
-    public mode: DownloaderMode = DownloaderMode.Unkown; 
+    public mode: DownloaderMode = DownloaderMode.Unkown;
 
     // File path of edited command
-    commandAccessFile: string | undefined; 
+    commandAccessFile: string | undefined;
 
     // sudo command
-    sudoCommand : string | null = null;
+    sudoCommand: string | null = null;
 
     // Download home directory
-	// downloadHome = Config.getInstance().getDownloadHome();
-	downloadHome = ConfigManager.downloadHome;
+    // downloadHome = Config.getInstance().getDownloadHome();
+    downloadHome = ConfigManager.downloadHome;
 
     // Download file path
-    downloadFile: string | undefined; 
+    downloadFile: string | undefined;
 
     // Content after cat command reading
-    fileContent: string | undefined; 
+    fileContent: string | undefined;
 
-    constructor(commandId : number, terminal : vscode.Terminal, parsedCommand: ParsedCommand) {
+    constructor(
+        commandId: number,
+        terminal: vscode.Terminal,
+        parsedCommand: ParsedCommand,
+    ) {
         this.commandId = commandId;
         this.terminal = terminal;
-        this.termnalShortName= Util.toCamelCase(terminal.name); // CamelCase conversion of terminal name
+        this.termnalShortName = Util.toCamelCase(terminal.name); // CamelCase conversion of terminal name
         this.parsedCommand = parsedCommand;
     }
-    
+
     /**
      * Searches the input command buffer for an editor command and returns the file name.
      * @param commandBuffer The string representing the command input (e.g., 'vi filename.txt')
@@ -71,8 +75,8 @@ export class ConsernedFileDownloader {
      */
     checkFileNameFromEditorCommand(commandBuffer: string): string | undefined {
         const commandParts = commandBuffer.trim().split(/\s+/);
-        const editorIndex = commandParts.findIndex(part => 
-            this.editorCommands.some(editor => part === editor)
+        const editorIndex = commandParts.findIndex((part) =>
+            this.editorCommands.some((editor) => part === editor),
         );
         if (editorIndex === -1) {
             this.sudoCommand = null;
@@ -83,8 +87,11 @@ export class ConsernedFileDownloader {
             this.sudoCommand = null;
             return undefined;
         }
-        if (commandParts[0] === 'sudo') {
-            this.sudoCommand = commandParts.slice(0, editorIndex).join(' ').trim();
+        if (commandParts[0] === "sudo") {
+            this.sudoCommand = commandParts
+                .slice(0, editorIndex)
+                .join(" ")
+                .trim();
         } else {
             this.sudoCommand = null;
         }
@@ -95,12 +102,13 @@ export class ConsernedFileDownloader {
      * Detects if the current command involves file access and switches the mode if necessary.
      * @returns True if file access is detected in the command; otherwise, false.
      */
-    detectFileAccessFromCommand() : boolean {
+    detectFileAccessFromCommand(): boolean {
         const commandText = this.parsedCommand.command;
         // Check if command accesses a file
-        const commandAccessFile  = this.checkFileNameFromEditorCommand(commandText); 
+        const commandAccessFile =
+            this.checkFileNameFromEditorCommand(commandText);
         if (commandAccessFile) {
-            console.log("Detect file access from command :", commandAccessFile); 
+            console.log("Detect file access from command :", commandAccessFile);
             this.commandAccessFile = commandAccessFile;
             this.mode = DownloaderMode.Caputure; // Switch mode to capture
             return true;
@@ -110,39 +118,40 @@ export class ConsernedFileDownloader {
 
     /**
      * Prompts the user for confirmation to download the accessed file.
-     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader
      * instance if confirmed; otherwise, rejects.
      * @throws An error if the file path is not set.
      */
     async showConfirmationMessage(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
-            throw new Error('File path to download is not set');
+            throw new Error("File path to download is not set");
         }
         const confirm = await vscode.window.showInformationMessage(
             `Do you want to download the file "${this.commandAccessFile}" ?`,
             { modal: true },
-            'Yes', 'No'
+            "Yes",
+            "No",
         );
-        if (confirm === 'Yes') {
+        if (confirm === "Yes") {
             return this;
         } else {
             this.mode = DownloaderMode.Skip; // Skip if user rejects
-            return Promise.reject(new Error('User canceled the download'));
+            return Promise.reject(new Error("User canceled the download"));
         }
     }
 
     /**
      * Captures the content of the accessed file by executing a 'cat' command in the terminal.
-     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader
      * instance after capturing.
      * @throws An error if the command access file is not found.
      */
     async caputureCommandAccessFile(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
-            throw new Error('Not found command access file');
+            throw new Error("Not found command access file");
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
-        const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
+        const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}cat ${this.commandAccessFile}`;
         this.terminal.sendText(commandText); // Send 'cat' command to terminal
         this.mode = DownloaderMode.Save;
         return this;
@@ -153,12 +162,14 @@ export class ConsernedFileDownloader {
      * @param {number} suffixNumber - Optional number to append to the filename for uniqueness.
      * @returns {string | undefined} The download filename or undefined if no file path is set.
      */
-    getDownloadFile(suffixNumber : number = 0): string | undefined {
+    getDownloadFile(suffixNumber: number = 0): string | undefined {
         if (!this.commandAccessFile) {
             return;
         }
         const downloadFileName = path.basename(this.commandAccessFile); // Extract base file name
-        return suffixNumber > 0 ? `${downloadFileName}_${suffixNumber}` : downloadFileName;
+        return suffixNumber > 0
+            ? `${downloadFileName}_${suffixNumber}`
+            : downloadFileName;
     }
 
     /**
@@ -167,7 +178,11 @@ export class ConsernedFileDownloader {
      * @returns The full path to the download file in the specified terminal directory.
      */
     getAbsoluteDownloadPath(downloadFile: string): string {
-        return path.join(this.downloadHome, this.termnalShortName, downloadFile);
+        return path.join(
+            this.downloadHome,
+            this.termnalShortName,
+            downloadFile,
+        );
     }
 
     /**
@@ -189,7 +204,7 @@ export class ConsernedFileDownloader {
                 return;
             }
             filePath = this.getAbsoluteDownloadPath(downloadFile);
-            file_suffix ++;
+            file_suffix++;
         }
         return downloadFile;
     }
@@ -199,7 +214,10 @@ export class ConsernedFileDownloader {
      * Creates the directory if it does not exist.
      */
     private ensureDownloadDirectoryExists() {
-        const downloadDirectory = path.join(this.downloadHome, this.termnalShortName);
+        const downloadDirectory = path.join(
+            this.downloadHome,
+            this.termnalShortName,
+        );
         console.log("Download directory : ", downloadDirectory);
         if (!fs.existsSync(downloadDirectory)) {
             fs.mkdirSync(downloadDirectory, { recursive: true });
@@ -209,30 +227,32 @@ export class ConsernedFileDownloader {
 
     /**
      * Saves the captured file content from the terminal to the download directory.
-     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the 
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the
      * downloader instance after saving.
      * @throws Throws an error if the buffer retrieval or file save operation fails.
      */
-    async saveCommandAccessFile(): Promise<ConsernedFileDownloader>  {
+    async saveCommandAccessFile(): Promise<ConsernedFileDownloader> {
         this.ensureDownloadDirectoryExists();
         this.downloadFile = this.getUniqueDownloadFile(); // Get unique file name
         console.log("Download file : ", this.downloadFile);
         if (!this.downloadFile) {
-            throw new Error('Downloaded save file name is not set');
+            throw new Error("Downloaded save file name is not set");
         }
         let filePath = this.getAbsoluteDownloadPath(this.downloadFile);
 
         // Wait for terminal data buffer to stabilize (1 second)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         // Retrieve terminal buffer data
-        const rawData = TerminalSessionManager.retrieveDataBuffer(this.terminal); 
-        if (!rawData) { 
-            throw new Error('Could not get the buffer from session');
+        const rawData = TerminalSessionManager.retrieveDataBuffer(
+            this.terminal,
+        );
+        if (!rawData) {
+            throw new Error("Could not get the buffer from session");
         }
         const parsedCommand = await CommandParser.parse(rawData);
         const output = parsedCommand.output;
         // const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
-        // // const output = await CommandParser.extractCommandOutput(rawData, commandText); 
+        // // const output = await CommandParser.extractCommandOutput(rawData, commandText);
         // const parts = ShellIntegrationCommandParser.splitBufferByCommandSequence(rawData);
         // const output0 = ShellIntegrationCommandParser.trimLastACommandSequence(parts.outputBuffer);
         // const output = ShellIntegrationCommandParser.removeOSC633Sequences(output0);
@@ -241,7 +261,9 @@ export class ConsernedFileDownloader {
             console.log("Save file : ", filePath);
             return this;
         } catch (err) {
-            Logger.error(`Error downloading file: ${this.downloadFile} - ${err}`);
+            Logger.error(
+                `Error downloading file: ${this.downloadFile} - ${err}`,
+            );
             throw err;
         }
     }
@@ -249,36 +271,36 @@ export class ConsernedFileDownloader {
     /**
      * Updates the command database entry to reflect a successful file download.
      * Links the downloaded file to the command and provides access from the database entry.
-     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader
      * instance after updating.
      * @throws Throws an error if the file or command ID is missing.
      */
     async updateCommandSuccess(): Promise<ConsernedFileDownloader> {
         if (!this.commandAccessFile) {
-            throw new Error('Not found command access file');
+            throw new Error("Not found command access file");
         }
         if (!this.downloadFile) {
-            throw new Error('Not found download file');
+            throw new Error("Not found download file");
         }
         const row1 = await Command.updateConceredFileOperation(
-            this.commandId, 
-            'downloaded', 
+            this.commandId,
+            "downloaded",
             this.commandAccessFile,
-            this.downloadFile, 
+            this.downloadFile,
         );
         const filePath = this.getAbsoluteDownloadPath(this.downloadFile);
         const fileUri = vscode.Uri.file(filePath);
 
         await Command.updatedWithoutTimestamp(
-            this.commandId, 
-            this.parsedCommand.command, 
-            `[Download file here](${fileUri.toString()})`, 
-            this.parsedCommand.cwd, 
+            this.commandId,
+            this.parsedCommand.command,
+            `[Download file here](${fileUri.toString()})`,
+            this.parsedCommand.cwd,
             this.parsedCommand.exitCode || 0,
         );
         Logger.info(`Command with ID ${this.commandId} updated`);
         // Re-enable shell events
-        TerminalSessionManager.enableShellIntegrationEvent(this.terminal); 
+        TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
         return this;
     }
 
@@ -286,21 +308,19 @@ export class ConsernedFileDownloader {
      * Handles any errors encountered during the file download process.
      * Notifies the user, updates the command status, and resets to error mode.
      * @param {Error} err - The error that occurred during processing.
-     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader 
+     * @returns {Promise<ConsernedFileDownloader>} A promise that resolves to the downloader
      * instance after handling the error.
      */
     async errorHandler(err: Error) {
-        vscode.window.showErrorMessage(
-            `Download canceled : ${err.message}`
-        );
+        vscode.window.showErrorMessage(`Download canceled : ${err.message}`);
         this.mode = DownloaderMode.Error;
         // Re-enable shell events
-        TerminalSessionManager.enableShellIntegrationEvent(this.terminal); 
+        TerminalSessionManager.enableShellIntegrationEvent(this.terminal);
         await Command.updatedWithoutTimestamp(
-            this.commandId, 
-            this.parsedCommand.command, 
-            ``, 
-            this.parsedCommand.cwd, 
+            this.commandId,
+            this.parsedCommand.command,
+            ``,
+            this.parsedCommand.cwd,
             this.parsedCommand.exitCode || 0,
         );
         return this;

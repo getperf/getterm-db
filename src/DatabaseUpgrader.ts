@@ -1,6 +1,6 @@
-import * as sqlite3 from 'sqlite3';
-import { createTableSQL } from './sql/tables';
-import { Logger } from './Logger';
+import * as sqlite3 from "sqlite3";
+import { createTableSQL } from "./sql/tables";
+import { Logger } from "./Logger";
 
 export class DatabaseUpgrader {
     private db: sqlite3.Database;
@@ -57,7 +57,9 @@ export class DatabaseUpgrader {
     private runQuery(query: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.db.run(query, (err) => {
-                if (err) {return reject(err);}
+                if (err) {
+                    return reject(err);
+                }
                 resolve();
             });
         });
@@ -66,7 +68,9 @@ export class DatabaseUpgrader {
     private getSingleResult(query: string): Promise<string | null> {
         return new Promise((resolve, reject) => {
             this.db.get(query, (err, row: { value: string }) => {
-                if (err) {return reject(err);}
+                if (err) {
+                    return reject(err);
+                }
                 resolve(row ? row.value : null);
             });
         });
