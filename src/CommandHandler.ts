@@ -119,6 +119,7 @@ export class CommandHandler {
         const commandId = session.commandId;
         if (!commandId) {
             Logger.warn(`command id not found from session: ${session.sessionName}`);
+            vscode.window.showInformationMessage("Failed to retrieve the command. This issue may occur during the first command retrieval after the session starts.");
             return;
         }
         Logger.info(`end command handler started, command id : ${commandId}`);

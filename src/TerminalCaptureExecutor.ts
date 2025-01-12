@@ -18,20 +18,6 @@ export class TerminalCaptureExecutor {
                 "getterm-db.startTerminalCapture",
                 this.startTerminalCapture,
             ),
-            vscode.commands.registerCommand(
-                "getterm-db.captureTerminal",
-                this.captureTerminal,
-            ),
-        );
-    }
-    private async captureTerminal() {
-        const terminal = vscode.window.activeTerminal;
-        if (!terminal) {
-            vscode.window.showErrorMessage("No active terminal found.");
-            return;
-        }
-        vscode.window.showInformationMessage(
-            `端末キャプチャー: ${terminal.name}`,
         );
     }
 
@@ -42,34 +28,15 @@ export class TerminalCaptureExecutor {
             return;
         }
         const remoteProfile = terminal.name;
-        Logger.info(`open terminal profile : ${remoteProfile}`);
+        Logger.info(`capture terminal, profile : ${remoteProfile}`);
         console.log(terminal);
-        const shellIntegration = terminal.shellIntegration;
-        console.log("shell integration : ", shellIntegration);
-        if (!shellIntegration) {
+        if (!terminal.shellIntegration) {
             vscode.window.showErrorMessage("シェル統合が有効化されてません");
-            return;
         }
-        // const config = Config.getInstance();
-        // config.set('terminalProfiles', [remoteProfile]);
-        Logger.info(`open terminal, save profile : ${remoteProfile}`);
-        const sessionId = await Session.create(
-            remoteProfile,
-            "Capture from existing terminal",
-            [],
-            "",
-            "",
-        );
-        const session = await Session.getById(sessionId);
-        // session.terminalSessionMode = TerminalSessionMode.Capturing;
-        console.log("セッション履歴登録：", session);
-        TerminalSessionManager.updateSession(terminal, "sessionId", sessionId);
-        TerminalSessionManager.updateSession(
-            terminal,
-            "terminalSessionMode",
-            TerminalSessionMode.Capturing,
-        );
-        Logger.info(`open terminal, regist session id : ${sessionId}`);
-        Logger.info(`open terminal, end`);
+
+        const session = await TerminalSessionManager.getSessionOrCreate(terminal);
+        session.terminalSessionMode = TerminalSessionMode.Capturing;
+        Logger.info(`capture terminal, regist session id : ${session.sessionId}`);
+        Logger.info(`capture terminal, end`);
     }
 }
