@@ -55,9 +55,12 @@ export class CellExecutionTimeProvider
         const startTime = new Date(row.start);
         const endTime = new Date(row.end);
         const execDuration = (endTime.getTime() - startTime.getTime()) / 1000;
+        const hhmiSS = startTime.toTimeString().split(' ')[0];
+
         this.executionTimes.set(
             lastCell.document.uri.toString(),
-            `${execDuration.toFixed(2)}s`,
+            // `${execDuration.toFixed(2)}s`,
+            hhmiSS,
         );
     }
 }

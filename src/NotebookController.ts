@@ -93,10 +93,10 @@ export class TerminalNotebookController {
      */
     public async createTemporaryNotebook() {
         const notebookHandler = TerminalNotebookHandler.create();
-
+        const lastSavePath = ConfigManager.lastSavePath;
         const options: vscode.SaveDialogOptions = {
             saveLabel: "Create Notebook",
-            defaultUri: ConfigManager.lastSavePath || notebookHandler.defaultUri(),
+            defaultUri: notebookHandler.defaultUri(lastSavePath),
             filters: { "GetTerm terminal capture Notebooks": ["getterm"] },
         };
         const notebookUri = await vscode.window.showSaveDialog(options);

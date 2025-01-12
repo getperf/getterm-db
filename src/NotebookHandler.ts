@@ -24,12 +24,23 @@ export class TerminalNotebookHandler {
     /**
      * Returns the default URI for saving a new terminal notebook.
      */
-    defaultUri(): vscode.Uri {
+    defaultUri(lastSavePath?: vscode.Uri | undefined): vscode.Uri {
         const now = new Date();
         const yyyymmdd = now.toISOString().split("T")[0].replace(/-/g, "");
         const hhmiss = now.toTimeString().split(" ")[0].replace(/:/g, "");
         const filename = `note_${yyyymmdd}_${hhmiss}.getterm`;
-        const notebookHome = ConfigManager.notebookHome;
+        let notebookHome = ConfigManager.notebookHome;
+        if (lastSavePath) {
+            const lastSaveDir = path.dirname(lastSavePath.fsPath);
+            if (lastSaveDir.startsWith(notebookHome)) {
+                notebookHome = lastSaveDir;
+            } else {
+                Logger.info(
+                    `Last save path '${lastSaveDir}' does not match notebookHome '${notebookHome}'. notebookHome remains unchanged.`
+                );
+            }
+        }
+    
         const filePath = path.join(notebookHome, filename);
 
         Logger.info(`Default notebook URI: ${filePath}`);
