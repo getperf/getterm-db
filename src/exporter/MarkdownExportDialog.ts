@@ -10,7 +10,7 @@ export class MarkdownExportDialog {
         private defaultExportPath: vscode.Uri
     ) {}
 
-    public async show(): Promise<ExportParameters | null> {
+    public async getExportParametersByDialog(): Promise<ExportParameters | null> {
         this.panel = vscode.window.createWebviewPanel(
             "exportDialog",
             "Export Notebook",
@@ -30,16 +30,18 @@ export class MarkdownExportDialog {
                         });
                         this.dispose();
                         console.log("export file:", uri);
-                        resolve(
-                            uri
-                                ? {
-                                      includeMetadata: message.data.includeMetadata,
-                                      includeOutput: message.data.includeOutput,
-                                      trimLineCount: parseInt(message.data.trimLineCount, 10),
-                                      exportPath: uri,
-                                  }
-                                : null
-                        );
+                        if (!uri) { 
+                            resolve(null);
+                        } else {
+                            const result: ExportParameters = {
+                                includeMetadata: message.data.includeMetadata,
+                                includeOutput: message.data.includeOutput,
+                                trimLineCount: parseInt(message.data.trimLineCount, 10),
+                                openMarkdown: message.data.openMarkdown,
+                                exportPath: uri,
+                            };
+                            resolve(result);
+                        }
                     } else if (message.command === "cancel") {
                         this.dispose();
                         resolve(null);
@@ -85,6 +87,10 @@ export class MarkdownExportDialog {
         <label>Trim Line Count (Number of lines to keep at start and end):
             <input id="trimLineCount" type="number" value="5" min="1" />
         </label>
+        <label>
+            <input type="checkbox" id="openMarkdown" />
+            Open Markdown File After Export
+        </label>
         <button type="button" id="saveButton">Export</button>
         <button type="button" id="cancelButton">Cancel</button>
     </form>
@@ -95,6 +101,7 @@ export class MarkdownExportDialog {
                 includeMetadata: document.getElementById("includeMetadata").checked,
                 includeOutput: document.getElementById("includeOutput").checked,
                 trimLineCount: document.getElementById("trimLineCount").value,
+                openMarkdown: document.getElementById("openMarkdown").checked,
             };
             vscode.postMessage({ command: "selectSaveLocation", data });
         });

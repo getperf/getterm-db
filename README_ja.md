@@ -3,7 +3,7 @@
 
 Gettermは、[VSCode Insiders](https://code.visualstudio.com/insiders) の拡張機能でターミナルソフトウェアとテキストエディタを統合します。特にサーバ管理タスクの運用効率を向上させることを目的としたツールです。
 
-![Getterm使用例](assets/getterm-usage.png)
+![Getterm使用例](assets/getterm-usage.gif)
 
 ## 特徴
 

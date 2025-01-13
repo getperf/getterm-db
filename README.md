@@ -3,7 +3,7 @@
 Getterm is an extension for [VSCode Insiders](https://code.visualstudio.com/insiders) that integrates terminal software with a text editor to enhance operational efficiency, particularly for server management tasks. 
 
 
-![Getterm usage](assets/getterm-usage.png)
+![Getterm usage](assets/getterm-usage.gif)
 
 ## Features
 

@@ -81,8 +81,8 @@
         "title": "Getterm : Create new terminal notebook"
       },
       {
-        "command": "getterm-db.reportTerminalNotebook",
-        "title": "Getterm : Create terminal notebook report"
+        "command": "getterm-db.exportExcel",
+        "title": "Getterm : Export to excel"
       },
       {
         "command": "getterm-db.exportMarkdown",

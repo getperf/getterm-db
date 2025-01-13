@@ -5,6 +5,7 @@ export interface ExportParameters {
     includeMetadata: boolean;
     includeOutput: boolean;
     trimLineCount: number;
+    openMarkdown: boolean;
     exportPath: vscode.Uri;
 }
 
@@ -21,13 +22,13 @@ export class MarkdownExport {
         const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
 
         const dialog = new MarkdownExportDialog(notebookName, defaultExportPath);
-        const result = await dialog.show();
-        console.log("export dialog result:", result);
-        if (result) {
+        const params = await dialog.getExportParametersByDialog();
+        console.log("export dialog result:", params);
+        if (params) {
             vscode.window.showInformationMessage(
-                `Exporting notebook "${notebookName}" to "${result.exportPath.fsPath}".`
+                `Exporting notebook "${notebookName}" to "${params.exportPath.fsPath}".`
             );
-            this.processExport(result, notebookEditor);
+            this.processExport(params, notebookEditor);
         } else {
             vscode.window.showInformationMessage("Export canceled.");
         }
@@ -41,6 +42,11 @@ export class MarkdownExport {
             () => vscode.window.showInformationMessage(`Exported to "${exportPath.fsPath}".`),
             (err) => vscode.window.showErrorMessage(`Failed to export: ${err.message}`)
         );
+        if (params.openMarkdown) {
+            vscode.workspace.openTextDocument(exportPath).then((document) => {
+            vscode.window.showTextDocument(document);
+            });
+        }
     }
 
     private static convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): string {
@@ -91,16 +97,4 @@ export class MarkdownExport {
         const endLines = lines.slice(-trimLineCount);
         return [...startLines, "...", ...endLines].join("\n");
     }
-    
-    // private trimOutput(outputText: string, trimLineCount: number): string {
-    //     const lines = outputText.split("\n");
-    //     if (lines.length <= trimLineCount * 2) {
-    //         return outputText;
-    //     }
-    //     return [
-    //         ...lines.slice(0, trimLineCount),
-    //         `... (${lines.length - trimLineCount * 2} lines omitted) ...`,
-    //         ...lines.slice(-trimLineCount),
-    //     ].join("\n");
-    // }
 }
