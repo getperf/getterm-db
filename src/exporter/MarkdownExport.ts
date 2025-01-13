@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { MarkdownExportDialog } from "./MarkdownExportDialog";
+import { Command } from "../model/Command";
 
 export interface ExportParameters {
     includeMetadata: boolean;
@@ -34,22 +35,27 @@ export class MarkdownExport {
         }
     }
 
-    private static processExport(params: ExportParameters, notebookEditor: vscode.NotebookEditor): void {
+    private static async processExport(params: ExportParameters, notebookEditor: vscode.NotebookEditor): Promise<void> {
         const exportPath = params.exportPath;
-        const content = this.convertNotebookToMarkdown(notebookEditor.notebook, params);
+        try {
+            const content = await this.convertNotebookToMarkdown(notebookEditor.notebook, params);
 
-        vscode.workspace.fs.writeFile(exportPath, Buffer.from(content, "utf-8")).then(
-            () => vscode.window.showInformationMessage(`Exported to "${exportPath.fsPath}".`),
-            (err) => vscode.window.showErrorMessage(`Failed to export: ${err.message}`)
-        );
-        if (params.openMarkdown) {
-            vscode.workspace.openTextDocument(exportPath).then((document) => {
-            vscode.window.showTextDocument(document);
-            });
+            vscode.workspace.fs.writeFile(exportPath, Buffer.from(content, "utf-8")).then(
+                () => vscode.window.showInformationMessage(`Exported to "${exportPath.fsPath}".`),
+                (err) => { throw new Error(`Failed to write file: ${err.message}`); }
+            );
+            if (params.openMarkdown) {
+                vscode.workspace.openTextDocument(exportPath).then((document) => {
+                vscode.window.showTextDocument(document);
+                });
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Failed to export: ${errorMessage}`);
         }
     }
 
-    private static convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): string {
+    private static async convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): Promise<string> {
         const { includeMetadata, includeOutput, trimLineCount, exportPath } = params;
         const lines: string[] = [];
     
@@ -63,15 +69,22 @@ export class MarkdownExport {
                 // コードセル
                 lines.push("```script", text, "```", "");
     
-                if (includeOutput && cell.outputs.length > 0) {
-                    for (const output of cell.outputs) {
-                        const textOutput = this.getOutputText(output, trimLineCount);
-                        if (textOutput) {
-                            lines.push("```text", textOutput, "```", "");
-                        }
-                    }
+                if (!includeOutput) { continue; }
+
+                const commandId = cell.metadata?.id;
+                if (!commandId) {
+                    throw new Error(`Command id not found in cell`);
                 }
-            }
+                const command = await Command.getById(commandId);
+                if (!command) {
+                    throw new Error(`Command not found: ${commandId}`);
+                }
+                const textOutput = this.getOutputText(command.output, trimLineCount);
+                // const textOutput = command.output;
+                if (textOutput) {
+                    lines.push("```text", textOutput, "```", "");
+                }
+    }
     
             if (includeMetadata && text.startsWith("% ")) {
                 lines.push(text.split("\n").filter((line) => line.startsWith("% ")).join("\n"), "");
@@ -81,11 +94,15 @@ export class MarkdownExport {
         return lines.join("\n");
     }
     
-    private static getOutputText(output: vscode.NotebookCellOutput, trimLineCount: number): string | null {
+    private static getCellOutputText(output: vscode.NotebookCellOutput, trimLineCount: number): string | null {
         const textData = output.items.find((item) => item.mime === "text/plain")?.data;
         if (!textData) {return null;}
     
         const text = Buffer.from(textData).toString("utf8");
+        return this.getOutputText(text, trimLineCount);
+    }
+
+    private static getOutputText(text: string, trimLineCount: number): string | null {
         const lines = text.split("\n");
     
         if (lines.length <= trimLineCount * 2) {
@@ -97,4 +114,5 @@ export class MarkdownExport {
         const endLines = lines.slice(-trimLineCount);
         return [...startLines, "...", ...endLines].join("\n");
     }
+
 }

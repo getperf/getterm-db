@@ -81,14 +81,14 @@ export class MarkdownExportDialog {
             Include Metadata
         </label>
         <label>
-            <input type="checkbox" id="includeOutput" />
+            <input type="checkbox" id="includeOutput" checked />
             Include Execution Results
         </label>
         <label>Trim Line Count (Number of lines to keep at start and end):
             <input id="trimLineCount" type="number" value="5" min="1" />
         </label>
         <label>
-            <input type="checkbox" id="openMarkdown" />
+            <input type="checkbox" id="openMarkdown" checked />
             Open Markdown File After Export
         </label>
         <button type="button" id="saveButton">Export</button>
