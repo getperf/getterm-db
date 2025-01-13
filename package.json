@@ -81,12 +81,12 @@
         "title": "Getterm : Create new terminal notebook"
       },
       {
-        "command": "getterm-db.createNewTerminalNotebook2",
-        "title": "Getterm : Create new terminal notebook 2"
-      },
-      {
         "command": "getterm-db.reportTerminalNotebook",
         "title": "Getterm : Create terminal notebook report"
+      },
+      {
+        "command": "getterm-db.exportMarkdown",
+        "title": "Getterm : Export to markdown"
       },
       {
         "command": "getterm-db.selectSession",

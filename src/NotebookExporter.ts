@@ -10,6 +10,7 @@ import {
     TerminalNotebookSerializer,
 } from "./NotebookSerializer";
 import { Util } from "./Util";
+import { MarkdownExport } from "./MarkdownExport";
 
 // 列定義の型
 type ColumnDefinition = {
@@ -115,6 +116,12 @@ export class TerminalNotebookExporter {
                 async () => {
                     await this.saveNotebookToDatabase();
                     this.reportTerminalNotebook();
+                },
+            ),
+            vscode.commands.registerCommand(
+                "getterm-db.exportMarkdown",
+                async () => {
+                    await MarkdownExport.exportNotebook();
                 },
             ),
         );
