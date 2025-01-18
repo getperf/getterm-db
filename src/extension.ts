@@ -12,6 +12,7 @@ import { TerminalNotebookExporter } from "./NotebookExporter";
 import { ConfigManager } from "./ConfigManager";
 import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
+import { NotebookMarkdownCellAdder } from "./NotebookMarkdownCellAdder";
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);
@@ -29,6 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
     TerminalSessionManager.initializeInstance();
     const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);
+    new NotebookMarkdownCellAdder(context);
     new CellExecutionTimeProvider(context);
     new TerminalNotebookSessionPicker(context);
     new RemoteShellExecutor(context);

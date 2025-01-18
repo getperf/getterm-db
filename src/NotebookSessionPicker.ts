@@ -141,8 +141,6 @@ export class TerminalNotebookSessionPicker {
                     "terminalSessionMode",
                     TerminalSessionMode.Capturing,
                 );
-                // NewTerminalSessionManager.setNotebookEditor(terminal, notebookEditor);
-                // NotebookSessionWriter.appendSessionStartCell(session);
                 NotebookSessionWriter.appendSessionStartCell(selectedSession);
                 TerminalNotebookSessionPicker.showExplorerAndOutline();
             }

@@ -36,6 +36,7 @@ export class MarkdownExportDialog {
                             const result: ExportParameters = {
                                 includeMetadata: message.data.includeMetadata,
                                 includeOutput: message.data.includeOutput,
+                                includeCommandInfo: message.data.includeCommandInfo,
                                 trimLineCount: parseInt(message.data.trimLineCount, 10),
                                 openMarkdown: message.data.openMarkdown,
                                 exportPath: uri,
@@ -84,6 +85,10 @@ export class MarkdownExportDialog {
             <input type="checkbox" id="includeOutput" checked />
             Include Execution Results
         </label>
+        <label>
+            <input type="checkbox" id="includeCommandInfo" checked />
+            Include Command Option Infomation(ege. elapse, exit code)
+        </label>
         <label>Trim Line Count (Number of lines to keep at start and end):
             <input id="trimLineCount" type="number" value="5" min="1" />
         </label>
@@ -100,6 +105,7 @@ export class MarkdownExportDialog {
             const data = {
                 includeMetadata: document.getElementById("includeMetadata").checked,
                 includeOutput: document.getElementById("includeOutput").checked,
+                includeCommandInfo: document.getElementById("includeCommandInfo").checked,
                 trimLineCount: document.getElementById("trimLineCount").value,
                 openMarkdown: document.getElementById("openMarkdown").checked,
             };

@@ -4,6 +4,7 @@ import { Command } from "../model/Command";
 
 export interface ExportParameters {
     includeMetadata: boolean;
+    includeCommandInfo: boolean;
     includeOutput: boolean;
     trimLineCount: number;
     openMarkdown: boolean;
@@ -56,7 +57,7 @@ export class MarkdownExport {
     }
 
     private static async convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): Promise<string> {
-        const { includeMetadata, includeOutput, trimLineCount, exportPath } = params;
+        const { includeMetadata, includeOutput, includeCommandInfo, trimLineCount, exportPath } = params;
         const lines: string[] = [];
     
         for (const cell of notebook.getCells()) {
@@ -67,10 +68,6 @@ export class MarkdownExport {
                 lines.push(text, "");
             } else if (cell.kind === vscode.NotebookCellKind.Code) {
                 // コードセル
-                lines.push("```script", text, "```", "");
-    
-                if (!includeOutput) { continue; }
-
                 const commandId = cell.metadata?.id;
                 if (!commandId) {
                     throw new Error(`Command id not found in cell`);
@@ -79,10 +76,30 @@ export class MarkdownExport {
                 if (!command) {
                     throw new Error(`Command not found: ${commandId}`);
                 }
+                console.log("Command:", command);
+                lines.push("```shell");
+                if (includeCommandInfo) {
+                    const startTime = new Date(command.start);
+                    const endTime = new Date(command.end);
+                    const execDuration = (endTime.getTime() - startTime.getTime()) / 1000;
+            
+                    lines.push(`# Start Time: ${command.start}`);
+                    lines.push(`# Duration: ${execDuration.toFixed(2)}s`);
+                    lines.push(`# Exit Code: ${command.exit_code}`);
+                }
+                lines.push(text);
+                lines.push("```", "");
+    
+                if (!includeOutput) { continue; }
+
                 const textOutput = this.getOutputText(command.output, trimLineCount);
                 // const textOutput = command.output;
                 if (textOutput) {
-                    lines.push("```text", textOutput, "```", "");
+                    lines.push("```text");
+                    lines.push(`# File Operation: ${command.file_operation_mode}`);
+                    lines.push(`# Access File: ${command.command_access_file}`);
+                    lines.push(`# Download File: ${command.download_file}`);
+                    lines.push(textOutput, "```", "");
                 }
     }
     
