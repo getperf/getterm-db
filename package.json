@@ -97,6 +97,16 @@
         "command": "getterm-db.stopCapture",
         "title": "Stop Capture",
         "category": "Notebook"
+      },
+      {
+        "command": "getterm-db.addMarkdownCell",
+        "title": "GetTerm : Add Markdown Header"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "getterm-db.addMarkdownCell",
+        "key": "ctrl+shift+l"
       }
     ],
     "menus": {
