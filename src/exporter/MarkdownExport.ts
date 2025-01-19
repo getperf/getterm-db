@@ -58,14 +58,14 @@ export class MarkdownExport {
         }
     }
 
-    private static async convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): Promise<string> {
+    static async convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): Promise<string> {
         const lines: string[] = [];
         for (const cell of notebook.getCells()) {
             const text = cell.document.getText();
     
             switch (cell.kind) {
                 case vscode.NotebookCellKind.Markup:
-                    this.processMarkdownCell(lines, text);
+                    this.processMarkdownCell(lines, text, params);
                     break;
     
                 case vscode.NotebookCellKind.Code:
@@ -76,17 +76,23 @@ export class MarkdownExport {
                     vscode.window.showWarningMessage(`Unsupported cell kind: ${cell.kind}`);
             }
     
-            if (params.includeMetadata && text.startsWith("% ")) {
-                this.addMetadata(lines, text);
-            }
+            // if (params.includeMetadata && text.startsWith("% ")) {
+            //     this.addMetadata(lines, text);
+            // }
         }
     
         return lines.join("\n");
     }
 
-    private static processMarkdownCell(lines: string[], text: string): void {
-        // Process Markdown cells by directly adding their content
-        lines.push(text, "");
+    private static processMarkdownCell(lines: string[], text: string, params: ExportParameters): void {
+        text.split(/\n/).forEach( (line) => {
+            if (line.startsWith("% ")) {
+                if (params.includeMetadata) {lines.push(line); }
+            } else {
+                lines.push(line);
+            }
+        });
+        lines.push("");
     }
 
     private static async processCodeCell(
