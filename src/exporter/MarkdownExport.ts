@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { MarkdownExportDialog } from "./MarkdownExportDialog";
-import { Command } from "../model/Command";
+import { Command, CommandRow } from "../model/Command";
+import { Logger } from "../Logger";
+import * as fs from "fs";
 
 export interface ExportParameters {
     includeMetadata: boolean;
@@ -57,66 +59,114 @@ export class MarkdownExport {
     }
 
     private static async convertNotebookToMarkdown(notebook: vscode.NotebookDocument, params: ExportParameters): Promise<string> {
-        const { includeMetadata, includeOutput, includeCommandInfo, trimLineCount, exportPath } = params;
         const lines: string[] = [];
-    
         for (const cell of notebook.getCells()) {
             const text = cell.document.getText();
-            console.log("Cell text:", text);
-            if (cell.kind === vscode.NotebookCellKind.Markup) {
-                // マークダウンセル
-                lines.push(text, "");
-            } else if (cell.kind === vscode.NotebookCellKind.Code) {
-                // コードセル
-                const commandId = cell.metadata?.id;
-                if (!commandId) {
-                    throw new Error(`Command id not found in cell`);
-                }
-                const command = await Command.getById(commandId);
-                if (!command) {
-                    throw new Error(`Command not found: ${commandId}`);
-                }
-                console.log("Command:", command);
-                lines.push("```shell");
-                if (includeCommandInfo) {
-                    const startTime = new Date(command.start);
-                    const endTime = new Date(command.end);
-                    const execDuration = (endTime.getTime() - startTime.getTime()) / 1000;
-            
-                    lines.push(`# Start Time: ${command.start}`);
-                    lines.push(`# Duration: ${execDuration.toFixed(2)}s`);
-                    lines.push(`# Exit Code: ${command.exit_code}`);
-                }
-                lines.push(text);
-                lines.push("```", "");
     
-                if (!includeOutput) { continue; }
-
-                const textOutput = this.getOutputText(command.output, trimLineCount);
-                // const textOutput = command.output;
-                if (textOutput) {
-                    lines.push("```text");
-                    lines.push(`# File Operation: ${command.file_operation_mode}`);
-                    lines.push(`# Access File: ${command.command_access_file}`);
-                    lines.push(`# Download File: ${command.download_file}`);
-                    lines.push(textOutput, "```", "");
-                }
-    }
+            switch (cell.kind) {
+                case vscode.NotebookCellKind.Markup:
+                    this.processMarkdownCell(lines, text);
+                    break;
     
-            if (includeMetadata && text.startsWith("% ")) {
-                lines.push(text.split("\n").filter((line) => line.startsWith("% ")).join("\n"), "");
+                case vscode.NotebookCellKind.Code:
+                    await this.processCodeCell(cell, lines, params);
+                    break;
+    
+                default:
+                    vscode.window.showWarningMessage(`Unsupported cell kind: ${cell.kind}`);
+            }
+    
+            if (params.includeMetadata && text.startsWith("% ")) {
+                this.addMetadata(lines, text);
             }
         }
     
         return lines.join("\n");
     }
+
+    private static processMarkdownCell(lines: string[], text: string): void {
+        // Process Markdown cells by directly adding their content
+        lines.push(text, "");
+    }
+
+    private static async processCodeCell(
+        cell: vscode.NotebookCell,
+        lines: string[],
+        params: ExportParameters
+    ): Promise<void> {
     
-    private static getCellOutputText(output: vscode.NotebookCellOutput, trimLineCount: number): string | null {
-        const textData = output.items.find((item) => item.mime === "text/plain")?.data;
-        if (!textData) {return null;}
+        const commandId = cell.metadata?.id;
     
-        const text = Buffer.from(textData).toString("utf8");
-        return this.getOutputText(text, trimLineCount);
+        if (!commandId) {
+            throw new Error(`Command ID not found in the cell metadata`);
+        }
+    
+        const command = await Command.getById(commandId);
+        if (!command) {
+            throw new Error(`Command not found: ${commandId}`);
+        }
+    
+        // Add command code block with optional command info
+        lines.push("```shell");
+        if (params.includeCommandInfo) {
+            this.addCommandInfo(lines, command);
+        }
+        lines.push(cell.document.getText());
+        lines.push("```", "");
+    
+        // Optionally include command output
+        if (params.includeOutput) {
+            this.addCommandOutput(lines, command, params.trimLineCount);
+        }
+    }
+
+    private static addCommandInfo(lines: string[], command: CommandRow): void {
+        const startTime = new Date(command.start);
+        const endTime = new Date(command.end ?? 0);
+        const execDuration = (endTime.getTime() - startTime.getTime()) / 1000;
+    
+        lines.push(`# Start Time: ${startTime.toLocaleString()}`);
+        lines.push(`# Duration: ${execDuration.toFixed(2)}s`);
+        lines.push(`# Exit Code: ${command.exit_code}`);
+    }
+    
+    private static addCommandOutput(lines: string[], command: CommandRow, trimLineCount: number): void {
+        let outputText = this.getOutputText(command.output, trimLineCount);
+    
+        if (outputText) {
+            if (command.file_operation_mode === 'downloaded') {
+                outputText = this.getDownloadContent(outputText);
+            }
+            lines.push("```text");
+            lines.push(outputText, "```", "");
+        }
+    }
+
+    private static addMetadata(lines: string[], text: string): void {
+        const metadataLines = text
+            .split("\n")
+            .filter((line) => line.startsWith("% "))
+            .join("\n");
+        if (metadataLines) {
+            lines.push(metadataLines, "");
+        }
+    }
+        
+    private static getDownloadContent(documentText: string) : string {
+        const fileUrlMatch = documentText.match(/\[.*?\]\((file:\/\/.*?)\)/);
+        if (!fileUrlMatch) {
+            return 'No file URL found in the document.';
+        }
+        const fileUrl = fileUrlMatch[1];
+        let filePath = decodeURIComponent(fileUrl.replace('file://', ''));
+        if (process.platform === 'win32' && filePath.startsWith('/')) {
+            filePath = filePath.slice(1); // Remove the leading slash on Windows paths
+        }
+        try {
+            return fs.readFileSync(filePath, 'utf-8');
+        } catch (error) {
+            return String(error);
+        }
     }
 
     private static getOutputText(text: string, trimLineCount: number): string | null {

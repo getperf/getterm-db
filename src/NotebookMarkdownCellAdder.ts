@@ -54,7 +54,7 @@ export class NotebookMarkdownCellAdder {
 
         const newCell = new vscode.NotebookCellData(
             vscode.NotebookCellKind.Markup,
-            markdownText, // `# ${heading}`, // Markdown の見出しとして追加
+            markdownText,
             'markdown'
         );
 
@@ -65,6 +65,9 @@ export class NotebookMarkdownCellAdder {
 
         await vscode.workspace.applyEdit(editData);
         const lastCellIndex = notebook.cellCount - 1;
-        notebookEditor.revealRange(new vscode.NotebookRange(lastCellIndex, lastCellIndex), vscode.NotebookEditorRevealType.Default);
+        notebookEditor.revealRange(
+            new vscode.NotebookRange(lastCellIndex, lastCellIndex), 
+            vscode.NotebookEditorRevealType.InCenter
+        );
     }
 }
