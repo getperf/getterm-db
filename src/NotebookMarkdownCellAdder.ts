@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { TerminalSessionManager } from './TerminalSessionManager';
 
 export class NotebookMarkdownCellAdder {
     private readonly context: vscode.ExtensionContext;
@@ -46,9 +47,22 @@ export class NotebookMarkdownCellAdder {
     }
 
     private async addMarkdownCellToNotebook(markdownText: string): Promise<void> {
-        const notebookEditor = vscode.window.activeNotebookEditor;
+        // const notebookEditor = vscode.window.activeNotebookEditor;
+        // if (!notebookEditor) {
+        //     vscode.window.showErrorMessage('No active notebook editor found.');
+        //     return;
+        // }
+        const activeTerminal = vscode.window.activeTerminal;
+        if (!activeTerminal) {
+            vscode.window.showInformationMessage(
+                "No active terminal is currently selected.",
+            );
+            return;
+        }
+        const notebookEditor =
+            TerminalSessionManager.getSession(activeTerminal).notebookEditor;
         if (!notebookEditor) {
-            vscode.window.showErrorMessage('No active notebook editor found.');
+            vscode.window.showErrorMessage("no active notebook editor found!");
             return;
         }
 
