@@ -75,26 +75,29 @@ export class MarkdownExportDialog {
     </style>
 </head>
 <body>
-    <h1>Export Markdown: ${this.notebookName}</h1>
+    <h1>Export Markdown</h1>
     <form id="exportForm">
+        <label>Input File: [${this.notebookName}]
+        <label>Include Options:</label>
         <label>
             <input type="checkbox" id="includeMetadata" />
-            Include Metadata
+            Include Session Details
         </label>
         <label>
             <input type="checkbox" id="includeOutput" checked />
-            Include Execution Results
+            Export Command Outputs(Default)
         </label>
         <label>
-            <input type="checkbox" id="includeCommandInfo" checked />
-            Include Command Option Infomation(ege. elapse, exit code)
+            <input type="checkbox" id="includeCommandInfo" />
+            Include Command Metadata (Elapsed Time, Exit Code, etc.)
         </label>
-        <label>Trim Line Count (Number of lines to keep at start and end):
+        <label>Output Settings:</label>
+        <label>Lines to keep (Start/End):
             <input id="trimLineCount" type="number" value="5" min="1" />
         </label>
         <label>
             <input type="checkbox" id="openMarkdown" checked />
-            Open Markdown File After Export
+            Open File After Export
         </label>
         <button type="button" id="saveButton">Export</button>
         <button type="button" id="cancelButton">Cancel</button>

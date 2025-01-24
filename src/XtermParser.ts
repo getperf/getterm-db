@@ -40,6 +40,7 @@ export class XtermParser {
         trimEmptyRow: boolean,
         delay: number = 10,
     ): Promise<string> {
+        console.log("INPUT XTerm:", JSON.stringify(buffer));
         return new Promise((resolve) => {
             this.terminal.clear();
             this.terminal.reset(); // Resets the terminal
