@@ -173,7 +173,8 @@ suite("ConsernedFileDownloader Test Suite", () => {
 
         TerminalSessionManager.pushDataBuffer(
             mockTerminal,
-            "cat /path/to/file; this is a test",
+            // "cat /path/to/file; this is a test",
+            "echo -e \"\\e]633;P;base64=$(cat 'input.txt' | base64)\\a\"\r\n\u001b]633;E;echo -e \"\\\\e]633\\x3bP\\x3bbase64=$(cat 'input.txt' | base64)\\\\a\";\u0007\u001b]633;C\u0007\u001b]633;P;base64=aGVsbG8gd29ybGQK\u0007\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@alma8 ~]$ \u001b]633;B\u0007"
         );
 
         assert.strictEqual(downloader.detectFileAccessFromCommand(), true);

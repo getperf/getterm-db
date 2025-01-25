@@ -151,7 +151,11 @@ export class ConsernedFileDownloader {
             throw new Error("Not found command access file");
         }
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
-        const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}cat ${this.commandAccessFile}`;
+
+        // OSC 633 ; P ; <Property>=<Value> ST - Set a property on the terminal, only known properties will be handled.
+        const captureCommand = `echo -e "\\e]633;P;base64=$(cat '${this.commandAccessFile}' | base64)\\a"`;
+        // const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}cat ${this.commandAccessFile}`;
+        const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}${captureCommand}`;
         this.terminal.sendText(commandText); // Send 'cat' command to terminal
         this.mode = DownloaderMode.Save;
         return this;
@@ -249,9 +253,14 @@ export class ConsernedFileDownloader {
         if (!rawData) {
             throw new Error("Could not get the buffer from session");
         }
-        console.log("RAWDATA:", rawData);
         const parsedCommand = await CommandParser.parse(rawData);
-        const output = parsedCommand.output;
+        Logger.debug(`Parsed command : ${JSON.stringify(parsedCommand)}`);
+        if (!parsedCommand.base64Content) {
+            throw new Error('Base64 content is missing or invalid.');
+        }
+        const output = Buffer.from(parsedCommand.base64Content, 'base64').toString('utf-8');
+        Logger.debug(`Output : ${output}`);
+        // const output = parsedCommand.output;
         // const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;
         // // const output = await CommandParser.extractCommandOutput(rawData, commandText);
         // const parts = ShellIntegrationCommandParser.splitBufferByCommandSequence(rawData);

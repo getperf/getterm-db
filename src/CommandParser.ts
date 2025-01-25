@@ -1,12 +1,13 @@
 import { Logger } from "./Logger";
 import { Util } from "./Util";
-import { XtermParser } from "./XtermParser";
+import { ParserOptions, XtermParser } from "./XtermParser";
 
 export class ParsedCommand {
     command = "";
     output = "";
     exitCode: number | null = null;
     cwd = "";
+    base64Content = "";
 }
 
 export class CommandParser {
@@ -137,7 +138,7 @@ export class CommandParser {
         return input;
     }
 
-    static async parse(buffer: string, disableXtermParser: boolean = false): Promise<ParsedCommand> {
+    static async parse(buffer: string, options: ParserOptions = {}): Promise<ParsedCommand> {
         // Split buffer into command and output parts using C-command delimiter
         Logger.info(`start command parser`);
         const parsedCommand = new ParsedCommand();
@@ -175,8 +176,15 @@ export class CommandParser {
                         console.log("E command text :", eCommandText);
                     }
                     break;
-                case "P": // Current working directory
-                    parsedCommand.cwd = oscData.split("=")[1] || ""; // Extract cwd from the format `Cwd=...`
+                case "P": // Current working directory or base64 content
+                    const params = oscData.split(";");
+                    params.forEach(param => {
+                        if (param.startsWith("Cwd=")) {
+                            parsedCommand.cwd = param.split("=")[1] || "";
+                        } else if (param.startsWith("base64=")) {
+                            parsedCommand.base64Content = param.split("=")[1] || "";
+                        }
+                    });
                     break;
                 default:
                     break;
@@ -191,13 +199,11 @@ export class CommandParser {
         Logger.debug(
             `extracted output with the command sequences removed : ${JSON.stringify(output)}`,
         );
-        if (!disableXtermParser) {
-            const xtermParser = XtermParser.getInstance();
-            output = await xtermParser.parseTerminalBuffer(output, {removeLeadingWhitespace:false});
-            Logger.debug(
-                `extracted output with the xterm.js parser : ${JSON.stringify(output)}`,
-            );
-        }
+        const xtermParser = XtermParser.getInstance();
+        output = await xtermParser.parseTerminalBuffer(output, options);
+        Logger.debug(
+            `extracted output with the xterm.js parser : ${JSON.stringify(output)}`,
+        );
         parsedCommand.output = output;
         Logger.info(`end command parser`);
         return parsedCommand;
