@@ -44,7 +44,7 @@ export class CommandParser {
         let command = "";
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            let cleanedLine = await xtermParser.parseTerminalBuffer(line, true);
+            let cleanedLine = await xtermParser.parseTerminalBuffer(line, {trimEmptyRow: true});
             cleanedLine = Util.removeLeadingLineWithWhitespace(cleanedLine); // Fix CTRL-U
             command += cleanedLine;
             // if (i < lines.length-1) {command += `\n`;}
@@ -137,7 +137,7 @@ export class CommandParser {
         return input;
     }
 
-    static async parse(buffer: string): Promise<ParsedCommand> {
+    static async parse(buffer: string, disableXtermParser: boolean = false): Promise<ParsedCommand> {
         // Split buffer into command and output parts using C-command delimiter
         Logger.info(`start command parser`);
         const parsedCommand = new ParsedCommand();
@@ -191,11 +191,13 @@ export class CommandParser {
         Logger.debug(
             `extracted output with the command sequences removed : ${JSON.stringify(output)}`,
         );
-        const xtermParser = XtermParser.getInstance();
-        output = await xtermParser.parseTerminalBuffer(output, true);
-        Logger.debug(
-            `extracted output with the xterm.js parser : ${JSON.stringify(output)}`,
-        );
+        if (!disableXtermParser) {
+            const xtermParser = XtermParser.getInstance();
+            output = await xtermParser.parseTerminalBuffer(output, {removeLeadingWhitespace:false});
+            Logger.debug(
+                `extracted output with the xterm.js parser : ${JSON.stringify(output)}`,
+            );
+        }
         parsedCommand.output = output;
         Logger.info(`end command parser`);
         return parsedCommand;

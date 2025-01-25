@@ -249,6 +249,7 @@ export class ConsernedFileDownloader {
         if (!rawData) {
             throw new Error("Could not get the buffer from session");
         }
+        console.log("RAWDATA:", rawData);
         const parsedCommand = await CommandParser.parse(rawData);
         const output = parsedCommand.output;
         // const commandText = `${this.sudoCommand ? this.sudoCommand + ' ' : ''}cat ${this.commandAccessFile}`;

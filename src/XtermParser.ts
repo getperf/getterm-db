@@ -3,13 +3,21 @@ import { Terminal } from "xterm-headless";
 import { Util } from "./Util";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 
+interface ParserOptions {
+    trimEmptyRow?: boolean;
+    normalizeCRLF?: boolean;
+    delay?: number;
+    removeLeadingWhitespace?: boolean;
+    passthrough?: boolean;
+}
+
 export class XtermParser {
     private static instance: XtermParser;
     private terminal: Terminal;
 
     private constructor() {
         this.terminal = new Terminal({
-            cols: 200,
+            cols: 1000,
             rows: 24,
             allowProposedApi: true,
         });
@@ -37,10 +45,21 @@ export class XtermParser {
 
     public async parseTerminalBuffer(
         buffer: string,
-        trimEmptyRow: boolean,
-        delay: number = 10,
+        options: ParserOptions = {},
     ): Promise<string> {
-        console.log("INPUT XTerm:", JSON.stringify(buffer));
+        const { 
+            trimEmptyRow = false, 
+            normalizeCRLF = true,
+            delay = 10, 
+            removeLeadingWhitespace = true,
+            passthrough = false, 
+        } = options;
+
+        if (passthrough) {return buffer; }
+        // `\n` を `\n\r` に変換（すでに `\r` がある場合はスキップ）
+        if (normalizeCRLF) {
+            buffer = buffer.replace(/\n(?!\r)/g, "\n\r");
+        }
         return new Promise((resolve) => {
             this.terminal.clear();
             this.terminal.reset(); // Resets the terminal
@@ -51,9 +70,13 @@ export class XtermParser {
                 const activeBuffer = this.terminal.buffer.active;
                 // Iterate over each line of the terminal buffer
                 for (let i = 0; i < activeBuffer.length; i++) {
-                    const line = activeBuffer
+                    let line = activeBuffer
                         .getLine(i)
                         ?.translateToString(true);
+                    if (line) {
+                        // Convert escaped `\\x3b` to `;`
+                        line = line.replace(/\\x3b/g, ";");
+                    }
                     if (trimEmptyRow) {
                         if (line) {
                             cleanedOutput += line + "\n";
@@ -63,8 +86,10 @@ export class XtermParser {
                     }
                 }
                 cleanedOutput = cleanedOutput.replace(/(\n)+$/, "\n");
-                cleanedOutput =
-                    Util.removeLeadingLineWithWhitespace(cleanedOutput);
+                if (removeLeadingWhitespace) {
+                    cleanedOutput =
+                        Util.removeLeadingLineWithWhitespace(cleanedOutput);
+                }
                 resolve(cleanedOutput);
             }, delay);
         });

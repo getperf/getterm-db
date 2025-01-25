@@ -73,8 +73,7 @@ export class CommandHandler {
 
         const xtermParser = XtermParser.getInstance();
         const commandText = await xtermParser.parseTerminalBuffer(
-            consoleBuffer,
-            true,
+            consoleBuffer
         );
         Logger.debug(`コマンド開始イベントバッファ整形 : ${commandText}`);
 

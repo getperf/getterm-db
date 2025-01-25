@@ -5,25 +5,35 @@ import { XtermParser } from "../../XtermParser";
 import { DatabaseManager } from "../../DatabaseManager";
 
 suite("XtermParser Tests", () => {
-    let xtermParser: XtermParser;
+    let parser: XtermParser;
 
     suiteSetup(() => {
-        xtermParser = XtermParser.getInstance();
+        parser = XtermParser.getInstance();
     });
 
-    test("parseTerminalBuffer should correctly parse and clean terminal output", async () => {
-        const buffer = `"\u001b[?25l\u001b[HActivate the web console with: systemctl enable --now cockpit.socket\u001b[K\r\n\u001b[K\r\nLast login: Mon Jan 20 06:12:15 2025 from 192.168.0.13\u001b[K\r\nsource \"/tmp/vscode-shell-integration.sh\"\u001b[K\r\n[psadmin@alma8 ~]$ source \"/tmp/vscode-shell-integration.sh\"\u001b[K\r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047028 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m  \r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047033 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m  \r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047059 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m  \r\n[psadmin@alma8 ~]$\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\r\n\u001b[K\u001b[18;20H\u001b[?25h\u001b[?25l\u001b[H 192.168.0.13\u001b[K\r\nsource \"/tmp/vscode-shell-integration.sh\"\u001b[K\r\n[psadmin@alma8 ~]$ source \"/tmp/vscode-shell-integration.sh\"\u001b[K\r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047028 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m\u001b[K\r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047033 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m\u001b[K\r\n[psadmin@alma8 ~]$ ps -ef | grep _getperf\u001b[K\r\npsadmin  2932014       1  0  1月20 ?      00:00:43 /home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptune/getperf.ini\u001b[K\r\npsadmin  3047059 3046681  0 06:20 pts/1    00:00:00 grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m\u001b[K\r\n\u001b[K\u001b[?25h\u001b]633;A\u0007[psadmin@alma8 ~]$ \u001b]633;B\u0007ps -ef | grep _getperf\r\n\u001b]633;E;ps -ef;\u0007\u001b]633;C\u0007psadmin  2932014       1  0  1月20 ?      00:00:43 /\r\n\u001b[22;52H/home/psadmin/ptune/bin/\u001b[31m\u001b[1m_getperf\u001b[m -c /home/psadmin/ptu\r\n\u001b[22;52Hune/getperf.ini\r\npsadmin  3047064 3046681  0 06:20 pts/1    00:00:00 \r\n\u001b[22;52H grep --color=auto \u001b[31m\u001b[1m_getperf\u001b[m\u001b[K\r\n\u001b]633;D;0\u0007\u001b]633;P;Cwd=/home/psadmin\u0007\u001b]633;A\u0007[psadmin@alma8 ~]$ \u001b]633;B\u0007"`;
+    test("parseTerminalBuffer with default options", async () => {
+        const buffer = "Line 1\n\rLine 2\n\r\n\rLine 3\n\r";
+        const result = await parser.parseTerminalBuffer(buffer);
+        assert.strictEqual(result, "Line 1\nLine 2\nLine 3\n");
+    });
 
-        const expectedOutput = `"ps -ef | grep _getperf
-psadmin  2930588       1  0 05:55 ?        00:00:00 /home/psadmin/ptune/bin/_getperf -c /home/psadmin/ptune/getperf.ini
-psadmin  2930816 2929931  0 05:56 pts/1    00:00:00 grep --color=auto _getperf
-[psadmin@alma8 ~]$ "`;
+    test("parseTerminalBuffer with trimEmptyRow = false", async () => {
+        const buffer = "Line 1\nLine 2\n\nLine 3\n";
+        const options = { trimEmptyRow: false };
+        const result = await parser.parseTerminalBuffer(buffer, options);
+        assert.strictEqual(result, "Line 1\nLine 2\n\nLine 3\n");
+    });
 
-        // Execute parseTerminalBuffer with trimEmptyRow = true
-        const actualOutput = await xtermParser.parseTerminalBuffer(buffer, true);
-        console.log("output:", actualOutput);
-        // Assert that the cleaned output matches the expected output
-        // assert.strictEqual(actualOutput, expectedOutput);
+    test("parseTerminalBuffer with delay", async () => {
+        const buffer = "Line 1\nLine 2\n";
+        const options = { delay: 100 }; // 長めの遅延を設定
+        const start = Date.now();
+        const result = await parser.parseTerminalBuffer(buffer, options);
+        const elapsed = Date.now() - start;
+
+        // 遅延が発生していることを確認
+        assert.ok(elapsed >= 100);
+        assert.strictEqual(result, "Line 1\nLine 2\n");
     });
 
 });
