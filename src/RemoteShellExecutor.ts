@@ -4,6 +4,7 @@ import { Session } from "./model/Session";
 import { Logger } from "./Logger";
 import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
+import { TerminalShellExecutor } from "./shell-startup/TerminalShellExecutor";
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -95,15 +96,17 @@ export class RemoteShellExecutor {
     
     private async openTerminalWithProfile(node: any) {
         if (!node || !node.label) {
-            vscode.window.showErrorMessage(
-                "プロファイルが選択されていません。",
-            );
+            vscode.window.showErrorMessage("プロファイルが選択されていません。");
             return;
         }
         await DatabaseManager.initialize();
         TerminalSessionManager.initializeInstance();
         // console.log("initialize terminal session end");
-
+        const terminal = await TerminalShellExecutor.openTerminalWithProfile(node);
+        if (!terminal) {
+            vscode.window.showErrorMessage("端末初期化に失敗しました");
+            return;
+        }
         const nodeLabel = node.label;
         const terminalName = RemoteShellExecutor.getTerminalName(node.label);
         Logger.info(`open terminal profile : ${nodeLabel}`);
@@ -113,9 +116,9 @@ export class RemoteShellExecutor {
             shellPath: "ssh",
             shellArgs: [nodeLabel],
         };
-        const terminal = await vscode.window.createTerminal(terminalOptions);
-        terminal.show();
-        console.log("open terminal profile end:", terminal);
+        // const terminal = await vscode.window.createTerminal(terminalOptions);
+        // terminal.show();
+        // console.log("open terminal profile end:", terminal);
 
         // const config = Config.getInstance();
         // config.set('terminalProfiles', [remoteProfile]);
@@ -126,15 +129,15 @@ export class RemoteShellExecutor {
         // TerminalSessionManager.updateSession(terminal, "sessionId", sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
 
-        const isok = await this.copyShellIntegrationScript(nodeLabel);
-        Logger.info(`open terminal, shell integration activate : ${isok}`);
-        if (!isok) {
-            vscode.window
-                .showErrorMessage(`シェル統合有効化スクリプトを実行できません。
-                手動でスクリプトを実行してください。詳細は ～ を参照してください`);
-            return;
-        }
-        terminal.sendText(`source "${this.remotePath}"`);
+        // const isok = await this.copyShellIntegrationScript(nodeLabel);
+        // Logger.info(`open terminal, shell integration activate : ${isok}`);
+        // if (!isok) {
+        //     vscode.window
+        //         .showErrorMessage(`シェル統合有効化スクリプトを実行できません。
+        //         手動でスクリプトを実行してください。詳細は ～ を参照してください`);
+        //     return;
+        // }
+        // terminal.sendText(`source "${this.remotePath}"`);
         Logger.info(`open terminal, end`);
     }
 }
