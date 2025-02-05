@@ -50,7 +50,7 @@ export class CommandParser {
             command += cleanedLine;
             // if (i < lines.length-1) {command += `\n`;}
         }
-        command = command.replace(/\\x3b/g, ";");
+        command = Util.unescapeShellMetaCharacters(command);
         command = command.replace(/\n$/, "");
         Logger.debug(
             `extract command text output : ${JSON.stringify(command)}`,
@@ -172,6 +172,7 @@ export class CommandParser {
                     break;
                 case "E": // Command text
                     eCommandText = oscData.split(";")[1];
+                    eCommandText = Util.unescapeShellMetaCharacters(eCommandText);
                     if (eCommandText) {
                         console.log("E command text :", eCommandText);
                     }

@@ -1,8 +1,8 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { TerminalBufferParser } from "./TerminalBufferParser";
 import { TerminalPromptWatcher } from "./TerminalPromptWatcher";
+import { Logger } from "../Logger";
 
 export class ShellStartupConfigurator  {
     public static remotePath = "$HOME/.getterm/vscode-shell-integration.sh";
@@ -23,7 +23,7 @@ export class ShellStartupConfigurator  {
                 .createHash("sha256")
                 .update(localScriptContent)
                 .digest("hex");
-            console.log(`Local checksum: ${localChecksum}`);
+            Logger.info(`Local checksum: ${localChecksum}`);
 
             const command = `
                 mkdir -p "$HOME/.getterm" &&
@@ -35,11 +35,11 @@ export class ShellStartupConfigurator  {
             `;
             terminal.sendText(command.replace(/\s+/g, " ").trim());
             const prompt = await TerminalPromptWatcher.waitMessage(terminal, /CHECKSUM: (.+)|FILE_NOT_FOUND/);
-            console.log(`Remote checksum result: ${prompt}`);
+            Logger.info(`Remote checksum result: ${prompt}`);
             if (prompt === localChecksum) {
-                console.log("Remote file checksum matches. Skipping transfer.");
+                vscode.window.showInformationMessage("Shell Integration script checksum matches.");
             } else {
-                console.log("Checksum mismatch. Transferring script...");
+                vscode.window.showInformationMessage("Checksum mismatch. Transferring Shell Integration script...");
                 await this.transferScriptContent(terminal, localScriptContent);
             }
 

@@ -4,30 +4,7 @@ import { ShellStartupConfigurator } from "./ShellStartupConfigurator";
 import { TerminalPromptWatcher } from "./TerminalPromptWatcher";
 
 export class TerminalShellExecutor {
-    // private context: vscode.ExtensionContext;
     private static remotePath = ShellStartupConfigurator.remotePath;
-
-    // constructor(context: vscode.ExtensionContext) {
-    //     this.context = context;
-    //     this.registerCommands();
-    // }
-
-    // private registerCommands() {
-    //     this.context.subscriptions.push(
-    //         vscode.commands.registerCommand(
-    //             "getterm-ssh.showRemoteSSHView",
-    //             () => {
-    //                 Logger.info("show remove ssh view command invoked");
-    //                 vscode.commands.executeCommand("workbench.view.remote");
-    //             },
-    //         ),
-    //         vscode.commands.registerCommand(
-    //             "getterm-ssh.openTerminalWithProfile",
-    //             this.openTerminalWithProfile,
-    //             this,
-    //         ),
-    //     );
-    // }
 
     static nodeCounts: { [key: string]: number } = {};
     
@@ -39,6 +16,30 @@ export class TerminalShellExecutor {
         this.nodeCounts[node]++;
         return `SSH: ${node} - ${this.nodeCounts[node]}`;
     }
+
+    private static async authenticateTerminal(terminal: vscode.Terminal): Promise<boolean> {
+        let retryLogin = 3;
+        while (retryLogin > 0) {
+            const prompt = await TerminalPromptWatcher.waitMessage(terminal, /[$#%]|password:$/);
+            console.log("WAIT MESSAGE RESULT:", prompt);
+            
+            if (prompt === 'password:') {
+                const password = await vscode.window.showInputBox({
+                    prompt: "Enter your SSH password",
+                    password: true,
+                });
+                if (password) {
+                    terminal.sendText(password);
+                } else {
+                    return false;
+                }
+            } else if (prompt && /[#$%]$/.test(prompt)) {
+                return true;
+            }
+            retryLogin--;
+        }
+        return false;
+    }
     
     public static async openTerminalWithProfile(node: any): Promise<vscode.Terminal | undefined> {
         if (!node || !node.label) {
@@ -49,7 +50,6 @@ export class TerminalShellExecutor {
         const nodeLabel = node.label;
         const terminalName = TerminalShellExecutor.getTerminalName(node.label);
         Logger.info(`open terminal profile : ${nodeLabel}`);
-        console.log("open terminal profile");
         const terminalOptions: vscode.TerminalOptions = {
             name: terminalName,
             shellPath: "ssh",
@@ -59,43 +59,30 @@ export class TerminalShellExecutor {
         TerminalPromptWatcher.registerTerminal(terminal);
         terminal.show();
 
-        let signedIn = false;
-        let retryLogin = 3;
-        while (retryLogin > 0) {
-            const prompt = await TerminalPromptWatcher.waitMessage(terminal, /[#$]|password:$/);
-            console.log("WAIT MESSAGE RESULT:", prompt);
-            if (prompt === 'password:') {
-                const password = await vscode.window.showInputBox({
-                    prompt: "Enter your SSH password",
-                    password: true,
-                });
-                if (password) {
-                    terminal.sendText(password);
-                } else {
-                    break;
-                }
-            } else if (prompt === '$') {
-                signedIn = true;
-                break;
+        try {
+            const signedIn = await this.authenticateTerminal(terminal);
+            if (!signedIn) {
+                vscode.window.showErrorMessage(`SSH ログインに失敗しました。`);
+                return;
             }
-            retryLogin--;
+            if (TerminalPromptWatcher.getShellIntegrationStatus(terminal)) {
+                Logger.info(`open terminal, shell integration already activated`);
+                return terminal;
+            }
+            const isok = await ShellStartupConfigurator.transferShellIntegrationScript(terminal);
+            Logger.info(`open terminal, shell integration activate : ${isok}`);
+            if (!isok) {
+                vscode.window
+                    .showErrorMessage(`シェル統合有効化スクリプトを実行できません。
+                    手動でスクリプトを実行してください。詳細は ～ を参照してください`);
+                return terminal;
+            } else {
+                terminal.sendText(`source "${this.remotePath}"`);
+            }
+            Logger.info(`open terminal, end`);
+            return terminal;
+        } finally {
+            TerminalPromptWatcher.unregisterTerminal(terminal);
         }
-        console.log("SIGNED IN:", signedIn);
-        if (!signedIn) {
-            vscode.window.showErrorMessage(`SSH ログインに失敗しました。`);
-            return;
-        }
-        const isok = await ShellStartupConfigurator .transferShellIntegrationScript(terminal);
-        Logger.info(`open terminal, shell integration activate : ${isok}`);
-        if (!isok) {
-            vscode.window
-                .showErrorMessage(`シェル統合有効化スクリプトを実行できません。
-                手動でスクリプトを実行してください。詳細は ～ を参照してください`);
-            return;
-        } else {
-            terminal.sendText(`source "${this.remotePath}"`);
-        }
-        Logger.info(`open terminal, end`);
-        return terminal;
     }
 }

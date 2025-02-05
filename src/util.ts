@@ -12,7 +12,13 @@ export class Util {
     //     }
     // }
 
-    static unescapeString(str: string): string {
+    /**
+     * Converts escaped shell metacharacters in the form of \xXX back to their original characters.
+     * Example: echo "hello\x3b" -> echo "hello;"
+     * @param input Escaped shell string
+     * @returns Decoded string
+     */
+    static unescapeShellMetaCharacters(str: string): string {
         return str.replace(/\\x([0-9A-Fa-f]{2})/g, (_, hex) =>
             String.fromCharCode(parseInt(hex, 16)),
         );

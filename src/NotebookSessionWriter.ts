@@ -54,7 +54,9 @@ export class NotebookSessionWriter {
     ) {
         const activeNotebook = notebook || vscode.window.activeNotebookEditor;
         if (!activeNotebook) {
-            vscode.window.showErrorMessage("No active notebook found.");
+            Logger.info(
+                "Unable to record session information because no notebook is open."
+            );
             return;
         }
         const notebookDocument = activeNotebook.notebook;

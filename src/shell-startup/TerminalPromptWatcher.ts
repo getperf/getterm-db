@@ -4,6 +4,7 @@ import { TerminalBufferParser } from "./TerminalBufferParser";
 export class TerminalPromptWatcher {
     private static terminalBuffers: Map<vscode.Terminal, string> = new Map();
     private static listeners: Map<vscode.Terminal, vscode.Disposable> = new Map();
+    private static terminalShellIntegrationStatus: Map<vscode.Terminal, boolean> = new Map();
 
     /**
      * 指定した端末の出力をバッファリングする
@@ -18,8 +19,19 @@ export class TerminalPromptWatcher {
                 this.terminalBuffers.set(terminal, existingBuffer + e.data);
             }
         });
+        const shellIntegrationDisposable = vscode.window.onDidChangeTerminalShellIntegration((e) => {
+            if (e.terminal === terminal) {
+                this.terminalShellIntegrationStatus.set(terminal, true);
+                console.log(`Shell integration status updated`);
+            }
+        });
 
-        this.listeners.set(terminal, disposable);
+        this.listeners.set(terminal, {
+            dispose: () => {
+                disposable.dispose();
+                shellIntegrationDisposable.dispose();
+            },
+        });
     }
 
     /**
@@ -61,6 +73,16 @@ export class TerminalPromptWatcher {
             }, 500);
         });
     }
+
+    /**
+     * 端末のシェル統合ステータスを取得
+     * @param terminal 対象の端末
+     * @returns シェル統合が有効なら `true`、無効なら `false`
+     */
+    static getShellIntegrationStatus(terminal: vscode.Terminal): boolean {
+        return this.terminalShellIntegrationStatus.get(terminal) || false;
+    }
+
 
     /**
      * 端末の監視を解除

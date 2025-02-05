@@ -86,7 +86,7 @@ export class XtermParser {
             }
         }
         // エスケープされたセミコロン（\x3b）を元に戻す
-        cleanedOutput = cleanedOutput.replace(/\\x3b/g, ";");
+        cleanedOutput = Util.unescapeShellMetaCharacters(cleanedOutput);
 
         // 末尾の改行を削除
         cleanedOutput = cleanedOutput.replace(/(\n)+$/, "\n");
