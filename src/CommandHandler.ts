@@ -136,10 +136,12 @@ export class CommandHandler {
             Logger.error(`couldn't retrieve command buffer from session: ${session.sessionName}`);
             return;
         }
+        console.log("ECOMMAND: ", e.execution.commandLine.value);
         const parsedCommand = await CommandParser.parse(consoleBuffer);
         const commandLine = e.execution.commandLine.value;
         if (commandLine) {
             Logger.info(`command text from API: ${commandLine}`);
+            parsedCommand.command = commandLine;
         }
         if (!parsedCommand) {
             vscode.window.showErrorMessage(

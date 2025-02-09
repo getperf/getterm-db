@@ -69,6 +69,7 @@ export class CommandParser {
             `split the console buffer input : ${JSON.stringify(buffer)}`,
         );
         const indexCommandC = buffer.lastIndexOf(osc633CommandC);
+        Logger.debug(`INDEX C : ${indexCommandC}`);
         if (indexCommandC === -1) {
             return {
                 commandBuffer: buffer,
@@ -81,6 +82,7 @@ export class CommandParser {
         );
 
         const indexCommandB = commandBuffer.lastIndexOf(osc633CommandB);
+        Logger.debug(`INDEX B : ${indexCommandB}`);
         if (indexCommandB !== -1) {
             commandBuffer = commandBuffer.slice(
                 indexCommandB + osc633CommandB.length,
@@ -146,6 +148,7 @@ export class CommandParser {
         const commandText = await this.extractCommandText(
             parts.commandBuffer + parts.outputBuffer.slice(0, 1024),
         );
+        console.log(`COMMAND : ${JSON.stringify(commandText)}`);
         Logger.info(`extracted command text : ${JSON.stringify(commandText)}`);
 
         const oscRegex = /\x1B\]633;([A-ZP])([^\x07]*)?\x07/g;
