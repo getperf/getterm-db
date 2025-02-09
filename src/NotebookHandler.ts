@@ -31,14 +31,15 @@ export class TerminalNotebookHandler {
         const filename = `note_${yyyymmdd}_${hhmiss}.getterm`;
         let notebookHome = ConfigManager.notebookHome;
         if (lastSavePath) {
-            const lastSaveDir = path.dirname(lastSavePath.fsPath);
-            if (lastSaveDir.startsWith(notebookHome)) {
-                notebookHome = lastSaveDir;
-            } else {
-                Logger.info(
-                    `Last save path '${lastSaveDir}' does not match notebookHome '${notebookHome}'. notebookHome remains unchanged.`
-                );
-            }
+            // const lastSaveDir = path.dirname(lastSavePath.fsPath);
+            notebookHome = path.dirname(lastSavePath.fsPath);
+            // if (lastSaveDir.startsWith(notebookHome)) {
+            //     notebookHome = lastSaveDir;
+            // } else {
+            //     Logger.info(
+            //         `Last save path '${lastSaveDir}' does not match notebookHome '${notebookHome}'. notebookHome remains unchanged.`
+            //     );
+            // }
         }
     
         const filePath = path.join(notebookHome, filename);

@@ -5,6 +5,7 @@ import { Logger } from "./Logger";
 import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { TerminalShellExecutor } from "./shell-startup/TerminalShellExecutor";
+import { ShellStartupConfigurator } from "./shell-startup/ShellStartupConfigurator";
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -23,6 +24,10 @@ export class RemoteShellExecutor {
                     Logger.info("show remove ssh view command invoked");
                     vscode.commands.executeCommand("workbench.view.remote");
                 },
+            ),
+            vscode.commands.registerCommand(
+                "getterm-db.loadShellIntegrationScript",
+                () => ShellStartupConfigurator.loadShellIntegrationScript(), 
             ),
             vscode.commands.registerCommand(
                 "getterm-db.openTerminalWithProfile",

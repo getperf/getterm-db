@@ -12,7 +12,7 @@ export class ShellStartupConfigurator  {
      * @param terminal - vscode.Terminal インスタンス
      * @returns Promise<boolean> - 成功/失敗
      */
-    static async transferShellIntegrationScript(terminal: vscode.Terminal): Promise<boolean> {
+    static async transferShellIntegrationScript(terminal: vscode.Terminal, skipCheck : boolean = false): Promise<boolean> {
         try {
             const shellIntegrationPath = this.getShellIntegrationPath();
             if (!shellIntegrationPath) {
@@ -25,6 +25,11 @@ export class ShellStartupConfigurator  {
                 .digest("hex");
             Logger.info(`Local checksum: ${localChecksum}`);
 
+            if (skipCheck) {
+                terminal.sendText(`mkdir -p "$HOME/.getterm"`);
+                await this.transferScriptContent(terminal, localScriptContent);
+                return true;
+            }
             const command = `
                 mkdir -p "$HOME/.getterm" &&
                 if [ -f "${this.remotePath}" ]; then
@@ -79,5 +84,15 @@ export class ShellStartupConfigurator  {
             console.error("Failed to execute command to locate shell integration path.", error);
             return "";
         }
+    }
+
+    public static async loadShellIntegrationScript() {
+        const terminal = vscode.window.activeTerminal;
+        if (!terminal) {
+            vscode.window.showErrorMessage("No active terminal found.");
+            return;
+        }
+        await this.transferShellIntegrationScript(terminal, true);
+        terminal.sendText(`source ${this.remotePath}`); 
     }
 }

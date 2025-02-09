@@ -69,6 +69,10 @@
         "title": "Getterm : Open terminal"
       },
       {
+        "command": "getterm-db.loadShellIntegrationScript",
+        "title": "Getterm : Load shell integration script"
+      },
+      {
         "command": "getterm-db.openTerminalWithProfileAndCreateNotebook",
         "title": "Getterm : Open terminal & Create notebook"
       },
