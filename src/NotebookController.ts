@@ -94,7 +94,6 @@ export class TerminalNotebookController {
     public async createTemporaryNotebook() {
         const notebookHandler = TerminalNotebookHandler.create();
         const lastSavePath = ConfigManager.lastSavePath;
-        console.log("LASTSAVEPATH:", lastSavePath);
         const options: vscode.SaveDialogOptions = {
             saveLabel: "Create Notebook",
             defaultUri: notebookHandler.defaultUri(lastSavePath),
@@ -126,13 +125,20 @@ export class TerminalNotebookController {
             vscode.window.showInformationMessage(
                 `Terminal notebook opend : ${notebookUri.fsPath}`,
             );
-            TerminalNotebookSessionPicker.showExplorerAndOutline();
+            // TerminalNotebookSessionPicker.showExplorerAndOutline();
         } catch (error) {
             vscode.window.showErrorMessage(
                 `Failed to create or open new notebook: ${error}`,
             );
         }
-        await vscode.commands.executeCommand("getterm-db.selectSession");
+        // await vscode.commands.executeCommand("getterm-db.selectSession");
+        // const sessionPicker = new TerminalNotebookSessionPicker(vscode.extensions.getExtension('your.extension.id')!.exports.context);
+        const terminal = vscode.window.activeTerminal;
+        if (terminal) {
+            await TerminalNotebookSessionPicker.bindNotebookToTerminal(terminal);          
+        }
+        // await TerminalNotebookSessionPicker.bindNotebookToTerminal()
+        await vscode.commands.executeCommand("workbench.action.toggleSidebarVisibility");
     }
 
     /**

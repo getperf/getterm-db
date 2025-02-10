@@ -2,9 +2,6 @@ import * as vscode from "vscode";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { NotebookSessionWriter } from "./NotebookSessionWriter";
 import { TerminalSessionMode } from "./TerminalSession";
-import { Session } from "./model/Session";
-import { Logger } from "./Logger";
-import { Terminal } from "xterm-headless";
 
 export class TerminalNotebookSessionPicker {
     private context: vscode.ExtensionContext;
@@ -23,7 +20,7 @@ export class TerminalNotebookSessionPicker {
             vscode.commands.registerCommand(
                 "getterm-db.selectSession",
                 async () => {
-                    await this.selectSession();
+                    await this.selectSessionAndBindNotebook();
                 },
             ),
             vscode.commands.registerCommand(
@@ -77,74 +74,50 @@ export class TerminalNotebookSessionPicker {
             }
         }
 
-        // if (!terminals || terminals.length === 0) {
-        //     vscode.window.showInformationMessage('現在開いているターミナルはありません。');
-        //     return;
-        // }
-
-        // // ターミナルリストを表示
-        // const terminalNames = Array.from(terminals.keys());
-        // console.log("terminalNames: ", JSON.stringify(terminalNames));
-        // const selected = await vscode.window.showQuickPick(terminalNames, {
-        //     placeHolder: '開いているターミナルを選択してください',
-        // });
-        // if (selected) {
-        //     vscode.window.showInformationMessage(`選択されたターミナル: ${selected}`);
-        //     return selected;
-        // }
         return;
     }
 
-    private async selectSession() {
-        const terminal = await this.selectOpenTerminals();
+    public async selectSessionAndBindNotebook(terminal?: vscode.Terminal) {
+        if (!terminal) {
+            terminal = await this.selectOpenTerminals();
+        }
         console.log("terminal: ", terminal?.name);
         if (!terminal) {
             vscode.window.showInformationMessage("No terminal selected.");
             return;
         }
-        const selectedSession =
-            await TerminalSessionManager.getSessionOrCreate(terminal);
+        TerminalNotebookSessionPicker.bindNotebookToTerminal(terminal);
+    }
 
-        if (selectedSession) {
-            const notebookEditor = vscode.window.activeNotebookEditor;
-            // Remove current terminal notebook from session.
-            const currentTerminal =
-                TerminalSessionManager.findTerminalByNotebookEditor(
-                    notebookEditor,
-                );
-            if (currentTerminal) {
-                TerminalSessionManager.updateSession(
-                    currentTerminal,
-                    "notebookEditor",
-                    undefined,
-                );
-                TerminalSessionManager.updateSession(
-                    currentTerminal,
-                    "terminalSessionMode",
-                    TerminalSessionMode.CaptureStop,
-                );
-            }
-            vscode.window.showInformationMessage(
-                `You selected: ${selectedSession.sessionName}`,
-            );
-            // const session = NewTerminalSessionManager.findByName(selectedSession);
-            // const terminal = NewTerminalSessionManager.findTerminalByName(selectedSession);
-            if (notebookEditor) {
-                // if (session && terminal && notebookEditor) {
-                TerminalSessionManager.updateSession(
-                    terminal,
-                    "notebookEditor",
-                    notebookEditor,
-                );
-                TerminalSessionManager.updateSession(
-                    terminal,
-                    "terminalSessionMode",
-                    TerminalSessionMode.Capturing,
-                );
-                NotebookSessionWriter.appendSessionStartCell(selectedSession);
-                TerminalNotebookSessionPicker.showExplorerAndOutline();
-            }
+    static async bindNotebookToTerminal(terminal : vscode.Terminal) {
+        const selectedSession =
+        await TerminalSessionManager.getSessionOrCreate(terminal);
+
+        if (!selectedSession) {
+            vscode.window.showInformationMessage("No session selected.");
+            return;
         }
+
+        const notebookEditor = vscode.window.activeNotebookEditor;
+        // Remove current terminal notebook from session.
+        const currentTerminal = TerminalSessionManager.findTerminalByNotebookEditor(
+            notebookEditor,
+        );
+        if (currentTerminal) {
+            selectedSession.notebookEditor = undefined;
+            selectedSession.terminalSessionMode = TerminalSessionMode.CaptureStop;
+        }
+        vscode.window.showInformationMessage(
+            `You selected: ${selectedSession.sessionName}`,
+        );
+        // Set notebook to current terminal session.
+        if (notebookEditor) {
+            selectedSession.notebookEditor = notebookEditor;
+            selectedSession.terminalSessionMode = TerminalSessionMode.Capturing;
+            NotebookSessionWriter.appendSessionStartCell(selectedSession);
+            // TerminalNotebookSessionPicker.showExplorerAndOutline();
+        }
+        terminal.show(false);
     }
 
     static showExplorerAndOutline() {

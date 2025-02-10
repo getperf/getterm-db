@@ -17,7 +17,8 @@ export class NotebookMarkdownCellAdder {
     }
 
     private async promptForMarkdown(): Promise<void> {
-        const headingOptions = ['Text', 'Heading (#)', 'Heading 2 (##)', 'Heading 3 (###)'];
+        // const headingOptions = ['Text', 'Heading (#)', 'Heading 2 (##)', 'Heading 3 (###)'];
+        const headingOptions = ['Heading 2 (##)', 'Heading 3 (###)', 'Text', 'Heading (#)'];
 
         const selectedHeading = await vscode.window.showQuickPick(headingOptions, {
             placeHolder: 'Select heading level or plain text',

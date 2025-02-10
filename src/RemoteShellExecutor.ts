@@ -39,6 +39,10 @@ export class RemoteShellExecutor {
                 this.openTerminalWithProfileAndCreateNotebook,
                 this,
             ),
+            vscode.commands.registerCommand(
+                'getterm-db.maximizeTerminalPanel', async () => {
+                await vscode.commands.executeCommand('workbench.action.toggleMaximizedPanel');
+            }),
         );
     }
 
@@ -49,13 +53,13 @@ export class RemoteShellExecutor {
             );
             return;
         }
-        await this.openTerminalWithProfile(node);
+        const terminal = await this.openTerminalWithProfile(node);
         await vscode.commands.executeCommand(
             "getterm-db.createNewTerminalNotebook",
         );
     }
 
-    private async openTerminalWithProfile(node: any) {
+    private async openTerminalWithProfile(node: any) : Promise<vscode.Terminal | undefined> {
         if (!node || !node.label) {
             vscode.window.showErrorMessage("プロファイルが選択されていません。");
             return;
@@ -78,5 +82,6 @@ export class RemoteShellExecutor {
         console.log("セッション履歴登録：", sessionId);
         TerminalSessionManager.create(terminal, sessionId);
         Logger.info(`open terminal, regist session id : ${sessionId}`);
+        return terminal;
     }
 }

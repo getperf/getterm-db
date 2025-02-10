@@ -92,7 +92,7 @@ export class TerminalNotebookHandler {
         this.notebookEditor.selection = range;
         this.notebookEditor.revealRange(
             range,
-            vscode.NotebookEditorRevealType.Default,
+            vscode.NotebookEditorRevealType.InCenter,
         );
 
         // Execute the newly added cell

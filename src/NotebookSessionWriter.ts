@@ -82,7 +82,7 @@ export class NotebookSessionWriter {
         activeNotebook.selection = range;
         activeNotebook.revealRange(
             range,
-            vscode.NotebookEditorRevealType.Default,
+            vscode.NotebookEditorRevealType.InCenter,
         );
     }
 
