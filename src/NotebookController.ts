@@ -131,13 +131,10 @@ export class TerminalNotebookController {
                 `Failed to create or open new notebook: ${error}`,
             );
         }
-        // await vscode.commands.executeCommand("getterm-db.selectSession");
-        // const sessionPicker = new TerminalNotebookSessionPicker(vscode.extensions.getExtension('your.extension.id')!.exports.context);
         const terminal = vscode.window.activeTerminal;
         if (terminal) {
             await TerminalNotebookSessionPicker.bindNotebookToTerminal(terminal);          
         }
-        // await TerminalNotebookSessionPicker.bindNotebookToTerminal()
         await vscode.commands.executeCommand("workbench.action.toggleSidebarVisibility");
     }
 

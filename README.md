@@ -1,98 +1,182 @@
 # Getterm: Terminal Capture Tool
 
-Getterm is an extension for [VSCode Insiders](https://code.visualstudio.com/insiders) that integrates terminal software with a text editor to enhance operational efficiency, particularly for server management tasks. 
-
+Getterm is a software that integrates a terminal with a text editor. Designed to enhance the efficiency of server management and operations, it automatically records terminal activity and logs the content to a notebook.
 
 ![Getterm usage](assets/getterm-usage.gif)
 
-## Features
+Getterm offers the following features to optimize terminal operations in server management:
 
-- **Automation of Terminal Operations and Logs:**  
-    Automate the recording of terminal activities, reducing manual intervention.
+## Key Features
 
-- **Minimization of Errors in Terminal Operations:**  
-    Prevent omissions and errors by streamlining work logs.
-
-- **Command Context and Comments:**  
-    Add comments to explain command intentions or document modifications effectively.
-
-## Use Cases
-
-Getterm is designed to optimize terminal usage in server operations by providing the following functionalities:
-
-1. **Deploy Rehearsal:**  
-    Capture commands into a task procedure document to simulate and review planned operations.
+1. **Automatic Recording of Terminal Operations**  
+    After establishing an SSH connection, terminal activities are recorded in real time and automatically reflected in a notebook.
     
-2. **Production Server Deployment:**  
-    Automatically log commands during production server deployment operations, including detailed information such as start and end times, to generate accurate execution reports.
+2. **Creation of Server Procedure Documentation**  
+    It automatically records the results of operation simulations performed in a test environment, allowing you to generate procedure documents for review purposes.
+    
+3. **Production Server Deployment Logging**  
+    Commands executed in the production environment are logged, and an execution report is generated that includes detailed information such as start and end times.
 
+## Shortcut Keys
+
+To support the integration between the terminal and the notebook, please use the following shortcut keys:
+
+- **CTRL+SHIFT+L**  
+    → Adds a Markdown cell for headers to the notebook.  
+    (This is used to organize recorded content and clearly delineate work sections.)
+    
+- **CTRL+SHIFT+K**  
+    → Toggles the terminal panel between maximized and normal sizes.  
+    (This is useful for expanding your workspace to concentrate on terminal operations.)
 
 ## Installation
 
-Since **Getterm** relies on proposed APIs available only in ["VSCode Insiders"](https://code.visualstudio.com/insiders), it cannot be installed from the regular VSCode Marketplace. Instead, follow the steps below to set up the extension manually in VSCode Insiders:
+Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode Insiders**](https://code.visualstudio.com/insiders) rather than the standard VSCode version.
 
-
-1. **Install the ["Remote - SSH"](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) Extension**
+1. **Launch VSCode Insiders**
     
-    - Open ["VSCode Insiders"](https://code.visualstudio.com/insiders) and search for the **Remote - SSH** extension in the Extensions Marketplace.
-    - Install the extension to enable remote workspace functionality.
+    - Install and launch [VSCode Insiders](https://code.visualstudio.com/insiders).
 
-2. **Install the Getterm Extension by .vsix**
+2. **Install the Remote - SSH Extension**
     
-    - [Download the `getterm.zip`](https://github.com/getperf/getterm/tags) and extract the contents.
-    - Open VSCode Insiders.
-    - Navigate to the Extensions view by clicking the Extensions icon in the Activity Bar or using `Ctrl+Shift+X`.
-    - Click the ellipsis (`...`) in the top-right corner of the Extensions view, then select **Install from VSIX...**.
-    - Browse to the location where you extracted the archive downloaded from [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags). Locate the `getterm-x.x.x.vsix` file and select it.
+    - Open the Extensions view in VSCode Insiders from the activity bar, search for "remote-ssh," and install the extension.
+
+3. **Install the Getterm Extension**
+    
+    - Download and unzip [`getterm-x.x.x.zip`](https://github.com/getperf/getterm/tags).
+    - In VSCode Insiders, click the ellipsis (`...`) in the upper right corner of the Extensions view and select **Install from VSIX...**.
+    - Navigate to the unzipped folder and select the `getterm-x.x.x.vsix` file to install the extension.
 
 ## Usage
 
-### 1. **Run the VSCode Insiders Launch Script**
+### 1. Execute the VSCode Insiders Launch Script
 
-- Open PowerShell and navigate to the directory where you extracted `getterm-x.x.x.zip`. Then, run the VSCode Insiders launch script:
+- Run the launch script located in the unzipped folder:
     
     ```powershell
-    cd {path to extracted folder} 
-    .\code-getterm.bat .
+    .\getterm.bat {working directory (optional)}
     ```
-    
-- This script starts VSCode Insiders with the necessary options to enable the proposed API functionality.
+
+- This script launches VSCode Insiders with the Proposal API enabled.
     
 
-### 2. **Connect to a Server**
+### 2. Connect to a Server and Create a Notebook
 
-- Once VSCode Insiders has launched, click on the **Remote - SSH** icon in the Activity Bar.
-    
-- Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to connect.
-    
-- It is recommended to configure the connection host to use a public key for authentication, **enabling passwordless login**. In such cases, shell integration will be automatically activated. If automatic login is not possible, you will need to manually load the shell integration script as described in the following notes.
+- After launching, click the **Remote - SSH** icon in the activity bar.
+- Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to establish an SSH connection to the target host.
+- The SSH connection will be initiated, and the shell integration script will automatically load on the remote host.
 
-#### Notes:
+### 3. Start Recording Terminal Operations
 
-- For new connections, click the **+** icon next to the SSH host list and register a new connection host.
+- Once the SSH connection is established, terminal operations are automatically recorded and their content is reflected in the notebook.
+- When working with the terminal and notebook, please also use the following shortcut keys:
+    - **CTRL+SHIFT+L**: Adds a Markdown header cell to the notebook.
+    - **CTRL+SHIFT+K**: Toggles the terminal panel between maximized and normal (On/Off).
 
-- After connecting via SSH, the script `shellIntegration-bash.sh` will automatically loaded to enable shell integration APIs.
+## Commands
+
+### Basic Operations
+
+- **`getterm-db.setLogLevel`**  
+    **Title:** Getterm: Set Log Level  
+    **Description:**  
+    Sets the log output level, which is useful for checking debug information during troubleshooting.
     
-- The `shellIntegration-bash.sh` script appends escape sequences to commands executed in the terminal, signaling events such as start and end times. These sequences are interpreted by VS Code Shell integration API.
+- **`getterm-db.showRemoteSSHView`**  
+    **Title:** Getterm: Show remote SSH view  
+    **Description:**  
+    Displays the list of Remote-SSH connection hosts in the navigation view.
     
-- If the script fails to load, manually upload `shellIntegration-bash.sh` of current directory to the server and load it with the following command:
+
+### SSH Connection Related
+
+- **`getterm-db.openTerminalWithProfile`**  
+    **Title:** Getterm: Open Terminal  
+    **Description:**  
+    Select a host from the Remote-SSH connection list and launch a terminal by right-clicking on it.  
+    _After execution, an SSH connection is initiated based on the selected profile._
     
+- **`getterm-db.openTerminalWithProfileAndCreateNotebook`**  
+    **Title:** Getterm: Open Terminal & Create Notebook  
+    **Description:**  
+    Select a host from the Remote-SSH connection list and right-click to launch a terminal while simultaneously creating a new notebook.  
+    _After connecting, terminal operations are recorded and automatically reflected in the notebook._
+    
+
+### Terminal Operations
+
+- **`getterm-db.startTerminalCapture`**  
+    **Title:** Getterm: Start Terminal Capture  
+    **Description:**  
+    Right-click on an entry in the terminal list (displayed on the right side of the terminal panel) and select **Getterm: Start Terminal Capture** to begin capturing terminal output. The recorded operations will later be logged in the notebook.
+    
+- **`getterm-db.loadShellIntegrationScript`**  
+    **Title:** Getterm: Load Shell Integration Script  
+    **Description:**  
+    Loads the shell integration script to enable shell integration functionality on the remote host.  
+    _(Re-run this command if the shell environment changes—for example, due to a user switch using the su command.)_
+    
+
+### Notebook Operations
+
+- **`getterm-db.createNewTerminalNotebook`**  
+    **Title:** Getterm: Create New Terminal Notebook  
+    **Description:**  
+    Creates a new notebook for recording terminal operations.
+    
+- **`getterm-db.selectSession`**  
+    **Title:** Select Session  
+    **Category:** Notebook  
+    **Description:**  
+    In the notebook menu, select [**Select Session**] → [**Terminal Name**] to initiate a terminal session and start recording.
+    
+- **`getterm-db.stopCapture`**  
+    **Title:** Stop Capture  
+    **Category:** Notebook  
+    **Description:**  
+    In the notebook menu, select [**Stop Capture**] to halt terminal capture, ending the recording and disconnecting the terminal session.
+    
+- **`getterm-db.addMarkdownCell`**  
+    **Title:** GetTerm: Add Markdown Header  
+    **Description:**  
+    Executed via the shortcut (CTRL+SHIFT+L), this command adds a Markdown header cell to the notebook.
+    
+- **`getterm-db.maximizeTerminalPanel`**  
+    **Title:** Maximize Terminal Panel  
+    **Description:**  
+    Executed via the shortcut (CTRL+SHIFT+K), this command toggles the terminal panel between maximized and normal sizes. Use it to maximize your view when you need to focus on terminal operations.
+    
+
+### Export Operations
+
+- **`getterm-db.exportExcel`**  
+    **Title:** Getterm: Export to Excel  
+    **Description:**  
+    Exports the contents of the notebook to Excel format for data aggregation and review.
+    
+- **`getterm-db.exportMarkdown`**  
+    **Title:** Getterm: Export to Markdown  
+    **Description:**  
+    Exports the notebook’s content to Markdown format, making it reusable as documentation or for web publication.
+
+## Notes
+
+- For new connections, open the **Remote - SSH** navigation view, click the + icon on the right side of an SSH entry, and register a new connection host.
+- After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
+- The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
+- If an error occurs while loading the script, manually upload the `vscode-shell-integration.sh` file from the current directory and load it using the following command:
+
     ```bash
-    source shellIntegration-bash.sh
+    # Upload and load vscode-shell-integration.sh on the host 
+    source vscode-shell-integration.sh
     ```
-    
-
-### 3. **Start Capturing**
-
-- In the notebook toolbar, click **Select Session** and choose the terminal session you wish to record.
-- Begin terminal operations. All actions will be logged into the notebook for documentation and review.
 
 ## Contributing
 
-We welcome contributions to this project! Here’s how you can contribute:
+Contributions to this project are welcome! You can participate by following these steps:
 
-1. Clone the repository from GitHub:
+Clone the GitHub repository and share your feedback via pull requests or issues:
 
-    ```bash
-    git clone https://github.com/getperf/getterm.git
-    ```
+```bash
+git clone https://github.com/getperf/getterm.git
+```

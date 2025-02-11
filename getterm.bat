@@ -1,15 +1,11 @@
 @echo off
-REM Check if an argument is provided
-if "%~1"=="" (
-  echo Usage: code-getterm.cmd [directory]
-  exit /b
-)
-
-REM Navigate to the specified directory
-cd /d "%~1"
-if errorlevel 1 (
-    echo Failed to change directory to %~1
-    exit /b 1
+REM Check if an argument, and navigate to the specified directory
+if not "%~1"=="" (
+  cd /d "%~1"
+  if errorlevel 1 (
+      echo Failed to change directory to %~1
+      exit /b 1
+  )
 )
 
 REM Run the command

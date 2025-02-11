@@ -1,96 +1,187 @@
-
 # Getterm: ターミナルキャプチャーツール
 
-Gettermは、[VSCode Insiders](https://code.visualstudio.com/insiders) の拡張機能でターミナルソフトウェアとテキストエディタを統合します。特にサーバ管理タスクの運用効率を向上させることを目的としたツールです。
+Gettermは、ターミナルとテキストエディタを統合したソフトウェアです。
+サーバ管理や運用作業の効率化を目的とし、ターミナル操作の記録とその内容のノートブックへの自動記録を実現します。
 
 ![Getterm使用例](assets/getterm-usage.gif)
 
-## 特徴
+サーバ運用におけるターミナル作業を最適化するために以下の機能を提供します。
 
-- **ターミナル操作とログの自動化**  
-    ターミナルでの作業を自動記録し、手動の介入を削減します。
-    
-- **ターミナル操作におけるエラーの最小化**  
-    作業ログを簡素化し、手順の抜け漏れやエラーを防ぎます。
-    
-- **コマンドの意図やコメント追加**  
-    コマンドの意図や変更内容を効果的に記録できるコメントを追加できます。
-    
+## 主な機能
 
-## 使用例
+1. **ターミナル操作の自動記録**  
+    SSH 接続後、ターミナルでの操作をリアルタイムに記録し、その内容をノートブックに反映します。
 
-Gettermは、サーバ運用におけるターミナル作業を最適化するために以下の機能を提供します。
+2. **サーバ手順書の作成**  
 
-1. **デプロイのリハーサル**  
-    テスト環境で予定されている操作をシミュレーションし、レビュー用のタスク手順書としてコマンドを記録します。
+    テスト環境での操作シミュレーション結果を自動的に記録し、レビュー用の手順書として活用できます。
     
-2. **本番サーバのデプロイ**  
-    本番環境のデプロイ作業でコマンドを自動的にログに記録し、開始時間や終了時間などの詳細情報を含む正確な実行レポートを生成します。
+3. **本番サーバのデプロイ記録**  
+
+    本番環境で実行されるコマンドをログに記録。開始・終了時刻などの詳細情報を含む実行レポートを生成します。
+
+## ショートカットキー
+
+ターミナルとノートブックの連携を支援するため、以下のショートカットキーをご利用ください。
+
+- **CTRL+SHIFT+L**  
+    → ノートブックに見出し用の Markdown セルを追加します。  
+    （記録内容を整理し、作業区分を明確にするために使用します。）
     
+- **CTRL+SHIFT+K**  
+    → ターミナルパネルを最大化または元に戻す切り替えを行います。  
+    （作業領域を拡大してターミナル操作に集中する際に便利です。）
 
 ## インストール
 
-**Getterm**は、[ **VSCode Insiders** ](https://code.visualstudio.com/insiders)で利用可能なプロポーサル API を使用するため、通常の VSCode Marketplace からはインストールできません。以下の手順で、VSCode Insiders を起動して手動でセットアップしてください。
+Getterm は VSCode のプロポーザル API を利用するため、通常版 VSCode ではなく [**VSCode Insiders**](https://code.visualstudio.com/insiders) での利用が必須です。
 
-1.  **[Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) 拡張機能をインストール**
+1. **VSCode Insiders の起動**
     
-    - [ VSCode Insiders ](https://code.visualstudio.com/insiders)を開き、拡張機能マーケットプレイスで [**Remote - SSH**](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh) を検索してインストールします。
-    
-2. **Getterm拡張機能をインストール**
-    
-    - [`getterm.zip`](https://github.com/getperf/getterm/tags)をダウンロードして解凍します。
-    - VSCode Insiders を開きます。
-    - アクティビティバーの拡張機能アイコンをクリックするか、`Ctrl+Shift+X`（macOSでは`Cmd+Shift+X`）を使用して拡張機能ビューに移動します。
-    - 拡張機能ビューの右上にある省略記号（`...`）をクリックし、**Install from VSIX...**を選択します。
-    - 解凍したアーカイブの場所に移動し、`getterm-x.x.x.vsix`ファイルを選択してください。
+    - [VSCode Insiders](https://code.visualstudio.com/insiders) をインストールし、起動します。
 
+2. **Remote - SSH 拡張機能のインストール**
+    
+    - VSCode Insiders のアクティビティバーから拡張機能ビューを開き、"remote-ssh" で検索してインストールします。
+
+3. **Getterm 拡張機能のインストール**
+    
+    - [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags) をダウンロードして解凍します。
+    - VSCode Insiders の拡張機能ビュー右上の「…」をクリックし、**Install from VSIX...** を選択します。
+    - 解凍したフォルダから `getterm-x.x.x.vsix` を選択してインストールします。
 
 ## 使用方法
 
 ### 1. **VSCode Insiders 起動スクリプトを実行**
     
-- PowerShell を開き、`getterm-x.x.x.zip` を解凍したディレクトリに移動し、 VSCode Insiders の起動スクリプトを実行します。
+- 解凍したフォルダ内にある起動スクリプトを実行してください。  
     
     ```powershell
-    cd {解凍先のパス}
-    .\code-getterm.bat .
+    .\getterm.bat {作業ディレクトリ(省略可)}
     ```
     
-- このスクリプトは、プロポーザルAPI機能を有効化するオプションを追加して、 VSCode Insiders を起動しています。
+- このスクリプトは、プロポーザル API 機能を有効にした状態で VSCode Insiders を起動します。
         
-### 2.**サーバーに接続する**
+### 2.**サーバーに接続してノートブックを作成する**
     
-- 起動後、アクティビティバーの **Remote - SSH** アイコンをクリックします。
+- 起動後、アクティビティバーの **Remote - SSH** アイコンをクリックします。
     
-- 既存の接続ホストアイコンを右クリックして **Getterm: Open Terminal & Create Notebook** を選択し、対象ホストに接続します。
+- 既存の接続ホストアイコンを右クリックして **Getterm: Open Terminal & Create Notebook** を選択し、対象ホストに SSH 接続します。
 
-- 接続ホストの設定は、公開鍵を登録して**パスワード入力なしでログインできる構成**にすることが推奨されます。この設定により、シェル統合が自動で有効化されます。ただし、自動ログインができない場合は、以下の注意事項に従い、スクリプトを**手動**で読み込む必要があります。
+- 選択したホストに対して SSH 接続が開始され、シェル統合スクリプトが自動でロードされます。
 
-#### 注意事項
+### 3. **ターミナル操作の記録開始** 
 
-- 新規接続の場合は SSH の行の右側の + をクリックし、新規接続ホストを登録してください。
+- SSH 接続後、ターミナルでの操作が自動的に記録され、内容がノートブックに反映されます。
+- ターミナルおよびノートブックを操作する際は、以下のショートカットキーも併用してください：
+
+    - CTRL-SHIFT-L : ノートブックに見出し用の Markdown セルを追加します。
+    - CTRL-SHIFT-K : ターミナルパネルの最大化／元に戻す（On/Off）切り替えを行います。
+
+## コマンド
+
+### 基本操作
+
+- **`getterm-db.setLogLevel`**  
+    **タイトル:** Getterm: Set Log Level  
+    **説明:**  
+    ログ出力レベルを設定します。デバッグ時の情報確認に利用します。
     
-- SSH 接続後、自動で `shellIntegration-bash.sh` を読み込み、シェル統合APIを有効化します。
+- **`getterm-db.showRemoteSSHView`**  
+    **タイトル:** Getterm: Show remote SSH view  
+    **説明:**  
+    ナビゲーションビューに Remote-SSH の接続ホストリストを表示します。
     
-- `shellIntegration-bash.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取りシェル統合 API と連携します。
+
+### SSH 接続関連
+
+- **`getterm-db.openTerminalWithProfile`**  
+    **タイトル:** Getterm: Open terminal  
+    **説明:**  
+    Remote-SSH の接続ホストリストからホストを選択し、 **右クリック** -> **[Getterm: Open terminal]** で端末を起動します。  
+    ※ コマンド実行後、選択したプロファイルに基づいた SSH 接続が開始されます。
     
-- スクリプトの読み込みがエラーとなった場合は、カレントディレクトリにある `shellIntegration-bash.sh` を手動でアップロードし、以下コマンドで読み込んでください。
+- **`getterm-db.openTerminalWithProfileAndCreateNotebook`**  
+    **タイトル:** Getterm: Open terminal & Create notebook  
+    **説明:**  
+    Remote-SSH の接続ホストリストからホストを選択し、 **右クリック** -> [**Getterm: Open terminal & Create notebook**] で端末を起動して、新規ノートブックを作成します。  
+    ※ 接続後、ターミナル操作が記録され、ノートブックに自動反映されます。
+    
+### 端末操作
+
+- **`getterm-db.startTerminalCapture`**  
+    **タイトル:** Getterm: Start Terminal Capture  
+    **説明:**  
+    ターミナルパネル右側の端末リストを選択し、**右クリック** -> [**Getterm: Start Terminal Capture**] でターミナル出力のキャプチャーを開始します。キャプチャーした操作内容は、後でノートブックに記録されます。
+
+- **`getterm-db.loadShellIntegrationScript`**  
+    **タイトル:** Getterm: Load shell integration script  
+    **説明:**  
+    シェル統合スクリプトをロードし、リモートホスト側のシェル統合機能を有効化します。  
+    （suコマンドによるユーザー切り替えなどでシェル環境が変更された場合に再実行します。）
+
+### ノートブック操作
+
+- **`getterm-db.createNewTerminalNotebook`**  
+    **タイトル:** Getterm: Create new terminal notebook  
+    **説明:**  
+    端末操作記録用の新規ノートブックを作成します。
+
+- **`getterm-db.selectSession`**  
+    **タイトル:** Select Session  
+    **カテゴリー:** Notebook  
+    **説明:**  
+    ノートブックのメニューから、[**Select Session**] -> [**ターミナル名**] を選択し、端末接続と同時に記録を開始します。
+    
+- **`getterm-db.stopCapture`**  
+    **タイトル:** Stop Capture  
+    **カテゴリー:** Notebook  
+    **説明:**  
+    ノートブックのメニューから [**Stop Capture**] を選択し、
+    端末セッションのキャプチャーを停止します。記録の終了と端末セッションの切断を行います。
+    
+- **`getterm-db.addMarkdownCell`**  
+    **タイトル:** GetTerm: Add Markdown Header  
+    **説明:**  
+    ショートカット（CTRL+SHIFT+L）で実行され、ノートブックに見出し用の Markdown セルを追加します。
+    
+- **`getterm-db.maximizeTerminalPanel`**  
+    **タイトル:** Maximize Terminal Panel  
+    **説明:**  
+    ショートカット（CTRL+SHIFT+K）で実行され、端末パネルのサイズを最大化／元に戻すトグル操作を行います。端末作業に集中したい場合は最大化します。
+
+### エクスポート操作
+
+- **`getterm-db.exportExcel`**  
+    **タイトル:** Getterm: Export to excel  
+    **説明:**  
+    ノートブックの内容を Excel 形式にエクスポートします。データの集計や作業レビューに利用します。
+    
+- **`getterm-db.exportMarkdown`**  
+    **タイトル:** Getterm: Export to markdown  
+    **説明:**  
+    ノートブックの内容を Markdown 形式にエクスポートします。ドキュメントとして再利用したり、Web に展開する際に便利です。
+
+## 注意事項
+
+- 新規接続の場合は  **Remote - SSH** ナビゲーションビューを開き、SSH の行の右側の + をクリックし、新規接続ホストを登録してください。
+    
+- SSH 接続後、自動で `vscode-shell-integration.sh` を読み込み、シェル統合APIを有効化します。
+    
+- `vscode-shell-integration.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取りシェル統合 API と連携します。
+    
+- スクリプトの読み込みがエラーとなった場合は、カレントディレクトリにある `vscode-shell-integration.sh` を手動でアップロードし、以下コマンドで読み込んでください。
     
     ```bash
-    # shellIntegration-bash.shをホストにアップロードして読み込み
-    source shellIntegration-bash.sh
+    # vscode-shell-integration.shをホストにアップロードして読み込み
+    source vscode-shell-integration.sh
     ```
         
-### 3. **キャプチャを開始する**
-    
-- ノートブック上部のメニューから **Select Session** を選択し、記録する端末名を選択します。
-- ターミナル操作の記録が開始され、操作内容がノートブックに記録されます。
-
 ## 貢献方法
 
 このプロジェクトへの貢献を歓迎します！以下の手順で参加できます：
 
-1. GitHub からリポジトリをクローンしてください:
+GitHub リポジトリからソースコードをクローンし、プルリクエストや Issue を通じてフィードバックをお寄せください。
 
     ```bash
     git clone https://github.com/getperf/getterm.git
