@@ -153,7 +153,7 @@ export class ConsernedFileDownloader {
         TerminalSessionManager.disableShellIntegrationEvent(this.terminal); // Disable shell events
 
         // OSC 633 ; P ; <Property>=<Value> ST - Set a property on the terminal, only known properties will be handled.
-        const captureCommand = `echo -e "\\e]633;P;base64=$(cat '${this.commandAccessFile}' | base64)\\a"`;
+        const captureCommand = `echo -e "\\e]633;P;base64=$(cat ${this.commandAccessFile} | base64)\\a"`;
         // const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}cat ${this.commandAccessFile}`;
         const commandText = `${this.sudoCommand ? this.sudoCommand + " " : ""}${captureCommand}`;
         this.terminal.sendText(commandText); // Send 'cat' command to terminal
