@@ -50,10 +50,15 @@ export class ConfigManager {
      * @returns The notebook home directory path.
      */
     public static get notebookHome(): string {
-        const workspaceFolder =
-            vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ||
-            path.join(os.homedir(), "Documents");
-        return this.getParameter("notebookHome", workspaceFolder);
+        const lastSave = this.lastSavePath;
+        const defaultDir = lastSave 
+          ? path.dirname(lastSave.fsPath)
+          : (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ||
+             path.join(os.homedir(), "Documents"));
+            // const workspaceFolder =
+            // vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ||
+            // path.join(os.homedir(), "Documents");
+        return this.getParameter("notebookHome", defaultDir);
     }
 
     /**
@@ -80,7 +85,7 @@ export class ConfigManager {
      * @returns 前回保存したパスのURIまたはundefined
      */
     public static get lastSavePath(): vscode.Uri | undefined {
-        const lastSavePath = this.context.globalState.get<string>(LAST_SAVE_PATH_KEY);
+        const lastSavePath = this.context?.globalState?.get<string>(LAST_SAVE_PATH_KEY);
         return lastSavePath ? vscode.Uri.parse(lastSavePath) : undefined;
     }
 
