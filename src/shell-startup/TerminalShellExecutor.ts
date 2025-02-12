@@ -79,6 +79,11 @@ export class TerminalShellExecutor {
             } else {
                 terminal.sendText(`source "${this.remotePath}"`);
             }
+            vscode.window.showInformationMessage(
+                'シェル統合を永続化するには、.bash_profile に次の行を追加してください:\n\n' +
+                'source "${HOME}/.getterm/vscode-shell-integration.sh"\n\n' +
+                '（ターミナルで "vi ~/.bash_profile" と入力して編集できます。）',
+            );
             Logger.info(`open terminal, end`);
             return terminal;
         } finally {

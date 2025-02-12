@@ -170,11 +170,12 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
     
 - `vscode-shell-integration.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取りシェル統合 API と連携します。
     
-- スクリプトの読み込みがエラーとなった場合は、カレントディレクトリにある `vscode-shell-integration.sh` を手動でアップロードし、以下コマンドで読み込んでください。
-    
+- シェル統合を永続化するには、.bash_profile に次の行を追加してください:
+
     ```bash
-    # vscode-shell-integration.shをホストにアップロードして読み込み
-    source vscode-shell-integration.sh
+    vi ~/.bash_profile
+    # 最終行に以下を追加
+    source "${HOME}/.getterm/vscode-shell-integration.sh"
     ```
         
 ## 貢献方法

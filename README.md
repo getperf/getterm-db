@@ -164,11 +164,12 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 - For new connections, open the **Remote - SSH** navigation view, click the + icon on the right side of an SSH entry, and register a new connection host.
 - After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
 - The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
-- If an error occurs while loading the script, manually upload the `vscode-shell-integration.sh` file from the current directory and load it using the following command:
+- To persist shell integration, please add the following line to your .bash_profile:
 
     ```bash
-    # Upload and load vscode-shell-integration.sh on the host 
-    source vscode-shell-integration.sh
+    vi ~/.bash_profile
+    # Append the following line at the end
+    source "${HOME}/.getterm/vscode-shell-integration.sh"
     ```
 
 ## Contributing
