@@ -2,21 +2,18 @@ import * as vscode from "vscode";
 import ExcelJS from "exceljs";
 import { Note } from "../model/Note";
 import { Cell } from "../model/Cell";
-import path from "path";
 import {
     RawNotebookCell,
     RawNotebookData,
 } from "../NotebookSerializer";
 import { Util } from "../Util";
-import { MarkdownExport } from "./MarkdownExport";
+import { ExportParameters, MarkdownExport } from "./MarkdownExport";
 import { ExcelExportModel } from "./ExcelExportModel";
-import { MarkdownExportDialog } from "./MarkdownExportDialog";
+import { ExportDialog } from "./ExportDialog";
 
 export class ExcelExport {
 
     static async exportToExcel() {
-        const workspaceRoot =
-            vscode.workspace.workspaceFolders?.[0].uri.fsPath || "";
         const document = vscode.window.activeNotebookEditor?.notebook;
         if (!document) {
             vscode.window.showErrorMessage("No active notebook editor found");
@@ -24,16 +21,16 @@ export class ExcelExport {
         }
 
         const notebookName = document.uri.path.split("/").pop() ?? "Untitled";
-        // const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
 
-        const dialog = new MarkdownExportDialog(notebookName, 'excel');
+        const dialog = new ExportDialog(notebookName, 'excel');
         const params = await dialog.getExportParametersByDialog();
-        console.log("export dialog result:", params);
+        if (!params) {
+            vscode.window.showInformationMessage("Export canceled.");
+            return;
+        }
+        // console.log("export dialog result:", params);
 
-        const notebookPath = document.uri.path;
-        const notebookTitle = path.basename(notebookPath, path.extname(notebookPath));
-
-        const note = await Note.getByTitle(notebookPath);
+        const note = await Note.getByTitle(document.uri.path);
         if (!note) {
             vscode.window.showErrorMessage(
                 "The open terminal notebook has not been saved",
@@ -41,8 +38,7 @@ export class ExcelExport {
             return;
         }
 
-        const notebookId = note.id;
-        const rows = await Note.reportQuery(notebookId);
+        const rows = await Note.reportQuery(note.id);
 
         // Create Excel Workbook and Worksheet
         const workbook = new ExcelJS.Workbook();
@@ -63,18 +59,15 @@ export class ExcelExport {
             stepNo++;
             const startTime = new Date(row.start);
             const endTime = new Date(row.end);
-            const durationFormatted = Util.calculateDuration(
-                startTime,
-                endTime,
-            );
-            // const output = MarkdownExport.getOutputText(Util.escapeXml(row.output), 5);
-            const output = MarkdownExport.getOutputText(row.output, 5);
+            const durationFormatted = Util.calculateDuration(startTime, endTime);
+            const textDescription = this.reformDescription(description, params);
+            const richtextDescription = ExcelExportModel.md2RichText(textDescription);
             worksheet.addRow({
                 position: stepNo,
-                session: row.profile_name ?? "-",
-                description: description,
-                command: Util.escapeXml(row.content),
-                output: output,
+                // session: row.profile_name ?? "-",
+                description: richtextDescription,
+                command: row.content,
+                output: MarkdownExport.getOutputText(row.output, params.trimLineCount),
                 start: Util.formatTime(startTime),
                 end: Util.formatTime(endTime),
                 duration: durationFormatted,
@@ -92,21 +85,39 @@ export class ExcelExport {
             ExcelExportModel.adjustRowHeight(row, rowIndex);
             ExcelExportModel.applyExitCodeFormatting(row, rowIndex);
         });
-
+        if (!params.includeCommandInfo) {
+            [5, 6, 7, 8].forEach((col) => {
+                worksheet.getColumn(col).hidden = true;
+            });
+        }
         // Write to Excel File
-        const filePath = path.join(
-            workspaceRoot,
-            `${notebookTitle}.xlsx`,
-        );
+        const filePath = params?.exportPath;
+        if (!filePath) {
+            vscode.window.showErrorMessage("No export path selected");
+            return;
+        }
         try {
-            await workbook.xlsx.writeFile(filePath);
-            vscode.window.showInformationMessage(
-                `Excel report saved to ${filePath}`,
-            );
-            Util.openExcelFile(filePath);
+            await workbook.xlsx.writeFile(filePath.fsPath);
+            vscode.window.showInformationMessage(`Excel report saved to ${filePath}`);
+            if (params.openMarkdown) {
+                Util.openExcelFile(filePath.fsPath);
+            }
         } catch (err) {
             vscode.window.showErrorMessage(`Error writing Excel file: ${err}`);
         }
+    }
+
+    static reformDescription(text: string, params: ExportParameters):string {
+        const lines: string[] = [];
+        text.split(/\n/).forEach( (line) => {
+            if (line.startsWith("% ")) {
+                if (params?.includeMetadata) {lines.push(line); }
+            } else {
+                lines.push(line);
+            }
+        });
+        lines.push("");
+        return lines.join("\n").trim();
     }
 
     static async saveNotebook(

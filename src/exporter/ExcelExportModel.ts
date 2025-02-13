@@ -1,6 +1,12 @@
 import * as vscode from "vscode";
 import ExcelJS from "exceljs";
 
+// ExcelJS の richText 用のセグメント型（ExcelJS でも同様の型を利用できます）
+interface RichTextSegment {
+    text: string;
+    font?: { bold?: boolean; size?: number };
+}
+  
 // 列定義の型
 type ColumnDefinition = {
     header: string;
@@ -20,7 +26,7 @@ const columns: ColumnDefinition[] = [
     {
         header: "Description",
         key: "description",
-        width: 40,
+        width: 30,
         alignment: { vertical: "top", horizontal: "left", wrapText: true },
     },
     {
@@ -113,7 +119,7 @@ export class ExcelExportModel {
             const estimatedLineCount = Math.ceil(text.length / colWidth);
             return Math.max(maxHeight, estimatedLineCount);
         }, 1);
-        return estimatedHeight * 20; // Multiply by a base height factor
+        return estimatedHeight * 30; // Multiply by a base height factor
     }
 
     /**
@@ -166,4 +172,40 @@ export class ExcelExportModel {
             width: col.width,
         }));
     }
+
+    static md2RichText(text: string): { richText: RichTextSegment[] } {
+        const segments: RichTextSegment[] = [];
+        const lines = text.split(/\n/);
+      
+        lines.forEach((line) => {
+          if (line.startsWith("#")) {
+            // 見出しの場合：正規表現でレベルと内容を抽出
+            const match = line.match(/^(#+)\s+(.*)$/);
+            if (match) {
+              const level = match[1].length;
+              const content = match[2];
+              // レベルに応じたフォントサイズ設定
+              let size = 13; // レベル1のデフォルト
+              if (level === 2) {
+                size = 12;
+              } else if (level === 3) {
+                size = 11;
+              } else if (level >= 4) {
+                size = 10;
+              }
+              segments.push({
+                text: content,
+                font: { bold: true, size: size },
+              });
+              segments.push({ text: "\n" });
+            } else {
+              segments.push({ text: line + "\n" });
+            }
+          } else {
+            segments.push({ text: line + "\n" });
+          }
+        });
+        return { richText: segments };
+    }
+      
 }

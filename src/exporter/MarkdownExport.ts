@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { MarkdownExportDialog } from "./MarkdownExportDialog";
+import { ExportDialog } from "./ExportDialog";
 import { Command, CommandRow } from "../model/Command";
 import { Logger } from "../Logger";
 import * as fs from "fs";
@@ -23,9 +23,8 @@ export class MarkdownExport {
         }
 
         const notebookName = notebookEditor.notebook.uri.path.split("/").pop() ?? "Untitled";
-        // const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
 
-        const dialog = new MarkdownExportDialog(notebookName, 'markdown');
+        const dialog = new ExportDialog(notebookName, 'markdown');
         const params = await dialog.getExportParametersByDialog();
         console.log("export dialog result:", params);
         if (params) {

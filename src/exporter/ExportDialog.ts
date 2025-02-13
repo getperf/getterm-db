@@ -14,7 +14,7 @@ export type ExportTypeDefinition = {
   };
 
 // クラス: エクスポートダイアログ
-export class MarkdownExportDialog {
+export class ExportDialog {
     private panel: vscode.WebviewPanel | null = null;
     private defaultExportPath: vscode.Uri;
     private exportType : ExportTypeDefinition;
@@ -47,7 +47,7 @@ export class MarkdownExportDialog {
                     if (message.command === "selectSaveLocation") {
                         const uri = await vscode.window.showSaveDialog({
                             saveLabel: "Export File",
-                            filters: { ".{ext}": [extension], "All Files": ["*"] },
+                            filters: { ".{md|xlsx}": [extension], "All Files": ["*"] },
                             defaultUri: this.defaultExportPath,
                         });
                         this.dispose();
@@ -97,7 +97,7 @@ export class MarkdownExportDialog {
     </style>
 </head>
 <body>
-    <h1>Export Markdown</h1>
+    <h1>Export ${this.exportType.title}</h1>
     <form id="exportForm">
         <label>Input File: [${this.notebookName}]
         <label>Include Options:</label>
