@@ -8,154 +8,11 @@ import {
     RawNotebookData,
 } from "../NotebookSerializer";
 import { Util } from "../Util";
-
-// 列定義の型
-type ColumnDefinition = {
-    header: string;
-    key: string;
-    width: number;
-    alignment: Partial<ExcelJS.Alignment>;
-};
-
-// 列定義
-const columns: ColumnDefinition[] = [
-    {
-        header: "No",
-        key: "position",
-        width: 5,
-        alignment: { vertical: "top", horizontal: "left" },
-    },
-    // { header: 'Type', key: 'type', width: 10, alignment: { vertical: 'top', horizontal: 'left' } },
-    {
-        header: "Session",
-        key: "session",
-        width: 10,
-        alignment: { vertical: "top", horizontal: "left", wrapText: true },
-    },
-    {
-        header: "Content",
-        key: "content",
-        width: 40,
-        alignment: { vertical: "top", horizontal: "left", wrapText: true },
-    },
-    {
-        header: "Output",
-        key: "output",
-        width: 40,
-        alignment: { vertical: "top", horizontal: "left", wrapText: true },
-    },
-    {
-        header: "Start Time",
-        key: "start",
-        width: 12,
-        alignment: { vertical: "top", horizontal: "right" },
-    },
-    {
-        header: "End Time",
-        key: "end",
-        width: 12,
-        alignment: { vertical: "top", horizontal: "right" },
-    },
-    {
-        header: "Duration",
-        key: "duration",
-        width: 10,
-        alignment: { vertical: "top", horizontal: "right" },
-    },
-    {
-        header: "Exit",
-        key: "exit_code",
-        width: 5,
-        alignment: { vertical: "top", horizontal: "center" },
-    },
-];
+import { MarkdownExport } from "./MarkdownExport";
+import { ExcelExportModel } from "./ExcelExportModel";
+import { MarkdownExportDialog } from "./MarkdownExportDialog";
 
 export class ExcelExport {
-    private isSaving = false;
-
-    /**
-     * Formats a cell in the worksheet.
-     */
-    private static formatCell(cell: ExcelJS.Cell, colNumber: number, rowIndex: number) {
-        // Add border to each cell
-        cell.border = {
-            top: { style: "thin" },
-            left: { style: "thin" },
-            bottom: { style: "thin" },
-            right: { style: "thin" },
-        };
-
-        // Set alignment to top and wrap text
-        cell.alignment = {
-            vertical: "top",
-            wrapText: true,
-        };
-
-        // Apply alignment from the column definitions
-        const columnDef = columns[colNumber - 1]; // 1-based index
-        if (columnDef?.alignment) {
-            cell.alignment = columnDef.alignment;
-        }
-
-        // Apply special styles for the header row
-        if (rowIndex === 1) {
-            cell.font = { bold: true }; // Bold header
-            // Left-aligned
-            cell.alignment = { horizontal: "left", vertical: "middle" };
-        }
-    }
-
-    /**
-     * Calculates the row height based on the content length.
-     */
-    private static calculateRowHeight(values: string[]): number {
-        const estimatedHeight = values.reduce((maxHeight, text) => {
-            const textLength = text.length;
-            const estimatedLineCount = Math.ceil(textLength / 20); // Estimate line count based on width
-            return Math.max(maxHeight, estimatedLineCount);
-        }, 1);
-
-        return estimatedHeight * 15; // Multiply by a base height factor
-    }
-
-    /**
-     * Adjusts the height of a row based on its content.
-     */
-    private static adjustRowHeight(row: ExcelJS.Row, rowIndex: number) {
-        if (rowIndex === 1) {
-            row.height = 25; // Header row
-            return;
-        }
-
-        const validValues = ((row.values as (string | undefined)[]) || [])
-            .filter((val, index) => index !== 0 && typeof val === "string")
-            .map((val) => val || "");
-
-        row.height = this.calculateRowHeight(validValues);
-    }
-
-    private static applyExitCodeFormatting(row: ExcelJS.Row, rowIndex: number) {
-        if (rowIndex === 1) {
-            return;
-        }
-        const exitCodeCell = row.getCell("exit_code"); // Use the column key
-        if (exitCodeCell.value === null) {
-            // Handle null
-            exitCodeCell.value = "-";
-            return;
-        }
-        const exitCode = Number(exitCodeCell.value);
-        if (Number.isNaN(exitCode)) {
-            return;
-        }
-        if (exitCode === 0) {
-            exitCodeCell.value = "OK";
-            exitCodeCell.font = { color: { argb: "99009900" } }; // Green color
-        } else {
-            exitCodeCell.value = `NG(${exitCode})`;
-            exitCodeCell.font = { color: { argb: "99990000" } }; // Red color
-        }
-    }
 
     static async exportToExcel() {
         const workspaceRoot =
@@ -166,8 +23,17 @@ export class ExcelExport {
             return;
         }
 
-        const notebookTitle = document.uri.path;
-        const note = await Note.getByTitle(notebookTitle);
+        const notebookName = document.uri.path.split("/").pop() ?? "Untitled";
+        // const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
+
+        const dialog = new MarkdownExportDialog(notebookName, 'excel');
+        const params = await dialog.getExportParametersByDialog();
+        console.log("export dialog result:", params);
+
+        const notebookPath = document.uri.path;
+        const notebookTitle = path.basename(notebookPath, path.extname(notebookPath));
+
+        const note = await Note.getByTitle(notebookPath);
         if (!note) {
             vscode.window.showErrorMessage(
                 "The open terminal notebook has not been saved",
@@ -183,45 +49,54 @@ export class ExcelExport {
         const worksheet = workbook.addWorksheet("Note Report");
 
         // Add Columns
-        worksheet.columns = columns.map((col) => ({
-            header: col.header,
-            key: col.key,
-            width: col.width,
-        }));
+        ExcelExportModel.setWorksheetColumns(worksheet);
 
+        let stepNo = 0;
+        let description = '';
         for (const row of rows) {
+            if (row.type !== "code") {
+                if (row.content) {
+                    description += row.content;
+                }
+                continue;
+            }
+            stepNo++;
             const startTime = new Date(row.start);
             const endTime = new Date(row.end);
             const durationFormatted = Util.calculateDuration(
                 startTime,
                 endTime,
             );
+            // const output = MarkdownExport.getOutputText(Util.escapeXml(row.output), 5);
+            const output = MarkdownExport.getOutputText(row.output, 5);
             worksheet.addRow({
-                position: row.position,
+                position: stepNo,
                 session: row.profile_name ?? "-",
-                // type: row.type,
-                content: Util.escapeXml(row.content),
-                output: Util.escapeXml(row.output),
+                description: description,
+                command: Util.escapeXml(row.content),
+                output: output,
                 start: Util.formatTime(startTime),
                 end: Util.formatTime(endTime),
                 duration: durationFormatted,
                 exit_code: row.exit_code ?? "-",
+                misc: '',
             });
+            description = '';
         }
 
         // Format Rows and Cells
         worksheet.eachRow((row, rowIndex) => {
             row.eachCell((cell, colNumber) => {
-                this.formatCell(cell, colNumber, rowIndex);
+                ExcelExportModel.formatCell(cell, colNumber, rowIndex);
             });
-            this.adjustRowHeight(row, rowIndex);
-            this.applyExitCodeFormatting(row, rowIndex);
+            ExcelExportModel.adjustRowHeight(row, rowIndex);
+            ExcelExportModel.applyExitCodeFormatting(row, rowIndex);
         });
 
         // Write to Excel File
         const filePath = path.join(
             workspaceRoot,
-            `notebook_${notebookId}_report.xlsx`,
+            `${notebookTitle}.xlsx`,
         );
         try {
             await workbook.xlsx.writeFile(filePath);

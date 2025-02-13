@@ -23,9 +23,9 @@ export class MarkdownExport {
         }
 
         const notebookName = notebookEditor.notebook.uri.path.split("/").pop() ?? "Untitled";
-        const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
+        // const defaultExportPath = vscode.Uri.file(`${notebookName.replace(/\.[^/.]+$/, "")}.md`);
 
-        const dialog = new MarkdownExportDialog(notebookName, defaultExportPath);
+        const dialog = new MarkdownExportDialog(notebookName, 'markdown');
         const params = await dialog.getExportParametersByDialog();
         console.log("export dialog result:", params);
         if (params) {
@@ -175,7 +175,7 @@ export class MarkdownExport {
         }
     }
 
-    private static getOutputText(text: string, trimLineCount: number): string | null {
+    public static getOutputText(text: string, trimLineCount: number): string | null {
         const lines = text.split("\n");
     
         if (lines.length <= trimLineCount * 2) {

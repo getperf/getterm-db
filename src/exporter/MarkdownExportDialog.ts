@@ -1,14 +1,34 @@
 import * as vscode from "vscode";
 import { ExportParameters } from "./MarkdownExport";
+import { title } from "process";
+
+export type ExportTypeDefinition = {
+    title: string;
+    extension: string;
+    extensionTitle: string;
+  };
+  
+  export const ExportTypes: { [key: string]: ExportTypeDefinition } = {
+    markdown: { title: "Markdown", extension: "md", extensionTitle: ".md" },
+    excel: { title: "Excel", extension: "xlsx", extensionTitle: ".xlsx" },
+  };
 
 // クラス: エクスポートダイアログ
 export class MarkdownExportDialog {
     private panel: vscode.WebviewPanel | null = null;
+    private defaultExportPath: vscode.Uri;
+    private exportType : ExportTypeDefinition;
 
     constructor(
         private notebookName: string,
-        private defaultExportPath: vscode.Uri
-    ) {}
+        exportKey: string,
+    ) {
+        this.exportType = ExportTypes[exportKey];
+        const extension = this.exportType.extension;
+        this.defaultExportPath = vscode.Uri.file(
+            `${notebookName.replace(/\.[^/.]+$/, "")}.${extension}`
+        );
+    }
 
     public async getExportParametersByDialog(): Promise<ExportParameters | null> {
         this.panel = vscode.window.createWebviewPanel(
@@ -22,10 +42,12 @@ export class MarkdownExportDialog {
         return new Promise((resolve) => {
             const messageHandler = this.panel!.webview.onDidReceiveMessage(
                 async (message) => {
+                    const extension = this.exportType.extension;
+                    const extensionTitle = this.exportType.extensionTitle;
                     if (message.command === "selectSaveLocation") {
                         const uri = await vscode.window.showSaveDialog({
                             saveLabel: "Export File",
-                            filters: { ".md": ["md"], "All Files": ["*"] },
+                            filters: { ".{ext}": [extension], "All Files": ["*"] },
                             defaultUri: this.defaultExportPath,
                         });
                         this.dispose();
@@ -63,7 +85,7 @@ export class MarkdownExportDialog {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export Markdown</title>
+    <title>Export ${this.exportType.title}</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 10px; max-width: 400px; margin: auto; }
         h1 { font-size: 1.5em; margin-bottom: 8px; }
