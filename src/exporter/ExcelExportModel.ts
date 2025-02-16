@@ -173,6 +173,49 @@ export class ExcelExportModel {
         }));
     }
 
+    static async addDownloadedContentSheet(
+        title: string, 
+        text: string, 
+        workbook: ExcelJS.Workbook
+    ) : Promise<ExcelJS.Worksheet> {
+        const worksheet = workbook.addWorksheet(title);
+        const fixedWidthFont = { name: 'Courier New', size: 11 };
+
+        // 各行の文字数の最大値を計算（先頭や末尾の空白、タブもそのまま含む）
+        const lines = text.split(/\r?\n/);
+        const maxLineLength = lines.reduce((max, line) => Math.max(max, line.length), 0);
+        worksheet.getColumn(1).width = maxLineLength + 2;
+
+        lines.forEach((line) => {
+            console.log("Adding line:", line);
+            // const row = worksheet.addRow([{ richText: [{ text: line }] }]);
+
+            const row = worksheet.addRow([]);
+            const cell = row.getCell(1);
+            cell.numFmt = '@';
+            // TODO : 先頭の空行がトリムされる問題を修正
+            cell.value = line;
+            cell.font = fixedWidthFont;
+            // row.getCell(1).value = ;
+            // row.getCell(1).font = fixedWidthFont;
+        });
+
+        // 範囲全体の外枠を設定
+        const startRow = 1;
+        const endRow = worksheet.rowCount;
+        for (let i = startRow; i <= endRow; i++) {
+            const cell = worksheet.getCell(`A${i}`);
+            const border: Partial<ExcelJS.Borders> = {};
+            if (i === startRow) { border.top = { style: 'thin' }; }
+            if (i === endRow) {border.bottom = { style: 'thin' }; }
+            border.left = { style: 'thin' };
+            border.right = { style: 'thin' };
+            cell.border = border;
+        }
+
+        return worksheet;
+    }
+
     static md2RichText(text: string): { richText: RichTextSegment[] } {
         const segments: RichTextSegment[] = [];
         const lines = text.split(/\n/);

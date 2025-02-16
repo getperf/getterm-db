@@ -1,10 +1,10 @@
-# Getterm: Terminal Capture Tool
+# GetTerm: Terminal Capture Tool
 
-Getterm is a software that integrates a terminal with a text editor. Designed to enhance the efficiency of server management and operations, it automatically records terminal activity and logs the content to a notebook.
+GetTerm is a software that integrates a terminal with a text editor. Designed to enhance the efficiency of server management and operations, it automatically records terminal activity and logs the content to a notebook.
 
-![Getterm usage](assets/getterm-usage.gif)
+![GetTerm usage](assets/getterm-usage.gif)
 
-Getterm offers the following features to optimize terminal operations in server management:
+GetTerm offers the following features to optimize terminal operations in server management:
 
 ## Key Features
 
@@ -86,22 +86,20 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
     **Title:** Getterm: Show remote SSH view  
     **Description:**  
     Displays the list of Remote-SSH connection hosts in the navigation view.
-    
 
-### SSH Connection Related
+### SSH Connection
+
+Use the Remote Explorer provided by Remote-SSH to display the list of hosts. Then, right-click on the target host to execute the command.
 
 - **`getterm-db.openTerminalWithProfile`**  
     **Title:** Getterm: Open Terminal  
     **Description:**  
-    Select a host from the Remote-SSH connection list and launch a terminal by right-clicking on it.  
-    _After execution, an SSH connection is initiated based on the selected profile._
+    Right-click on the target host and select **[Getterm: Open Terminal]**. This will initiate an SSH connection based on the selected profile and open a terminal.
     
 - **`getterm-db.openTerminalWithProfileAndCreateNotebook`**  
     **Title:** Getterm: Open Terminal & Create Notebook  
     **Description:**  
-    Select a host from the Remote-SSH connection list and right-click to launch a terminal while simultaneously creating a new notebook.  
-    _After connecting, terminal operations are recorded and automatically reflected in the notebook._
-    
+    Right-click on the target host and choose **[Getterm: Open Terminal & Create Notebook]**. This command establishes an SSH connection and simultaneously creates a new notebook, automatically logging your terminal activity.    
 
 ### Terminal Operations
 

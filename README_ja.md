@@ -1,6 +1,6 @@
-# Getterm: ターミナルキャプチャーツール
+# GetTerm: ターミナルキャプチャーツール
 
-Gettermは、ターミナルとテキストエディタを統合したソフトウェアです。
+GetTermは、ターミナルとテキストエディタを統合したソフトウェアです。
 サーバ管理や運用作業の効率化を目的とし、ターミナル操作の記録とその内容のノートブックへの自動記録を実現します。
 
 ![Getterm使用例](assets/getterm-usage.gif)
@@ -93,19 +93,19 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
     ナビゲーションビューに Remote-SSH の接続ホストリストを表示します。
     
 
-### SSH 接続関連
+### SSH 接続
+
+VSCodeの左側のバー (Activity Bar) から、Remote Explorer を選択してホスト一覧を表示し、接続ホストを選択して右クリックしてコマンドを実行してください。
 
 - **`getterm-db.openTerminalWithProfile`**  
-    **タイトル:** Getterm: Open terminal  
+    **タイトル:** Getterm: Open Terminal  
     **説明:**  
-    Remote-SSH の接続ホストリストからホストを選択し、 **右クリック** -> **[Getterm: Open terminal]** で端末を起動します。  
-    ※ コマンド実行後、選択したプロファイルに基づいた SSH 接続が開始されます。
+    対象ホストを右クリックし、**[Getterm: Open Terminal]** を選択すると、選択したプロファイルに基づいて SSH 接続が開始され、ターミナルが起動します。
     
 - **`getterm-db.openTerminalWithProfileAndCreateNotebook`**  
-    **タイトル:** Getterm: Open terminal & Create notebook  
+    **タイトル:** Getterm: Open Terminal & Create Notebook  
     **説明:**  
-    Remote-SSH の接続ホストリストからホストを選択し、 **右クリック** -> [**Getterm: Open terminal & Create notebook**] で端末を起動して、新規ノートブックを作成します。  
-    ※ 接続後、ターミナル操作が記録され、ノートブックに自動反映されます。
+    対象ホストを右クリックし、**[Getterm: Open Terminal & Create Notebook]** を選択すると、SSH 接続が確立されると同時に新規ノートブックが作成され、ターミナル操作が自動的に記録されます。
     
 ### 端末操作
 
