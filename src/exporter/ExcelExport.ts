@@ -57,17 +57,20 @@ export class ExcelExport {
                 continue;
             }
             stepNo++;
+            console.log("ROW:", row);
             const startTime = new Date(row.start);
             const endTime = new Date(row.end);
             const durationFormatted = Util.calculateDuration(startTime, endTime);
             const textDescription = this.reformDescription(description, params);
             const richtextDescription = ExcelExportModel.md2RichText(textDescription);
+            let output = this.reformOutput(row.output, params);
+
             worksheet.addRow({
                 position: stepNo,
                 // session: row.profile_name ?? "-",
                 description: richtextDescription,
                 command: row.content,
-                output: MarkdownExport.getOutputText(row.output, params.trimLineCount),
+                output: output,
                 start: Util.formatTime(startTime),
                 end: Util.formatTime(endTime),
                 duration: durationFormatted,
@@ -105,6 +108,16 @@ export class ExcelExport {
         } catch (err) {
             vscode.window.showErrorMessage(`Error writing Excel file: ${err}`);
         }
+    }
+
+    static reformOutput(output: string, params: ExportParameters) : string{
+        const match = output.match(/\((file:\/\/[^\)]+)\)/);
+        if (match && match[1]) {
+            console.log("Extracted file link:", match[1]);
+            return MarkdownExport.getDownloadContent(output);
+        }
+
+        return MarkdownExport.getOutputText(output, params.trimLineCount) ?? '';
     }
 
     static reformDescription(text: string, params: ExportParameters):string {

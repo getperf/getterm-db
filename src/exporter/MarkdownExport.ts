@@ -157,7 +157,7 @@ export class MarkdownExport {
         }
     }
         
-    private static getDownloadContent(documentText: string) : string {
+    static getDownloadContent(documentText: string) : string {
         const fileUrlMatch = documentText.match(/\[.*?\]\((file:\/\/.*?)\)/);
         if (!fileUrlMatch) {
             return 'No file URL found in the document.';
