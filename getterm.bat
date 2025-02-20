@@ -10,6 +10,7 @@ if not "%~1"=="" (
 
 REM Run the command
 code-insiders.cmd . --enable-proposed-api getperf.getterm-db
+
 if errorlevel 1 (
     echo Failed to execute code-insiders.cmd
     exit /b 1

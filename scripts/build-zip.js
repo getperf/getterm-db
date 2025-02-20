@@ -33,10 +33,10 @@ try {
 
 // バンドルするファイルを追加
 const filesToInclude = [
-  "code-getterm.bat",
+  "getterm.bat",
   `getterm-db-${version}.vsix`,
   "README.md",
-  "getterm-usage.png",
+  path.join("assets", "getterm-usage.gif"),
   path.join("out", "shellIntegration-bash.sh"),
 ];
 
