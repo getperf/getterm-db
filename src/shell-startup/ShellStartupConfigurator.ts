@@ -4,17 +4,57 @@ import * as vscode from "vscode";
 import { TerminalPromptWatcher } from "./TerminalPromptWatcher";
 import { Logger } from "../Logger";
 
-export class ShellStartupConfigurator  {
-    public static remotePath = "$HOME/.getterm/vscode-shell-integration.sh";
+export enum ShellType {
+    Bash = "bash",
+    Zsh = "zsh",
+    Fish = "fish"
+}
+
+export class ShellStartupConfigurator {
+    public remotePath = "$HOME/.getterm/vscode-shell-integration.sh";
+    private shellType: ShellType = ShellType.Bash;
 
     /**
-     * スクリプトの転送を行うスタティックメソッド
+     * シェルタイプを選択するメソッド
+     * @returns Promise<ShellType | undefined> - 選択されたシェルタイプ
+     */
+    private async pickShellType(): Promise<ShellType | undefined> {
+        const shellType = await vscode.window.showQuickPick(
+            Object.values(ShellType),
+            {
+                placeHolder: "ログイン後に利用するシェルを選択してください。"
+            }
+        );
+        return shellType as ShellType | undefined;
+    }
+
+    getShellConfigFilePath(): string {
+        switch (this.shellType) {
+            case ShellType.Bash:
+                return '.bash_profile';
+            case ShellType.Zsh:
+                return '.zshrc';
+            case ShellType.Fish:
+                return '.config/fish/config.fish';
+            default:
+                throw new Error(`Unsupported shell type: ${this.shellType}`);
+        }
+    }
+      
+    /**
+     * スクリプトの転送を行うメソッド
      * @param terminal - vscode.Terminal インスタンス
      * @returns Promise<boolean> - 成功/失敗
      */
-    static async transferShellIntegrationScript(terminal: vscode.Terminal, skipCheck : boolean = false): Promise<boolean> {
+    async transferShellIntegrationScript(terminal: vscode.Terminal, skipCheck: boolean = false): Promise<boolean> {
         try {
-            const shellIntegrationPath = this.getShellIntegrationPath();
+            const shellType = await this.pickShellType() ?? ShellType.Bash;
+            if (!shellType) {
+                vscode.window.showErrorMessage("シェルの選択がキャンセルされました。");
+                return false;
+            }
+            this.shellType = this.shellType;
+            const shellIntegrationPath = this.getShellIntegrationPath(shellType);
             if (!shellIntegrationPath) {
                 throw new Error("Failed to locate shell integration path.");
             }
@@ -32,7 +72,7 @@ export class ShellStartupConfigurator  {
             }
             const command = `
                 mkdir -p "$HOME/.getterm" &&
-                if [ -f "${this.remotePath}" ]; then
+                if [ -f "${this.remotePath}"]; then
                     sha256sum ${this.remotePath} | awk '{print toupper("checksum:"), $1}';
                 else
                     echo "file_not_found" | awk '{print toupper($0)}';
@@ -61,7 +101,7 @@ export class ShellStartupConfigurator  {
      * @param terminal - vscode.Terminal インスタンス
      * @param scriptContent - スクリプト内容
      */
-    private static async transferScriptContent(
+    private async transferScriptContent(
         terminal: vscode.Terminal,
         scriptContent: string,
     ): Promise<void> {
@@ -76,8 +116,8 @@ export class ShellStartupConfigurator  {
      * シェル統合スクリプトのパスを取得する
      * @returns スクリプトのパス
      */
-    private static getShellIntegrationPath(): string {
-        const getScriptCmd = "code-insiders --locate-shell-integration-path bash";
+    private getShellIntegrationPath(shellType: string = "bash"): string {
+        const getScriptCmd = `code-insiders --locate-shell-integration-path ${shellType}`;
         try {
             return require("child_process").execSync(getScriptCmd).toString().trim();
         } catch (error) {
@@ -86,13 +126,13 @@ export class ShellStartupConfigurator  {
         }
     }
 
-    public static async loadShellIntegrationScript() {
+    public async loadShellIntegrationScript() {
         const terminal = vscode.window.activeTerminal;
         if (!terminal) {
             vscode.window.showErrorMessage("No active terminal found.");
             return;
         }
         await this.transferShellIntegrationScript(terminal, true);
-        terminal.sendText(`source ${this.remotePath}`); 
+        terminal.sendText(`source ${this.remotePath}`);
     }
 }

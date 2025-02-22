@@ -4,7 +4,7 @@ import { ShellStartupConfigurator } from "./ShellStartupConfigurator";
 import { TerminalPromptWatcher } from "./TerminalPromptWatcher";
 
 export class TerminalShellExecutor {
-    private static remotePath = ShellStartupConfigurator.remotePath;
+    // private static remotePath = ShellStartupConfigurator.remotePath;
 
     static nodeCounts: { [key: string]: number } = {};
     
@@ -65,11 +65,14 @@ export class TerminalShellExecutor {
                 vscode.window.showErrorMessage(`SSH ログインに失敗しました。`);
                 return;
             }
+            
             if (TerminalPromptWatcher.getShellIntegrationStatus(terminal)) {
                 Logger.info(`open terminal, shell integration already activated`);
                 return terminal;
             }
-            const isok = await ShellStartupConfigurator.transferShellIntegrationScript(terminal);
+            const configurator = new ShellStartupConfigurator();
+            // const isok = await ShellStartupConfigurator.transferShellIntegrationScript(terminal);
+            const isok = await configurator.transferShellIntegrationScript(terminal);
             Logger.info(`open terminal, shell integration activate : ${isok}`);
             if (!isok) {
                 vscode.window
@@ -77,12 +80,13 @@ export class TerminalShellExecutor {
                     手動でスクリプトを実行してください。詳細は ～ を参照してください`);
                 return terminal;
             } else {
-                terminal.sendText(`source "${this.remotePath}"`);
+                terminal.sendText(`source "${configurator.remotePath}"`);
             }
+            const shellConfigFile = configurator.getShellConfigFilePath();
             vscode.window.showInformationMessage(
-                'シェル統合を永続化するには、.bash_profile に次の行を追加してください:\n\n' +
-                'source "${HOME}/.getterm/vscode-shell-integration.sh"\n\n' +
-                '（ターミナルで "vi ~/.bash_profile" と入力して編集できます。）',
+                `シェル統合を永続化するには、${shellConfigFile} に次の行を追加してください:\n\n` +
+                `source "\${HOME}/.getterm/vscode-shell-integration.sh"\n\n` +
+                `（ターミナルで "vi ~/${shellConfigFile}" と入力して編集できます。`,
             );
             Logger.info(`open terminal, end`);
             return terminal;

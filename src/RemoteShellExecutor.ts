@@ -5,7 +5,7 @@ import { Logger } from "./Logger";
 import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { TerminalShellExecutor } from "./shell-startup/TerminalShellExecutor";
-import { ShellStartupConfigurator } from "./shell-startup/ShellStartupConfigurator";
+import { ShellStartupConfigurator, ShellType } from "./shell-startup/ShellStartupConfigurator";
 
 export class RemoteShellExecutor {
     private context: vscode.ExtensionContext;
@@ -26,8 +26,10 @@ export class RemoteShellExecutor {
                 },
             ),
             vscode.commands.registerCommand(
-                "getterm-db.loadShellIntegrationScript",
-                () => ShellStartupConfigurator.loadShellIntegrationScript(), 
+                "getterm-db.loadShellIntegrationScript", async () => {
+                    const configurator = new ShellStartupConfigurator();
+                    configurator.loadShellIntegrationScript();
+                }
             ),
             vscode.commands.registerCommand(
                 "getterm-db.openTerminalWithProfile",
