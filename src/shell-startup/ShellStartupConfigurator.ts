@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as vscode from "vscode";
+import * as zlib from "zlib";
 import { TerminalPromptWatcher } from "./TerminalPromptWatcher";
 import { Logger } from "../Logger";
 
@@ -12,13 +13,16 @@ export enum ShellType {
 
 export class ShellStartupConfigurator {
     public remotePath = "$HOME/.getterm/vscode-shell-integration.sh";
-    private shellType: ShellType = ShellType.Bash;
+    private shellType: ShellType | undefined;
 
+    constructor(shellType?: ShellType) {
+        this.shellType = shellType;
+    }
     /**
      * シェルタイプを選択するメソッド
      * @returns Promise<ShellType | undefined> - 選択されたシェルタイプ
      */
-    private async pickShellType(): Promise<ShellType | undefined> {
+    static async pickShellType(): Promise<ShellType | undefined> {
         const shellType = await vscode.window.showQuickPick(
             Object.values(ShellType),
             {
@@ -48,13 +52,16 @@ export class ShellStartupConfigurator {
      */
     async transferShellIntegrationScript(terminal: vscode.Terminal, skipCheck: boolean = false): Promise<boolean> {
         try {
-            const shellType = await this.pickShellType() ?? ShellType.Bash;
-            if (!shellType) {
-                vscode.window.showErrorMessage("シェルの選択がキャンセルされました。");
+            // const shellType = await this.pickShellType() ?? ShellType.Bash;
+            if (!this.shellType) {
+                this.shellType = await ShellStartupConfigurator.pickShellType();
+            }
+            if (!this.shellType) {
+                vscode.window.showErrorMessage("シェルの選択が選択されていません。");
                 return false;
             }
-            this.shellType = this.shellType;
-            const shellIntegrationPath = this.getShellIntegrationPath(shellType);
+            // this.shellType = this.shellType;
+            const shellIntegrationPath = this.getShellIntegrationPath(this.shellType);
             if (!shellIntegrationPath) {
                 throw new Error("Failed to locate shell integration path.");
             }
@@ -105,9 +112,12 @@ export class ShellStartupConfigurator {
         terminal: vscode.Terminal,
         scriptContent: string,
     ): Promise<void> {
-        const encodedScript = Buffer.from(scriptContent).toString("base64");
+        // const encodedScript = Buffer.from(scriptContent).toString("base64");
+        const compressedBuffer = zlib.gzipSync(scriptContent);
+        const encodedScript = compressedBuffer.toString("base64");
 
-        terminal.sendText(`echo "${encodedScript}" | base64 -d > "${this.remotePath}"`);
+        terminal.sendText(`echo "${encodedScript}" | base64 -d > "${this.remotePath}.gz"`);
+        terminal.sendText(`gunzip -f "${this.remotePath}.gz"`);
         terminal.sendText(`chmod +x "${this.remotePath}"`);
         console.log("Shell integration script successfully transferred.");
     }

@@ -27,7 +27,8 @@ export class RemoteShellExecutor {
             ),
             vscode.commands.registerCommand(
                 "getterm-db.loadShellIntegrationScript", async () => {
-                    const configurator = new ShellStartupConfigurator();
+                    const shellType = await ShellStartupConfigurator.pickShellType();
+                    const configurator = new ShellStartupConfigurator(shellType);
                     configurator.loadShellIntegrationScript();
                 }
             ),
