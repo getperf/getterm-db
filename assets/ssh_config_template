@@ -1,0 +1,12 @@
+# Read more about SSH config files: https://linux.die.net/man/5/ssh_config
+
+# Host example
+#     HostName example.com
+#     User your-username
+
+# Detailed configuration
+# Host <Arbitrary host name>
+#     HostName <Server IP address or domain name>
+#     User <User name>
+#     Port <Port number (default is 22)>
+#     IdentityFile <Path to private key>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+  <rect x="1" y="1" width="20" height="20" rx="2" 
+        fill="none" 
+        stroke="var(--vscode-icon-foreground, #424242)" 
+        stroke-width="1.5" />
+  <text x="11" y="14" 
+        fill="var(--vscode-icon-foreground, #424242)" 
+        font-family="Tahoma" 
+        font-size="9" 
+        text-anchor="middle">
+    SSH
+  </text>
+</svg>
