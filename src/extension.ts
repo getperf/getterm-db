@@ -13,21 +13,16 @@ import { ConfigManager } from "./ConfigManager";
 import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { NotebookMarkdownCellAdder } from "./NotebookMarkdownCellAdder";
+import { SSHConfigProvider } from "./SSHConfigProvider";
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);
     Logger.setup(vscode.window.createOutputChannel("getterm-log"), context);
-    // Logger.setLogLevel(LogLevel.DEBUG);
-    // const workspaceReady = await WorkspaceManager.ensureWorkspaceIsOpen();
-    // if (!workspaceReady) {
-    //     vscode.window.showErrorMessage('ワークスペースが開いていません');
-    //     return Promise.reject(new Error('Workspace not opened.'));
-    // }
 
     await DatabaseManager.initialize();
-    // await initializeDatabase();
-
     TerminalSessionManager.initializeInstance();
+
+    new SSHConfigProvider(context);
     const terminalNotebookProvider = new TerminalNotebookProvider(context);
     new NotebookCopyButtonProvider(context);
     new NotebookMarkdownCellAdder(context);

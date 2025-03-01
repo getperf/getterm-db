@@ -109,6 +109,14 @@
       {
         "command": "getterm-db.maximizeTerminalPanel",
         "title": "Maximize Terminal Panel"
+      },
+      {
+        "command": "getterm-db.showSSHConfigTreeView",
+        "title": "Getterm: Show SSH Config Tree View"
+      },
+      {
+        "command": "getterm-db.editSSHConfig",
+        "title": "Edit"
       }
     ],
     "keybindings": [
@@ -122,7 +130,33 @@
         "when": "terminalFocus"
       }
     ],
+    "views": {
+      "getterm": [
+        {
+          "id": "sshHosts",
+          "name": "SSH Hosts",
+          "icon": "assets/icons/getterm-icon.svg"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "getterm",
+          "title": "GetTerm",
+          "icon": "assets/icons/getterm-icon.svg"
+        }
+      ]
+    },
+    "activationEvents": ["onView:sshHosts"],
     "menus": {
+      "view/title": [
+        {
+          "command": "getterm-db.editSSHConfig",
+          "when": "view == sshHosts",
+          "group": "navigation"
+        }
+      ],
       "view/item/context": [
         {
           "command": "getterm-db.openTerminalWithProfile",
@@ -202,6 +236,7 @@
     "exceljs": "^4.4.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
+    "ssh-config": "^5.0.3",
     "xterm": "^5.3.0",
     "xterm-headless": "^5.3.0",
     "yaml": "^2.5.1"
