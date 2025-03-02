@@ -34,6 +34,8 @@ GetTermは、ターミナルとテキストエディタを統合したソフト�
 
 ## インストール
 
+**注意事項**： OpenSSH クライアントが標準で搭載されている Windows 11、Windows Server 2019 以降をサポートします
+
 Getterm は VSCode のプロポーザル API を利用するため、通常版 VSCode ではなく [**VSCode Insiders**](https://code.visualstudio.com/insiders) での利用が必須です。
 
 1. **VSCode Insiders の起動**
@@ -73,6 +75,23 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
 
     - CTRL-SHIFT-L : ノートブックに見出し用の Markdown セルを追加します。
     - CTRL-SHIFT-K : ターミナルパネルの最大化／元に戻す（On/Off）切り替えを行います。
+
+## 注意事項
+
+
+- 新規接続の場合は  **SSH** ナビゲーションビューを開き、右上の Edit をクリックし、新規接続ホストを登録してください。
+    
+- SSH 接続後、自動で `vscode-shell-integration.sh` を読み込み、シェル統合APIを有効化します。
+    
+- `vscode-shell-integration.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取りシェル統合 API と連携します。
+    
+- シェル統合を永続化するには、.bash_profile に次の行を追加してください:
+
+    ```bash
+    vi ~/.bash_profile
+    # 最終行に以下を追加
+    source "${HOME}/.getterm/vscode-shell-integration.sh"
+    ```
 
 ## コマンド
 
@@ -157,23 +176,7 @@ VSCodeの左側のバー (Activity Bar) から、Remote Explorer を選択して
     **タイトル:** Getterm: Export to markdown  
     **説明:**  
     ノートブックの内容を Markdown 形式にエクスポートします。ドキュメントとして再利用したり、Web に展開する際に便利です。
-
-## 注意事項
-
-- 新規接続の場合は  **SSH** ナビゲーションビューを開き、右上の Edit をクリックし、新規接続ホストを登録してください。
     
-- SSH 接続後、自動で `vscode-shell-integration.sh` を読み込み、シェル統合APIを有効化します。
-    
-- `vscode-shell-integration.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取りシェル統合 API と連携します。
-    
-- シェル統合を永続化するには、.bash_profile に次の行を追加してください:
-
-    ```bash
-    vi ~/.bash_profile
-    # 最終行に以下を追加
-    source "${HOME}/.getterm/vscode-shell-integration.sh"
-    ```
-        
 ## 貢献方法
 
 このプロジェクトへの貢献を歓迎します！以下の手順で参加できます：

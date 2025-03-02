@@ -31,17 +31,15 @@ To support the integration between the terminal and the notebook, please use the
 
 ## Installation
 
+**Note:** Supported on Windows 11 and Windows Server 2019 or later, which include the OpenSSH client by default.
+
 Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode Insiders**](https://code.visualstudio.com/insiders) rather than the standard VSCode version.
 
 1. **Launch VSCode Insiders**
     
     - Install and launch [VSCode Insiders](https://code.visualstudio.com/insiders).
 
-2. **Install the Remote - SSH Extension**
-    
-    - Open the Extensions view in VSCode Insiders from the activity bar, search for "remote-ssh," and install the extension.
-
-3. **Install the Getterm Extension**
+2. **Install the Getterm Extension**
     
     - Download and unzip [`getterm-x.x.x.zip`](https://github.com/getperf/getterm/tags).
     - In VSCode Insiders, click the ellipsis (`...`) in the upper right corner of the Extensions view and select **Install from VSIX...**.
@@ -62,7 +60,7 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 
 ### 2. Connect to a Server and Create a Notebook
 
-- After launching, click the **Remote - SSH** icon in the activity bar.
+- After launching, click the **SSH** icon in the activity bar.
 - Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to establish an SSH connection to the target host.
 - The SSH connection will be initiated, and the shell integration script will automatically load on the remote host.
 
@@ -72,6 +70,19 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 - When working with the terminal and notebook, please also use the following shortcut keys:
     - **CTRL+SHIFT+L**: Adds a Markdown header cell to the notebook.
     - **CTRL+SHIFT+K**: Toggles the terminal panel between maximized and normal (On/Off).
+
+## Notes
+
+- For new connections, open the **SSH** navigation view, click the + icon on the right side of an SSH entry, and register a new connection host.
+- After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
+- The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
+- To persist shell integration, please add the following line to your .bash_profile:
+
+    ```bash
+    vi ~/.bash_profile
+    # Append the following line at the end
+    source "${HOME}/.getterm/vscode-shell-integration.sh"
+    ```
 
 ## Commands
 
@@ -156,19 +167,6 @@ Use the Remote Explorer provided by Remote-SSH to display the list of hosts. The
     **Title:** Getterm: Export to Markdown  
     **Description:**  
     Exports the notebook’s content to Markdown format, making it reusable as documentation or for web publication.
-
-## Notes
-
-- For new connections, open the **Remote - SSH** navigation view, click the + icon on the right side of an SSH entry, and register a new connection host.
-- After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
-- The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
-- To persist shell integration, please add the following line to your .bash_profile:
-
-    ```bash
-    vi ~/.bash_profile
-    # Append the following line at the end
-    source "${HOME}/.getterm/vscode-shell-integration.sh"
-    ```
 
 ## Contributing
 
