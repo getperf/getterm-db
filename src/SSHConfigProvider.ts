@@ -62,7 +62,7 @@ export class SSHConfigProvider implements vscode.TreeDataProvider<SSHHostTreeIte
                 const template = await fs.readFile(templatePath, 'utf8');
                 await vscode.workspace.fs.writeFile(configPath, Buffer.from(template));
             } catch (err) {
-                vscode.window.showErrorMessage(`テンプレートの読み込みに失敗しました: ${err}`);
+                vscode.window.showErrorMessage(`Failed to load the template: ${err}`);
                 return;
             }
         }
@@ -103,18 +103,14 @@ export class SSHConfigProvider implements vscode.TreeDataProvider<SSHHostTreeIte
 
     getChildren(element?: SSHHostTreeItem): Thenable<SSHHostTreeItem[]> {
         if (!element) {
-            // トップレベルの場合、ssh-config の Host エントリーを抽出
             const config = sshConfig.parse(this.sshConfigContent);
-            // 'Host' エントリーだけを抽出（パターンに応じて複数ホスト名がスペース区切りの場合もあります）
             const hosts = config.filter((entry: sshConfig.ConfigEntry) => entry.param === 'Host');
-            // 例えば、各エントリーの value をそのまま label として利用する
-            console.log("HOSTS:", JSON.stringify(hosts));
+            // console.log("HOSTS:", JSON.stringify(hosts));
             const items = hosts.map(
                 (host: sshConfig.ConfigEntry) => new SSHHostTreeItem(host.value, host)
             );
             return Promise.resolve(items);
         }
-        // 子要素が不要な場合は空配列を返す
         return Promise.resolve([]);
     }
 

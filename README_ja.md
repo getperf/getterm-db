@@ -40,11 +40,7 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
     
     - [VSCode Insiders](https://code.visualstudio.com/insiders) をインストールし、起動します。
 
-2. **Remote - SSH 拡張機能のインストール**
-    
-    - VSCode Insiders のアクティビティバーから拡張機能ビューを開き、"remote-ssh" で検索してインストールします。
-
-3. **Getterm 拡張機能のインストール**
+2. **Getterm 拡張機能のインストール**
     
     - [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags) をダウンロードして解凍します。
     - VSCode Insiders の拡張機能ビュー右上の「…」をクリックし、**Install from VSIX...** を選択します。
@@ -64,7 +60,7 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
         
 ### 2.**サーバーに接続してノートブックを作成する**
     
-- 起動後、アクティビティバーの **Remote - SSH** アイコンをクリックします。
+- 起動後、アクティビティバーの **SSH** アイコンをクリックします。
     
 - 既存の接続ホストアイコンを右クリックして **Getterm: Open Terminal & Create Notebook** を選択し、対象ホストに SSH 接続します。
 
@@ -164,7 +160,7 @@ VSCodeの左側のバー (Activity Bar) から、Remote Explorer を選択して
 
 ## 注意事項
 
-- 新規接続の場合は  **Remote - SSH** ナビゲーションビューを開き、SSH の行の右側の + をクリックし、新規接続ホストを登録してください。
+- 新規接続の場合は  **SSH** ナビゲーションビューを開き、右上の Edit をクリックし、新規接続ホストを登録してください。
     
 - SSH 接続後、自動で `vscode-shell-integration.sh` を読み込み、シェル統合APIを有効化します。
     
