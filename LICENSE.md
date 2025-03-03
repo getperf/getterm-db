@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2024 Minoru Furusawa
+Copyright (c) 2025 Minoru Furusawa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

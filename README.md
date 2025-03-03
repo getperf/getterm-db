@@ -73,7 +73,7 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 
 ## Notes
 
-- For new connections, open the **SSH** navigation view, click the + icon on the right side of an SSH entry, and register a new connection host.
+- For new connections, open the **SSH** navigation view, click "Edit" in the upper right, and register a new connection host.
 - After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
 - The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
 - To persist shell integration, please add the following line to your .bash_profile:
@@ -168,6 +168,11 @@ Use the Remote Explorer provided by Remote-SSH to display the list of hosts. The
     **Description:**  
     Exports the notebook’s content to Markdown format, making it reusable as documentation or for web publication.
 
+
+# Vulnerability Management Policy
+
+In this project, dependency vulnerabilities are regularly checked using `npm audit` and Snyk, and dependency packages are updated as needed. GitHub’s Dependabot is also enabled, and we are committed to promptly addressing any detected vulnerabilities.
+
 ## Contributing
 
 Contributions to this project are welcome! You can participate by following these steps:
@@ -175,5 +180,5 @@ Contributions to this project are welcome! You can participate by following thes
 Clone the GitHub repository and share your feedback via pull requests or issues:
 
 ```bash
-git clone https://github.com/getperf/getterm.git
+git clone https://github.com/getperf/getterm-db.git
 ```

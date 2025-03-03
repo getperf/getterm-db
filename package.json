@@ -1,6 +1,6 @@
 {
   "name": "getterm-db",
-  "displayName": "getterm-db",
+  "displayName": "GetTerm",
   "publisher": "getperf",
   "files": [
     "dist/**",
@@ -11,10 +11,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/getperf/getterm.git"
+    "url": "https://github.com/getperf/getterm-db.git"
   },
-  "description": "",
-  "version": "0.0.1",
+  "description": "GetTerm: Terminal Capture Tool",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.95.0"
   },

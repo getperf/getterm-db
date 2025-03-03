@@ -79,7 +79,7 @@ export class ShellStartupConfigurator {
             }
             const command = `
                 mkdir -p "$HOME/.getterm" &&
-                if [ -f "${this.remotePath}"]; then
+                if [ -f "${this.remotePath}" ]; then
                     sha256sum ${this.remotePath} | awk '{print toupper("checksum:"), $1}';
                 else
                     echo "file_not_found" | awk '{print toupper($0)}';
