@@ -44,7 +44,7 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
 
 2. **Getterm 拡張機能のインストール**
     
-    - [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags) をダウンロードして解凍します。
+    - [getterm-x.x.x.zip](https://github.com/getperf/getterm-db/releases) をダウンロードして解凍します。
     - VSCode Insiders の拡張機能ビュー右上の「…」をクリックし、**Install from VSIX...** を選択します。
     - 解凍したフォルダから `getterm-x.x.x.vsix` を選択してインストールします。
 

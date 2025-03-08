@@ -41,7 +41,7 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 
 2. **Install the Getterm Extension**
     
-    - Download and unzip [`getterm-x.x.x.zip`](https://github.com/getperf/getterm/tags).
+    - Download and unzip [`getterm-x.x.x.zip`](https://github.com/getperf/getterm-db/releases).
     - In VSCode Insiders, click the ellipsis (`...`) in the upper right corner of the Extensions view and select **Install from VSIX...**.
     - Navigate to the unzipped folder and select the `getterm-x.x.x.vsix` file to install the extension.
 
