@@ -187,5 +187,5 @@ VSCodeの左側のバー (Activity Bar) から、Remote Explorer を選択して
 GitHub リポジトリからソースコードをクローンし、プルリクエストや Issue を通じてフィードバックをお寄せください。
 
     ```bash
-    git clone https://github.com/getperf/getterm.git
+    git clone https://github.com/getperf/getterm-db.git
     ```
