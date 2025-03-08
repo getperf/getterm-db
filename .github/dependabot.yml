@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # 使用するパッケージマネージャー (例: npm, pip, bundlerなど)
+    directory: "/"          # マニフェストファイルの場所 (例: package.jsonがあるディレクトリ)
+    schedule:
+      interval: "daily"     # 更新頻度 (daily, weekly, monthly)
