@@ -46,24 +46,22 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
     
     - [getterm-x.x.x.zip](https://github.com/getperf/getterm/tags) をダウンロードして解凍します。
     - VSCode Insiders の拡張機能ビュー右上の「…」をクリックし、**Install from VSIX...** を選択します。
-    - 解凍したフォルダから `getterm-x.x.x.vsix` を選択してインストールします。
+    - 解凍したフォルダから `getterm-db-x.x.x.vsix` を選択してインストールします。
 
 ## 使用方法
 
-### 1. **VSCode Insiders 起動スクリプトを実行**
+### 1. **VSCode Insiders 起動コマンドを実行**
     
-- 解凍したフォルダ内にある起動スクリプトを実行してください。  
-    
-    ```powershell
-    .\getterm.bat {作業ディレクトリ(省略可)}
-    ```
-    
-- このスクリプトは、プロポーザル API 機能を有効にした状態で VSCode Insiders を起動します。
+- 解凍したフォルダ内にある起動コマンド**getterm.exe**を実行してください。  
+
+- このコマンドは、プロポーザル API 機能を有効にした状態で VSCode Insiders を起動します。
         
 ### 2.**サーバーに接続してノートブックを作成する**
     
 - 起動後、アクティビティバーの **SSH** アイコンをクリックします。
-    
+
+- 新規接続の場合は  **SSH** ナビゲーションビュー右上の Edit をクリックし、新規接続ホストを登録してください。
+
 - 既存の接続ホストアイコンを右クリックして **Getterm: Open Terminal & Create Notebook** を選択し、対象ホストに SSH 接続します。
 
 - 選択したホストに対して SSH 接続が開始され、シェル統合スクリプトが自動でロードされます。
@@ -77,10 +75,8 @@ Getterm は VSCode のプロポーザル API を利用するため、通常版 V
     - CTRL-SHIFT-K : ターミナルパネルの最大化／元に戻す（On/Off）切り替えを行います。
 
 ## 注意事項
-
-- 新規接続の場合は  **SSH** ナビゲーションビューを開き、右上の Edit をクリックし、新規接続ホストを登録してください。
-    
-- SSH 接続後、自動で `vscode-shell-integration.sh` を読み込み、シェル統合APIを有効化します。
+  
+- SSH 接続後、自動で `vscode-shell-integration.sh` をロードし、シェル統合APIを有効化します。
     
 - `vscode-shell-integration.sh` は コマンドの実行時に開始・終了などを示すイベントのエスケープシーケンスを追加します。VS Code は本エスケープシーケンスを読み取り、シェル統合 API と連携します。
     
