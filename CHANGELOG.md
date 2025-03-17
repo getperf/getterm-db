@@ -4,6 +4,17 @@ All notable changes to the "getterm-db" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## 1.0.0
+## [1.0.0] - 2025-03-08
 
 - Initial release
+
+## [1.1.0] - 2025-03-15
+
+### Added
+
+- `iexpress` を使用して `getterm.bat` から `getterm.exe` を自動生成するスクリプトを追加 ([#12](https://github.com/getperf/getterm-db/issues/12))
+- `npm run build-exe` で `.exe` を作成できるように `package.json` に `scripts` を追加
+
+### Changed
+
+- `getterm.bat` の実行方法を `.exe` に変更し、コンソールウィンドウが表示されないように改善

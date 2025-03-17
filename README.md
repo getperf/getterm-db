@@ -43,24 +43,19 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
     
     - Download and unzip [`getterm-x.x.x.zip`](https://github.com/getperf/getterm/tags).
     - In VSCode Insiders, click the ellipsis (`...`) in the upper right corner of the Extensions view and select **Install from VSIX...**.
-    - Navigate to the unzipped folder and select the `getterm-x.x.x.vsix` file to install the extension.
+    - Navigate to the unzipped folder and select the `getterm-db-x.x.x.vsix` file to install the extension.
 
 ## Usage
 
 ### 1. Execute the VSCode Insiders Launch Script
 
-- Run the launch script located in the unzipped folder:
-    
-    ```powershell
-    .\getterm.bat {working directory (optional)}
-    ```
-
-- This script launches VSCode Insiders with the Proposal API enabled.
-    
+- Execute **getterm.exe** from the extracted folder.
+- This command launches VSCode Insiders with the Proposal API feature enabled.
 
 ### 2. Connect to a Server and Create a Notebook
 
 - After launching, click the **SSH** icon in the activity bar.
+- For a new connection, click **Edit** in the top right of the **SSH** navigation view and register a new host.
 - Right-click on an existing connection host icon and select **Getterm: Open Terminal & Create Notebook** to establish an SSH connection to the target host.
 - The SSH connection will be initiated, and the shell integration script will automatically load on the remote host.
 
@@ -73,9 +68,8 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 
 ## Notes
 
-- For new connections, open the **SSH** navigation view, click "Edit" in the upper right, and register a new connection host.
-- After an SSH connection is established, the `vscode-shell-integration.sh` script is automatically loaded to enable the shell integration API.
-- The `vscode-shell-integration.sh` script appends escape sequences that indicate command start and end events. VS Code reads these sequences and integrates them with the shell integration API.
+- After establishing an SSH connection, `vscode-shell-integration.sh` is automatically loaded to enable the shell integration API.
+- `vscode-shell-integration.sh` adds escape sequences to indicate the start and end of command executions. VS Code reads these escape sequences to integrate with the shell integration API.
 - To persist shell integration, please add the following line to your .bash_profile:
 
     ```bash
