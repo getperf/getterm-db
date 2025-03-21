@@ -117,6 +117,10 @@
       {
         "command": "getterm-db.editSSHConfig",
         "title": "Edit"
+      },
+      {
+        "command": "getterm-db.toggleMute",
+        "title": "Getterm: Toggle Mute"
       }
     ],
     "keybindings": [
@@ -148,7 +152,9 @@
         }
       ]
     },
-    "activationEvents": ["onView:sshHosts"],
+    "activationEvents": [
+      "onView:sshHosts"
+    ],
     "menus": {
       "view/title": [
         {

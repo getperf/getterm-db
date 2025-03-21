@@ -4,7 +4,7 @@ SEDVersion=3
 [Options]
 PackagePurpose=InstallApp
 ShowInstallProgramWindow=1
-HideExtractAnimation=0
+HideExtractAnimation=1
 UseLongFileName=0
 InsideCompressed=0
 CAB_FixedSize=0
@@ -24,7 +24,7 @@ SourceFiles=SourceFiles
 InstallPrompt=
 DisplayLicense=
 FinishMessage=
-TargetName=C:\home\vscode\skel\getterm-db\getterm.exe
+TargetName=C:\home\vscode\getterm-db\getterm.EXE
 FriendlyName=GetTerm
 AppLaunched=getterm.cmd
 PostInstallCmd=<None>
@@ -32,6 +32,6 @@ AdminQuietInstCmd=
 UserQuietInstCmd=
 FILE0="getterm.cmd"
 [SourceFiles]
-SourceFiles0=C:\home\vscode\skel\getterm-db\
+SourceFiles0=C:\home\vscode\getterm-db\
 [SourceFiles0]
 %FILE0%=

@@ -14,6 +14,7 @@ import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { NotebookMarkdownCellAdder } from "./NotebookMarkdownCellAdder";
 import { SSHConfigProvider } from "./SSHConfigProvider";
+import { TerminalStatusBarProvider } from "./TerminalStatusBar";
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);
@@ -30,7 +31,8 @@ export async function activate(context: vscode.ExtensionContext) {
     new TerminalNotebookSessionPicker(context);
     new RemoteShellExecutor(context);
     new PowerShellExecutor(context);
-    new TerminalCaptureExecutor(context);
+    new TerminalStatusBarProvider(context);
+    // new TerminalCaptureExecutor(context);
     new TerminalNotebookExporter(context);
     new ConsoleEventProvider(context, terminalNotebookProvider.controller);
 }
