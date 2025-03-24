@@ -233,7 +233,7 @@
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.27.0",
-    "@typescript-eslint/parser": "^8.27.0",
+    "@typescript-eslint/parser": "^8.28.0",
     "@vscode/sqlite3": "^5.1.6-vscode",
     "eslint": "^9.23.0",
     "exceljs": "^4.4.0",
