@@ -14,6 +14,8 @@ import { DatabaseManager } from "./DatabaseManager";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 import { NotebookMarkdownCellAdder } from "./NotebookMarkdownCellAdder";
 import { SSHConfigProvider } from "./SSHConfigProvider";
+import { Note } from "./model/Note";
+import { NotebookMuteManager } from "./NotebookMuteManager";
 
 export async function activate(context: vscode.ExtensionContext) {
     ConfigManager.initialize(context);
@@ -33,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
     new TerminalCaptureExecutor(context);
     new TerminalNotebookExporter(context);
     new ConsoleEventProvider(context, terminalNotebookProvider.controller);
+    new NotebookMuteManager(context);
 }
 
 export function deactivate() {}

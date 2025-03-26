@@ -103,6 +103,11 @@
         "category": "Notebook"
       },
       {
+        "command": "getterm-db.toggleMute",
+        "title": "Mute",
+        "category": "Notebook"
+      },
+      {
         "command": "getterm-db.addMarkdownCell",
         "title": "GetTerm : Add Markdown Header"
       },
