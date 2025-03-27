@@ -6,6 +6,7 @@ import { Logger } from "./Logger";
 import { TerminalNotebookSessionPicker } from "./NotebookSessionPicker";
 import { TerminalNotebookHandler } from "./NotebookHandler";
 import { ConfigManager } from "./ConfigManager";
+import { NotebookMuteManager } from "./NotebookMuteManager";
 export const NOTEBOOK_TYPE = "terminal-notebook";
 
 /**
@@ -160,6 +161,11 @@ export class TerminalNotebookController {
             vscode.window.showInformationMessage(
                 "The terminal is not opened by Getterm.",
             );
+            return;
+        }
+        if (NotebookMuteManager.isMuted(notebookEditor)) {
+            Logger.info(
+                `notebook is muted, skip update notebook session id : ${sessionId} , command id : ${rowid}`,);
             return;
         }
         Logger.info(

@@ -133,6 +133,10 @@
         "command": "getterm-db.maximizeTerminalPanel",
         "key": "ctrl+shift+k",
         "when": "terminalFocus"
+      },
+      {
+        "command": "getterm-db.toggleMute",
+        "key": "ctrl+shift+j"
       }
     ],
     "views": {

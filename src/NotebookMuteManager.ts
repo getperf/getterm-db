@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 
 export class NotebookMuteManager {
-    private static muteMap: Map<string, boolean> = new Map();
+    private static muteMap: Map<vscode.NotebookEditor, boolean> = new Map();
     private static statusBarItem: vscode.StatusBarItem;
 
     constructor(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('notebook.toggleMute', this.toggleMute.bind(this))
+            vscode.commands.registerCommand('getterm-db.toggleMute', this.toggleMute.bind(this))
         );
 
         // ステータスバーの初期化
         NotebookMuteManager.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-        NotebookMuteManager.statusBarItem.command = 'notebook.toggleMute';
+        NotebookMuteManager.statusBarItem.command = 'getterm-db.toggleMute';
         context.subscriptions.push(NotebookMuteManager.statusBarItem);
 
         this.updateStatusBar();
@@ -27,20 +27,19 @@ export class NotebookMuteManager {
             return;
         }
 
-        const notebookUri = editor.notebook.uri.toString();
-        const currentState = NotebookMuteManager.muteMap.get(notebookUri) || false;
+        const currentState = NotebookMuteManager.muteMap.get(editor) || false;
         const newState = !currentState;
-        NotebookMuteManager.muteMap.set(notebookUri, newState);
+        NotebookMuteManager.muteMap.set(editor, newState);
 
         // VS Code のコンテキストを更新
         await vscode.commands.executeCommand(
             'setContext',
-            `notebookMuteState:${notebookUri}`,
+            `notebookMuteState:${editor.notebook.uri.toString()}`,
             newState
         );
 
         vscode.window.showInformationMessage(
-            `Notebook is  ${newState ? 'Muted' : 'Unmuted'}`
+            `Notebook is ${newState ? 'Muted' : 'Unmuted'}`
         );
 
         this.updateStatusBar();
@@ -53,14 +52,13 @@ export class NotebookMuteManager {
             return;
         }
 
-        const notebookUri = editor.notebook.uri.toString();
-        const isMuted = NotebookMuteManager.muteMap.get(notebookUri) || false;
+        const isMuted = NotebookMuteManager.muteMap.get(editor) || false;
 
         NotebookMuteManager.statusBarItem.text = isMuted ? '$(mute) Mute' : '$(unmute) Unmute';
         NotebookMuteManager.statusBarItem.show();
     }
 
-    static isMuted(notebookUri: vscode.Uri): boolean {
-        return NotebookMuteManager.muteMap.get(notebookUri.toString()) || false;
+    static isMuted(editor: vscode.NotebookEditor): boolean {
+        return NotebookMuteManager.muteMap.get(editor) || false;
     }
 }
