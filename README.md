@@ -29,6 +29,9 @@ To support the integration between the terminal and the notebook, please use the
     → Toggles the terminal panel between maximized and normal sizes.  
     (This is useful for expanding your workspace to concentrate on terminal operations.)
 
+- **CTRL+SHIFT+J**  
+    → Toggles the mute function on and off. When mute is enabled, terminal logs are not written to the notebook.
+
 ## Installation
 
 **Note:** Supported on Windows 11 and Windows Server 2019 or later, which include the OpenSSH client by default.
@@ -65,6 +68,7 @@ Since Getterm utilizes the VSCode Proposal API, it must be used with [**VSCode I
 - When working with the terminal and notebook, please also use the following shortcut keys:
     - **CTRL+SHIFT+L**: Adds a Markdown header cell to the notebook.
     - **CTRL+SHIFT+K**: Toggles the terminal panel between maximized and normal (On/Off).
+    - **CTRL+SHIFT+J**: Toggles the mute function on and off.
 
 ## Notes
 
@@ -139,6 +143,13 @@ Use the Remote Explorer provided by Remote-SSH to display the list of hosts. The
     **Description:**  
     In the notebook menu, select [**Stop Capture**] to halt terminal capture, ending the recording and disconnecting the terminal session.
     
+- **`getterm-db.toggleMute`**  
+    **Title:** Mute  
+    **Category:** Notebook  
+    **Description:**
+    When a notebook is open, the status bar displays **Mute** or **Unmute**, allowing you to toggle the mute function by executing this command or clicking the label.
+    When mute is enabled (Muted), output and logging to the notebook are suppressed, and terminal logs are not recorded.
+
 - **`getterm-db.addMarkdownCell`**  
     **Title:** GetTerm: Add Markdown Header  
     **Description:**  
