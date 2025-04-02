@@ -1,0 +1,17 @@
+# Ignore build artifacts
+/build/
+
+# Ignore temporary files
+*.pyc
+*.pyo
+*.swp
+*.swo
+
+# Ignore Sphinx cache
+doctrees/
+__pycache__/
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+.DS_Store
