@@ -11,6 +11,7 @@ export interface ExportParameters {
     trimLineCount: number;
     openMarkdown: boolean;
     exportPath: vscode.Uri;
+    captionCommandOutput : boolean;
 }
 
 export class MarkdownExport {
@@ -121,7 +122,8 @@ export class MarkdownExport {
     
         // Optionally include command output
         if (params.includeOutput) {
-            this.addCommandOutput(lines, command, params.trimLineCount);
+            // this.addCommandOutput(lines, command, params.trimLineCount);
+            this.addCommandOutput(lines, command, params);
         }
     }
 
@@ -135,12 +137,18 @@ export class MarkdownExport {
         lines.push(`# Exit Code: ${command.exit_code}`);
     }
     
-    private static addCommandOutput(lines: string[], command: CommandRow, trimLineCount: number): void {
+    // private static processMarkdownCell(lines: string[], text: string, params: ExportParameters): void {
+    private static addCommandOutput(lines: string[], command: CommandRow, params: ExportParameters): void {
+        const trimLineCount = params.trimLineCount ?? 5;
+        // const captionCommandOutput = params.captionCommandOutput ?? false;
         let outputText = this.getOutputText(command.output, trimLineCount);
     
         if (outputText) {
             if (command.file_operation_mode === 'downloaded') {
                 outputText = this.getDownloadContent(outputText);
+            }
+            if (params.captionCommandOutput) {
+                lines.push(`**Command Output:**`);
             }
             lines.push("```text");
             lines.push(outputText, "```", "");

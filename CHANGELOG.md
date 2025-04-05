@@ -18,3 +18,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Changed
 
 - `getterm.bat` の実行方法を `.exe` に変更し、コンソールウィンドウが表示されないように改善
+
+## [1.2.0] - 2025-03-15
+
+### Added
+
+- Markdownエクスポートでコマンド実行結果のキャプションに **Command Output:** を追加
+
+### Changed
+
+- `getterm.bat` の実行方法を `.exe` に変更し、コンソールウィンドウが表示されないように改善
+
+### Fixed
+
+- sudo vi エディタ編集モードで、権限不足でキャプチャーに失敗する問題修正。キャプチャー実行時に sudo cat コマンドを追加
