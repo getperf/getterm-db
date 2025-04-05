@@ -27,7 +27,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Changed
 
-- `getterm.bat` の実行方法を `.exe` に変更し、コンソールウィンドウが表示されないように改善
+- Excelエクスポートの実行時間、終了コード出力オプションの規定値を有効化に変更
 
 ### Fixed
 
