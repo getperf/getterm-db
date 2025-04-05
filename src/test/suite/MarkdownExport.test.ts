@@ -77,6 +77,7 @@ suite("MarkdownExport.convertNotebookToMarkdown", () => {
             trimLineCount: 2,
             exportPath: vscode.Uri.file("/mock/path/output.md"),
             openMarkdown: false,
+            captionCommandOutput: false,
         };
 
         // Run the method
@@ -118,7 +119,10 @@ Command output line 3
             openMarkdown: false,
         };
 
-        const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook1, params);
+        const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook1, {
+            ...params,
+            captionCommandOutput: false,
+        });
         const expectedOutput = `
 ### Markdown Header
 Markdown content
@@ -146,6 +150,7 @@ Command output line 3
             trimLineCount: 2,
             exportPath: vscode.Uri.file("/mock/path/output.md"),
             openMarkdown: false,
+            captionCommandOutput: false,
         };
 
         const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook1, params);
@@ -169,6 +174,7 @@ echo 'Hello, World!'
             trimLineCount: 1,
             exportPath: vscode.Uri.file("/mock/path/output.md"),
             openMarkdown: false,
+            captionCommandOutput: false,
         };
 
         const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook1, params);
@@ -198,6 +204,7 @@ Command output line 3
             trimLineCount: 0,
             exportPath: vscode.Uri.file("/mock/path/output.md"),
             openMarkdown: false,
+            captionCommandOutput: false,
         };
 
         const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook2, params);
@@ -224,6 +231,7 @@ ls -l
             trimLineCount: 0,
             exportPath: vscode.Uri.file("/mock/path/output.md"),
             openMarkdown: false,
+            captionCommandOutput: false,
         };
 
         const result = await MarkdownExport.convertNotebookToMarkdown(mockNotebook2, params);

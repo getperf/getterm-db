@@ -61,6 +61,7 @@ export class ExportDialog {
                                 includeCommandInfo: message.data.includeCommandInfo,
                                 trimLineCount: parseInt(message.data.trimLineCount, 10),
                                 openMarkdown: message.data.openMarkdown,
+                                captionCommandOutput: message.data.captionCommandOutput,
                                 exportPath: uri,
                             };
                             resolve(result);
@@ -113,6 +114,10 @@ export class ExportDialog {
             <input type="checkbox" id="includeCommandInfo" />
             Include Command Metadata (Elapsed Time, Exit Code, etc.)
         </label>
+        <label>
+            <input type="checkbox" id="captionCommandOutput" checked />
+            Caption Command Output (Markdown only)
+        </label>
         <label>Output Settings:</label>
         <label>Lines to keep (Start/End):
             <input id="trimLineCount" type="number" value="5" min="1" />
@@ -133,6 +138,7 @@ export class ExportDialog {
                 includeCommandInfo: document.getElementById("includeCommandInfo").checked,
                 trimLineCount: document.getElementById("trimLineCount").value,
                 openMarkdown: document.getElementById("openMarkdown").checked,
+                captionCommandOutput: document.getElementById("captionCommandOutput").checked,
             };
             vscode.postMessage({ command: "selectSaveLocation", data });
         });
