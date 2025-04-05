@@ -58,7 +58,7 @@ export class ExportDialog {
                             const result: ExportParameters = {
                                 includeMetadata: message.data.includeMetadata,
                                 includeOutput: message.data.includeOutput,
-                                includeCommandInfo: message.data.includeCommandInfo,
+                                includeCommandInfo: this.exportType.extension === "xlsx" ? true : message.data.includeCommandInfo,
                                 trimLineCount: parseInt(message.data.trimLineCount, 10),
                                 openMarkdown: message.data.openMarkdown,
                                 captionCommandOutput: message.data.captionCommandOutput,
@@ -111,7 +111,8 @@ export class ExportDialog {
             Export Command Outputs(Default)
         </label>
         <label>
-            <input type="checkbox" id="includeCommandInfo" />
+            <input type="checkbox" id="includeCommandInfo" 
+            ${this.exportType.extension === "xlsx" ? "checked" : ""} />
             Include Command Metadata (Elapsed Time, Exit Code, etc.)
         </label>
         <label>
