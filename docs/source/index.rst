@@ -1,11 +1,10 @@
-Welcome to GetTerm documentation!
+GetTerm: ターミナルキャプチャーツールガイド
 ======================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: 目次
 
    01_install/index
-   02_usage/index
    03_tutorial/index
    04_commands/index
