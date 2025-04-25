@@ -219,15 +219,16 @@ export class ExcelExportModel {
     static md2RichText(text: string): { richText: RichTextSegment[] } {
         const segments: RichTextSegment[] = [];
         const lines = text.split(/\n/);
-      
+
         lines.forEach((line) => {
+          line = line.trim();
+
           if (line.startsWith("#")) {
             // 見出しの場合：正規表現でレベルと内容を抽出
             const match = line.match(/^(#+)\s+(.*)$/);
             if (match) {
               const level = match[1].length;
-              const content = match[2];
-              // レベルに応じたフォントサイズ設定
+              const content = match[2].trim();
               let size = 13; // レベル1のデフォルト
               if (level === 2) {
                 size = 12;
@@ -235,12 +236,13 @@ export class ExcelExportModel {
                 size = 11;
               } else if (level >= 4) {
                 size = 10;
+              } else if (level >= 5) {
+                size = 9;
               }
               segments.push({
                 text: content,
                 font: { bold: true, size: size },
               });
-              segments.push({ text: "\n" });
             } else {
               segments.push({ text: line + "\n" });
             }

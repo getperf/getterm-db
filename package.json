@@ -16,7 +16,7 @@
   "description": "GetTerm: Terminal Capture Tool",
   "version": "1.1.0",
   "engines": {
-    "vscode": "^1.98.0"
+    "vscode": "^1.99.0"
   },
   "categories": [
     "Other"
