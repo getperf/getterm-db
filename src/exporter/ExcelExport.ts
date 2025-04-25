@@ -47,9 +47,52 @@ export class ExcelExport {
         // Add Columns
         ExcelExportModel.setWorksheetColumns(worksheet);
 
+        // code行の最初と最後の位置を探す
+        let firstCodePos = 0;
+        let lastCodePos = Infinity;
+
+        for (const row of rows) {
+            if (row.type === "code") {
+                if (firstCodePos === 0) {
+                    firstCodePos = row.position;
+                }
+                lastCodePos = row.position;
+            }
+        }
+
         let stepNo = 0;
         let description = '';
         for (const row of rows) {
+            console.log("ROW:", row.position, firstCodePos);
+            if (row.position < firstCodePos) {
+                worksheet.addRow({
+                    position: row.position,
+                    description: ExcelExportModel.md2RichText(row.content),
+                    command: '',
+                    output: '',
+                    start: '',
+                    end: '',
+                    duration: '',
+                    exit_code: '',
+                    misc: 'ヘッダー部',
+                });
+                continue;
+            } 
+            if (row.position > lastCodePos) {
+                worksheet.addRow({
+                    position: row.position,
+                    description: ExcelExportModel.md2RichText(row.content),
+                    command: '',
+                    output: '',
+                    start: '',
+                    end: '',
+                    duration: '',
+                    exit_code: '',
+                    misc: 'フッター部',
+                });
+                continue;
+            }
+ 
             if (row.type !== "code") {
                 if (row.content) {
                     description += row.content;
