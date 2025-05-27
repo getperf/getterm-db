@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { Terminal } from 'xterm-headless';
+// import { Terminal } from 'xterm-headless';
+import { Terminal } from '@xterm/headless';
 
 export class TerminalBufferParser {
     public static async parse(buffer: string, trimEmptyRow: boolean, delay: number = 10): Promise<string> {

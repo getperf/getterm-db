@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { Terminal } from "xterm-headless";
+// import { Terminal } from "xterm-headless";
+import { Terminal } from '@xterm/headless';
 import { Util } from "./Util";
 import { TerminalSessionManager } from "./TerminalSessionManager";
 
