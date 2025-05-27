@@ -32,3 +32,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Fixed
 
 - sudo vi エディタ編集モードで、権限不足でキャプチャーに失敗する問題修正。キャプチャー実行時に sudo cat コマンドを追加
+
+## [1.3.0] - 2025-05-27
+
+### Changed
+
+- ドキュメントのGIFアニメにブログレスバーの表示を追加。
+
+### Fixed
+
+- Replace `xterm-headless` with official `@xterm/headless` to avoid `window is not defined` error
+
