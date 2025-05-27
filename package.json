@@ -241,7 +241,7 @@
     "vscode-dts": "^0.3.3"
   },
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.29.0",
     "@vscode/sqlite3": "^5.1.6-vscode",
     "@xterm/headless": "^5.5.0",
