@@ -245,7 +245,7 @@
     "@typescript-eslint/parser": "^8.29.0",
     "@vscode/sqlite3": "^5.1.6-vscode",
     "@xterm/headless": "^5.5.0",
-    "eslint": "^9.25.1",
+    "eslint": "^9.29.0",
     "exceljs": "^4.4.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
